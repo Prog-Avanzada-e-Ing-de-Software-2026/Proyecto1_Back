@@ -39,6 +39,14 @@ src/**/*.js.map
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# yarn
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
 # dotenv environment variable files
 .env
 .env.development.local
