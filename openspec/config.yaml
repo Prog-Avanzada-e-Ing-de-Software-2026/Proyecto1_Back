@@ -1,0 +1,78 @@
+schema: spec-driven
+
+context: |
+  Project: Proyecto1_Back (base-gestion-t), a modular NestJS backend for a distributor management system.
+  Stack: NestJS 11, TypeScript 5.7/CommonJS, TypeORM 0.3.22, MySQL 8, Yarn 4.18, Node 24.
+  Architecture: Modular NestJS modules with domain entities, application services/controllers, infrastructure persistence, DTOs, and shared modules.
+  API: Global /api prefix, Swagger/OpenAPI at /api, environment-driven configuration, JWT/bcrypt authentication.
+  Quality: ESLint 9 with typescript-eslint, Prettier 3, Jest 29 with ts-jest, and Nest CLI compilation.
+  Delivery: GitHub Actions deployment workflow plus Docker/Docker Compose local infrastructure.
+
+strict_tdd: true
+
+testing:
+  strict_tdd: true
+  detected: 2026-08-31
+  test_runner:
+    command: yarn test
+    framework: Jest 29.7 with ts-jest 29.2.5
+    configuration: jest.config.js
+  test_layers:
+    unit:
+      available: true
+      tool: Jest + @nestjs/testing
+      evidence: src/**/*.spec.ts
+    integration:
+      available: true
+      tool: Jest + Nest testing utilities + supertest
+      evidence: No separately named integration suite detected
+    e2e:
+      available: true
+      tool: Jest + ts-jest
+      command: yarn test:e2e
+      configuration: test/jest-e2e.json
+      evidence: test/app.e2e-spec.ts
+  coverage:
+    available: true
+    command: yarn test:cov
+    configuration: collectCoverage enabled in jest.config.js; output coverage/
+    threshold: 0
+  quality:
+    linter:
+      available: true
+      command: yarn lint
+      tool: ESLint 9 + typescript-eslint
+    type_checker:
+      available: true
+      command: yarn build
+      tool: Nest CLI / TypeScript compilation
+    formatter:
+      available: true
+      command: yarn format
+      tool: Prettier 3
+
+rules:
+  proposal:
+    - Define problem, scope, non-goals, risks, and a rollback plan for risky changes.
+  specs:
+    - Use Given/When/Then scenarios.
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY).
+  design:
+    - Preserve modular NestJS boundaries and document architecture decisions with rationale.
+    - Include sequence diagrams for complex flows.
+  tasks:
+    - Group tasks by phase with hierarchical numbering.
+    - Keep each work unit completable in one session and map it to requirements.
+  apply:
+    guidelines:
+      - Follow existing NestJS module, DTO, service, repository, and testing patterns.
+      - Strict TDD is mandatory: RED -> GREEN -> REFACTOR for each implementation task.
+    tdd: true
+    test_command: yarn test
+  verify:
+    test_command: yarn test
+    build_command: yarn build
+    coverage_command: yarn test:cov
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas into main specifications.

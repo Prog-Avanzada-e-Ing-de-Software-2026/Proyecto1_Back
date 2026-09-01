@@ -72,3 +72,5 @@ docker-compose.*.yml
 
 src/*/.js
 src/*/.js.map
+# Local AI runtime state
+.atl/
