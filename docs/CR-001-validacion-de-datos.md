@@ -1,0 +1,200 @@
+# CR-001 — Auditoría de validación de datos
+
+La revisión detectó fallas transversales en el contrato de errores y en la validación de DTO, además de desajustes concretos entre DTO y entidades. Corregir sólo mensajes aislados no alcanza: actualmente existen entradas inválidas que se transforman silenciosamente, reglas que no se ejecutan y errores de validación que no llegan al cliente.
+
+## Alcance
+
+- Entidades y DTO de escritura de `gestion-productos`, `organizacion` y `gutil`.
+- Configuración global que determina si las validaciones se ejecutan y cómo se responden.
+- Validaciones de formato, rango, relaciones, consistencia DTO/entidad y claridad de mensajes.
+- Se excluyeron autenticación, inicio de sesión, gestión de usuarios y módulos de sistema.
+- Los DTO de salida y búsqueda sólo se consideraron cuando participan de una escritura.
+
+## Resumen de prioridades
+
+| Prioridad | Acción |
+| --- | --- |
+| Crítica | Preservar los mensajes de `ValidationPipe` en la respuesta HTTP y completar los DTO de Alícuota IVA y Condición IVA. |
+| Alta | Corregir transformaciones inseguras, validar objetos anidados y cerrar rangos y formatos que hoy admiten datos inválidos. |
+| Media | Alinear mensajes, expresiones regulares, longitudes e identificadores con el dominio y la base de datos. |
+| Preventiva | Definir los DTO de módulos `*-operacion` antes de implementar su persistencia. |
+
+## Hallazgos transversales
+
+### 1. El filtro global oculta los mensajes de validación — Crítico
+
+**Evidencia:** `src/main.ts:12-21` configura `ValidationPipe`, pero `src/modules/common/filters/global-exception.filters.ts:72-94` reconstruye la respuesta usando `exception.message`. En un error de `class-validator`, ese valor suele ser `Bad Request Exception`; los mensajes específicos están en `exception.getResponse().message` y sólo aparecen dentro de `details` en desarrollo.
+
+**Impacto:** aunque un DTO tenga un mensaje correcto, el cliente no lo recibe en producción.
+
+**Solución breve:** preservar la respuesta de las excepciones HTTP o definir un `exceptionFactory` que entregue un contrato estable, por ejemplo `message: string[]`, `fieldErrors` y `statusCode`. Agregar una prueba e2e que compruebe el cuerpo real de un error 400.
+
+### 2. Las transformaciones de denominación pueden fallar antes de validar — Alto
+
+**Evidencia:** los DTO llaman `value.trim()` sin comprobar el tipo; por ejemplo `create-producto.dto.ts:16`, `update-producto.dto.ts:13`, `create-linea.dto.ts:15`, `create-marca.dto.ts:6` y el mismo patrón en Provincia, Localidad, Alícuota IVA, Condición IVA, Empresa, Personal, Cliente y Proveedor. Se verificó que enviar un número o `null` produce `TypeError` antes de ejecutar `@IsString`.
+
+**Impacto:** una entrada inválida puede terminar como error 500 o mensaje genérico, en lugar de un 400 claro.
+
+**Solución breve:** transformar sólo cuando `typeof value === 'string'`, o centralizar la normalización en un pipe seguro. Mantener `@IsString` y `@IsNotEmpty` como responsables del rechazo.
+
+### 3. Los mensajes no identifican correctamente la regla incumplida — Medio
+
+**Evidencia:** varios `@MaxLength(255)` informan “La denominación no puede estar vacía”; ocurre, entre otros, en Producto (`create-producto.dto.ts:19`), Línea (`create-linea.dto.ts:18`), Marca (`create-marca.dto.ts:9`) y los DTO equivalentes de `organizacion` y `gutil`. En Domicilio, el mensaje de `localidadId @IsInt` vuelve a decir que la localidad es obligatoria (`create-domicilio.dto.ts:9-11`). En Cliente, el mensaje de `vendedorId @IsInt` vuelve a indicar que el personal es obligatorio (`create-cliente.dto.ts:55-57`). Otros validadores conservan mensajes predeterminados en inglés.
+
+**Impacto:** el consumidor no puede distinguir ausencia, tipo incorrecto, formato inválido o exceso de longitud.
+
+**Solución breve:** usar un mensaje específico por campo y regla, con terminología estable: “es obligatorio”, “debe ser un entero positivo”, “no puede superar N caracteres” y “debe tener un formato válido”.
+
+## Gestión de productos
+
+### 4. Booleanos inválidos se convierten silenciosamente en `false` — Alto
+
+**Evidencia:** `CreateProductoDto` transforma `costoEnDolar`, `destacado` y `envioGratis` con `value === 'true' || value === true` (`create-producto.dto.ts:61-74`). Se verificó que valores como `"not-a-boolean"`, `1` y `null` se convierten a `false` y superan `@IsBoolean`. `UpdateProductoDto` hereda el comportamiento.
+
+**Impacto:** se guardan datos distintos de los enviados sin informar el error.
+
+**Solución breve:** aceptar explícitamente sólo `true`, `false`, `"true"` y `"false"`; cualquier otro valor debe conservarse para que el validador lo rechace, o provocar un 400 controlado.
+
+### 5. Faltan rangos y reglas condicionales en Producto y Línea — Alto
+
+**Evidencia:** Producto acepta valores negativos para `costo`, `costoDolar`, `precio`, `porcentaje`, `cantidadPorPack` y `stockMinimo` (`create-producto.dto.ts:53-107`). También permite omitir `stockMinimo` con `utilizaStockMinimo: true` y `cantidadPorPack` con `utilizaPack: true`. Línea presenta el mismo desacople entre `utilizaStockMinimo` y `stockMinimo` (`create-linea.dto.ts:24-29`). El adaptador de Producto propaga el DTO a la entidad (`producto.persistence-adapters.ts:33-60`).
+
+**Impacto:** pueden persistirse costos, precios, mínimos o tamaños de pack inválidos.
+
+**Solución breve:** agregar mínimos y máximos compatibles con las columnas; aplicar `@ValidateIf` junto con `@IsDefined` para los campos condicionales. Confirmar funcionalmente si `porcentaje` admite descuentos antes de fijar su mínimo.
+
+### 6. El DTO rechaza cantidades fraccionarias que la entidad admite — Alto
+
+**Evidencia:** `Producto.stock`, `Producto.stockMinimo` y `Linea.stockMinimo` usan `CantidadColumn`, un decimal `(12,3)` (`cantidad-column.decorator.ts:3-12`; `producto.entity.ts:57-68`; `linea.entity.ts:33-34`). Sin embargo, los DTO los validan con `@IsInt` (`create-producto.dto.ts:53-59`; `create-linea.dto.ts:24-26`).
+
+**Impacto:** valores válidos para productos medidos por peso o volumen, como `1.5`, son rechazados por la API.
+
+**Solución breve:** usar `@IsNumber({ maxDecimalPlaces: 3 })` y límites compatibles con `decimal(12,3)`. Mantener `@IsInt` sólo para cantidades que realmente sean unidades enteras, como un pack si ésa es la regla del dominio.
+
+### 7. Las reglas de denominación de Producto son contradictorias — Medio
+
+**Evidencia:** el DTO admite hasta 255 caracteres (`create-producto.dto.ts:19`), mientras el servicio de dominio rechaza más de 200 (`producto-intrinsic-validation.service.ts.ts:31-39`). Además, create permite `%` y `_` mediante `\w` (`create-producto.dto.ts:24-26`), pero update usa otra expresión regular que los rechaza (`update-producto.dto.ts:17-20`).
+
+**Impacto:** el contrato publicado no coincide con la regla ejecutada y un valor aceptado al crear puede no poder reenviarse al actualizar.
+
+**Solución breve:** definir una única política reutilizable de denominación, usar el mismo límite y regex en create/update y cubrirla con casos parametrizados.
+
+### 8. Campos de texto y decimales no respetan los límites de persistencia — Alto
+
+**Evidencia:** `codigoProveedor` tiene `varchar(255)` en la entidad (`producto.entity.ts:32-34`) pero carece de `@MaxLength`; los campos monetarios y porcentuales usan columnas con precisión finita (`monetario-column.decorator.ts`, `porcentaje-column.decorator.ts`) sin máximos equivalentes en el DTO.
+
+**Impacto:** entradas fuera del rango llegan a la base de datos y terminan como error genérico de persistencia o posible truncamiento, según la configuración del motor.
+
+**Solución breve:** reflejar longitud, precisión y escala en validadores de DTO, y devolver mensajes de dominio antes de guardar.
+
+### 9. El mensaje de alícuota referencia un campo inexistente — Medio
+
+**Evidencia:** `CreateProductoDto.alicuotaIva` informa “tipo debe ser...” (`create-producto.dto.ts:111-114`) y la enumeración está presentada con puntuación ambigua.
+
+**Impacto:** el cliente no sabe qué propiedad debe corregir ni cuáles son los valores aceptados.
+
+**Solución breve:** informar “La alícuota IVA debe ser una de: 0, 10.5, 21 o 27”, manteniendo el valor y la representación de entrada acordados.
+
+### 10. `UpdatePrecioDto` contiene mensajes copiados de paginación — Medio
+
+**Evidencia:** `costo`, `costoDolar` y `cotizacionDolar` usan el mensaje “skip debe ser...” (`update-precio.dto.ts:6-19`); `porcentaje` usa el texto incompleto “Porcentaje de aumento” (`:21-24`). Actualmente no se encontró un controlador que exponga este DTO, aunque el repositorio contiene la operación de persistencia.
+
+**Impacto:** al conectar el flujo, los errores serán incorrectos y ambiguos.
+
+**Solución breve:** corregir mensajes y validar rango, precisión e identificador positivo antes de exponer el caso de uso.
+
+## Organización y utilitarios
+
+### 11. `CreateAlicuotaIvaDto` no representa columnas obligatorias — Crítico
+
+**Evidencia:** la entidad exige `alicuota` y `codigoAfip`, este último además único (`alicuota-iva.entity.ts:13-20`), pero el DTO sólo declara denominación, observación y metadatos (`create-alicuota-iva.dto.ts:5-24`). Con `whitelist` y `forbidNonWhitelisted`, esos campos son rechazados si se envían; el adaptador intenta guardar sin ellos (`alicuota-iva.persistence-adapters.ts:37-42`).
+
+**Impacto:** la creación por API no puede satisfacer el modelo persistente de forma válida.
+
+**Solución breve:** agregar `alicuota` con representación y rango acordados —los seeds actuales usan `0.21` y `0.105`— y `codigoAfip` como entero no negativo; traducir la violación de unicidad a 409 con un mensaje claro.
+
+### 12. `CreateCondicionIvaDto` contradice campos obligatorios de la entidad — Crítico
+
+**Evidencia:** la entidad exige `letra` y `tipoCondicionIvaReceptor` (`condicion-iva.entity.ts:23-27`); el DTO marca `letra` como opcional y no declara `tipoCondicionIvaReceptor` (`create-condicion-iva.dto.ts:16-22`). Tampoco expone `requiereCuit` ni `requiereDocumento` (`entity.ts:32-36`). El adaptador copia el DTO sin completar estas reglas (`condicion-iva.persistence-adapters.ts:28-31`).
+
+**Impacto:** puede fallar la persistencia o crearse una condición fiscal con requisitos incorrectos por defecto.
+
+**Solución breve:** hacer obligatoria `letra`, incorporar y restringir `tipoCondicionIvaReceptor` mediante enum o rango AFIP, y validar ambos indicadores booleanos.
+
+### 13. Los domicilios anidados no se validan — Alto
+
+**Evidencia:** Cliente y Proveedor usan `@Type` pero no `@ValidateNested` en create (`cliente/dto/create-cliente.dto.ts:59-61`; `proveedor/dto/create-proveedor.dto.ts:65-67`) ni update (`cliente/dto/update-cliente.dto.ts:16-18`; `proveedor/dto/update-proveedor.dto.ts:20-22`).
+
+**Impacto:** las reglas de `CreateDomicilioDto` y `UpdateDomicilioDto` no se recorren; un objeto mal formado puede alcanzar el servicio o la base.
+
+**Solución breve:** agregar `@ValidateNested()`, `@Type(() => ...)` y, si el domicilio es obligatorio, `@IsDefined()`/`@IsNotEmptyObject()`.
+
+### 14. CUIT y DNI no tienen validación semántica consistente — Alto
+
+**Evidencia:** Cliente persiste CUIT y DNI en `varchar(11)` (`cliente.entity.ts:38-44`), pero el DTO admite strings de hasta 255 (`create-cliente.dto.ts:41-49`). Proveedor repite el desacople para CUIT (`proveedor.entity.ts:34-36`; `create-proveedor.dto.ts:52-59`). El checksum de CUIT sólo se ejecuta cuando la condición IVA lo requiere (`condicion-iva-validation-helper.ts:32-45`); un CUIT opcional inválido puede persistirse. Para DNI condicionado sólo se comprueba presencia (`:48-53`).
+
+**Impacto:** se aceptan documentos con longitud, caracteres o dígito verificador incorrectos.
+
+**Solución breve:** crear validadores reutilizables para CUIT y DNI que se ejecuten siempre que el campo esté presente; conservar por separado la regla que decide cuándo son obligatorios.
+
+### 15. Faltan límites equivalentes a las columnas de texto — Alto
+
+**Evidencia:** Cliente no limita `mail`, `celular`, `contactoNombre` ni `contactoCargo` (`create-cliente.dto.ts:63-80`) frente a columnas `varchar(255)` (`cliente.entity.ts:49-68`). Personal no limita `mail` (`create-personal.dto.ts:16-17`) frente a `varchar(255)` (`personal.entity.ts:26-27`). Empresa admite CUIT de hasta 255 caracteres (`create-empresa.dto.ts:16-19`) pero la entidad sólo permite 15 (`empresa.entity.ts:24-25`).
+
+**Impacto:** la base de datos se convierte en el primer validador y devuelve errores poco claros.
+
+**Solución breve:** alinear `@MaxLength`/`@Length` con cada columna y sumar validadores de formato donde corresponda.
+
+### 16. Proveedor convierte el string `"false"` en `true` — Alto
+
+**Evidencia:** `esProveedorMateriaPrima` y `esProveedorGastos` usan `@Type(() => Boolean)` antes de `@IsBoolean` (`create-proveedor.dto.ts:69-77`). En JavaScript, cualquier string no vacío se convierte a `true`.
+
+**Impacto:** formularios que envían `"false"` pueden persistir el valor opuesto.
+
+**Solución breve:** exigir booleanos JSON o usar una transformación estricta que reconozca únicamente las representaciones permitidas y rechace las demás.
+
+### 17. Los identificadores relacionados aceptan cero y negativos — Medio
+
+**Evidencia:** sólo se aplica `@IsInt` a relaciones como Provincia de Localidad (`localidad/dto/create-localidad.dto.ts:15-17`), Localidad de Domicilio (`domicilio/dto/create-domicilio.dto.ts:9-11`), condición IVA y vendedor de Cliente (`cliente/dto/create-cliente.dto.ts:51-57`), condición IVA de Proveedor (`proveedor/dto/create-proveedor.dto.ts:61-63`) y condición IVA de Empresa (`empresa/dto/create-empresa.dto.ts:21-23`).
+
+**Impacto:** IDs imposibles llegan a consultas o restricciones de clave foránea antes de ser rechazados.
+
+**Solución breve:** agregar `@Min(1)` con un mensaje específico; usar conversión numérica sólo si el contrato decide aceptar strings numéricos.
+
+### 18. Las expresiones regulares rechazan datos reales del dominio — Medio
+
+**Evidencia:** Provincia permite sólo letras, números y espacios (`provincia/dto/create-provincia.dto.ts:9-11`), pero los seeds incluyen “Tierra del Fuego, Antártida...” (`seed-organizacion.service.ts:87-90`). Alícuota IVA usa la misma restricción aunque los seeds incluyen nombres con coma decimal, como “Reducida 10,5” (`seed-organizacion.service.ts:718-720`).
+
+**Impacto:** datos válidos ya existentes no pueden reproducirse mediante la API.
+
+**Solución breve:** definir una política de nombres desde el lenguaje del dominio y cubrir con pruebas los signos admitidos; no reutilizar una regex genérica sin evidencia.
+
+### 19. Existen campos desalineados entre DTO y entidad — Medio
+
+**Evidencia:** Proveedor acepta `mail` (`proveedor/dto/create-proveedor.dto.ts:79-81`) pero la entidad no contiene esa columna (`proveedor.entity.ts:20-88`). Empresa posee `domicilio`, `telefono`, `email`, `fechaInicioActividad` e `ingresosBrutos` (`empresa.entity.ts:33-46`) sin representación en create. Localidad posee `codigoPostal` (`localidad.entity.ts:13-14`) sin campo equivalente en su DTO.
+
+**Impacto:** algunos datos aceptados se descartan y otros datos del modelo no pueden enviarse debido a `forbidNonWhitelisted`.
+
+**Solución breve:** confirmar qué campos son editables y alinear el contrato: agregar validadores semánticos a los campos expuestos o retirar del DTO los que no se persisten.
+
+## Validadores a implementar
+
+1. Contrato global de errores de validación con mensajes por campo.
+2. Transformadores seguros para strings y booleanos, reutilizados por todos los DTO.
+3. Validador de CUIT con 11 dígitos y checksum; validador de DNI con formato y longitud acordados.
+4. Validadores condicionales para stock mínimo y cantidad por pack.
+5. Validadores reutilizables de cantidades, importes y porcentajes que respeten precisión y escala de TypeORM.
+6. Validación anidada de domicilio.
+7. Enum o restricción formal para `tipoCondicionIvaReceptor` y, antes de activar persistencia, para `tipoOperacion`.
+
+## Módulos de operación aún no persistentes
+
+`producto-operacion`, `cliente-operacion`, `proveedor-operacion` y `empresa-operacion` exponen DTO create/update vacíos mientras sus entidades contienen relación, `operacionId` y `tipoOperacion`. Sus servicios actuales sólo retornan strings y no guardan, por lo que no constituyen hoy una falla activa de persistencia. Antes de implementar esos casos de uso deben definirse DTO con relación/ID positivo, tipo de operación cerrado y mensajes claros.
+
+## Orden de implementación recomendado
+
+1. Corregir el contrato global de errores y agregar pruebas e2e del 400.
+2. Incorporar transformadores seguros y pruebas unitarias de DTO con entradas límite e inválidas.
+3. Resolver los DTO incompletos de Alícuota IVA y Condición IVA.
+4. Implementar validación anidada, documentos, rangos y reglas condicionales.
+5. Alinear longitudes, regex y mensajes restantes con las entidades y seeds.
