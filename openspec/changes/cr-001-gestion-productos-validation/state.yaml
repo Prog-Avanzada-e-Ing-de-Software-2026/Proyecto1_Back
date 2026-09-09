@@ -1,0 +1,71 @@
+schemaName: gentle-ai.sdd-status
+schemaVersion: 2
+changeName: cr-001-gestion-productos-validation
+artifactStore: openspec
+planningHome:
+  mode: repo-local
+  path: /extra/IdeaProjects/Proyecto1_Back/openspec
+changeRoot: /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation
+artifactPaths:
+  proposal:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/proposal.md
+  specs:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/specs/product-write-validation/spec.md
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/specs/validation-error-contract/spec.md
+  design:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/design.md
+  tasks:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/tasks.md
+  applyProgress:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/tasks.md
+  verifyReport:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/verify-report.md
+contextFiles:
+  proposal:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/proposal.md
+  specs:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/specs/product-write-validation/spec.md
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/specs/validation-error-contract/spec.md
+  design: []
+  tasks: []
+  applyProgress: []
+  verifyReport: []
+artifacts:
+  proposal: done
+  specs: done
+  design: missing
+  tasks: missing
+  applyProgress: missing
+  verifyReport: missing
+taskProgress:
+  total: 0
+  completed: 0
+  pending: 0
+  allComplete: false
+dependencies:
+  proposal: all_done
+  specs: all_done
+  design: ready
+  tasks: blocked
+  apply: blocked
+  verify: blocked
+  archive: blocked
+applyState: blocked
+actionContext:
+  mode: repo-local
+  workspaceRoot: /extra/IdeaProjects/Proyecto1_Back
+  allowedEditRoots:
+    - /extra/IdeaProjects/Proyecto1_Back
+relationships:
+  dependsOn: []
+  supersedes: []
+  amends: []
+  conflictsWith: []
+  sameDomainActiveChanges: []
+remediationState:
+  required: false
+  complete: false
+  failedEvidenceRevision: ""
+  reason: ""
+nextRecommended: design
+blockedReasons: []
