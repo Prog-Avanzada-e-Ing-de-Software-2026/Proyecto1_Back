@@ -6,7 +6,7 @@ Este documento registra las decisiones funcionales confirmadas para cerrar el al
 
 ### `Producto.porcentaje` representa el margen
 
-- `Producto.porcentaje` es la representación persistida del `Margen` definido en `docs/Analisis_de_Dominio.md`.
+- `Producto.porcentaje` es la representación persistida del `Margen` definido en `../../Analisis_de_Dominio.md`.
 - El margen expresa el porcentaje de ganancia aplicado al costo para obtener el precio de venta.
 - El análisis de dominio documenta un margen general del 15 %, con posibles valores particulares por producto, y ejemplifica costo 1000 más margen 15 % como precio 1150.
 - CR-001 puede validar `porcentaje` como margen respetando la precisión persistida, pero no debe agregar reglas funcionales que todavía no estén confirmadas.
@@ -36,7 +36,7 @@ Mientras estos puntos sigan abiertos, CR-001 debe limitarse a validar tipo y pre
 
 ## Referencias
 
-- `docs/Analisis_de_Dominio.md`
+- `../../Analisis_de_Dominio.md`
 - `docs/Pedidos de Cambio/CR-001.md`
-- `openspec/changes/cr-001-gestion-productos-validation/exploration.md`
-- `openspec/changes/cr-001-gestion-productos-validation/proposal.md`
+- `../../../openspec/changes/cr-001-gestion-productos-validation/exploration.md`
+- `../../../openspec/changes/cr-001-gestion-productos-validation/proposal.md`
