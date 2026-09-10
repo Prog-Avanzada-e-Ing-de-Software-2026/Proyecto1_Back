@@ -1,5 +1,7 @@
 schemaName: gentle-ai.sdd-status
 schemaVersion: 2
+# Operational status: paused by explicit user direction.
+# The SDD engine remains technically ready; do not apply until the user explicitly resumes CR-001.
 changeName: cr-001-gestion-productos-validation
 artifactStore: openspec
 planningHome:
@@ -11,6 +13,7 @@ artifactPaths:
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/proposal.md
   specs:
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/specs/product-write-validation/spec.md
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/specs/product-search-validation/spec.md
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/specs/validation-error-contract/spec.md
   design:
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/design.md
@@ -25,6 +28,7 @@ contextFiles:
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/proposal.md
   specs:
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/specs/product-write-validation/spec.md
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/specs/product-search-validation/spec.md
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/specs/validation-error-contract/spec.md
   design:
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/design.md
@@ -40,9 +44,9 @@ artifacts:
   applyProgress: missing
   verifyReport: missing
 taskProgress:
-  total: 11
+  total: 14
   completed: 0
-  pending: 11
+  pending: 14
   allComplete: false
 dependencies:
   proposal: all_done
