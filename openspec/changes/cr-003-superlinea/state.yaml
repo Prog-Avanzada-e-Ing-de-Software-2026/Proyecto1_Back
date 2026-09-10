@@ -1,0 +1,65 @@
+schemaName: gentle-ai.sdd-status
+schemaVersion: 2
+# Operational status: pre-proposal discovery is blocked pending two domain-owner decisions.
+# Do not launch sdd-propose until both blockedReasons are resolved and recorded in exploration.md.
+changeName: cr-003-superlinea
+artifactStore: openspec
+planningHome:
+  mode: repo-local
+  path: /extra/IdeaProjects/Proyecto1_Back/openspec
+changeRoot: /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea
+artifactPaths:
+  proposal: []
+  specs: []
+  design: []
+  tasks: []
+  applyProgress: []
+  verifyReport: []
+contextFiles:
+  proposal: []
+  specs: []
+  design: []
+  tasks: []
+  applyProgress: []
+  verifyReport: []
+artifacts:
+  proposal: missing
+  specs: missing
+  design: missing
+  tasks: missing
+  applyProgress: missing
+  verifyReport: missing
+taskProgress:
+  total: 0
+  completed: 0
+  pending: 0
+  allComplete: false
+dependencies:
+  proposal: blocked
+  specs: blocked
+  design: blocked
+  tasks: blocked
+  apply: blocked
+  verify: blocked
+  archive: blocked
+applyState: blocked
+actionContext:
+  mode: repo-local
+  workspaceRoot: /extra/IdeaProjects/Proyecto1_Back
+  allowedEditRoots:
+    - /extra/IdeaProjects/Proyecto1_Back
+relationships:
+  dependsOn: []
+  supersedes: []
+  amends: []
+  conflictsWith: []
+  sameDomainActiveChanges: []
+remediationState:
+  required: false
+  complete: false
+  failedEvidenceRevision: ''
+  reason: ''
+nextRecommended: resolve-blockers
+blockedReasons:
+  - The domain owner must decide whether soft-deleted Linea records continue blocking deletion of their associated SuperLinea.
+  - The domain owner must decide whether a soft-deleted SuperLinea denomination remains reserved or may be reused.
