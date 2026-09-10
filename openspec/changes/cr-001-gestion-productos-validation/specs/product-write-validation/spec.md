@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define the accepted write contract for products, product lines, brands, price updates, and future product-operation writes.
+Define the accepted write contract for products, product lines, brands, and price updates.
 
 ## Requirements
 
@@ -31,7 +31,7 @@ Product boolean fields MUST accept only JSON booleans or the strings `"true"` an
 
 ### Requirement: Persistable numeric values
 
-Costs and prices MUST be non-negative decimals with at most 5 decimal places; stock and minimum stock MUST be non-negative decimals with at most 3 decimal places. Pack quantity MUST be a positive integer. Percentage and VAT values MUST fit their persisted precision, and VAT MUST be one of 0, 10.5, 21, or 27.
+Costs and prices MUST be non-negative decimals with at most 5 decimal places; stock and minimum stock MUST be non-negative decimals with at most 3 decimal places. Pack quantity MUST be a positive integer. Product `porcentaje`, which represents the domain margin, and VAT values MUST fit their persisted precision; VAT MUST be one of 0, 10.5, 21, or 27. Validation MUST NOT impose an unconfirmed margin formula, sign, or range beyond persistence constraints.
 
 #### Scenario: Fractional stock
 - GIVEN stock or minimum stock is `1.5`
@@ -69,12 +69,3 @@ Price-update validation MUST identify `costo`, `costoDolar`, `cotizacionDolar`, 
 - GIVEN a price update contains an invalid numeric value or non-positive user identifier
 - WHEN the request is validated
 - THEN every returned message MUST name the actual invalid field and rule
-
-### Requirement: Product-operation contract precedes persistence
-
-Before product-operation persistence is enabled, its write DTOs MUST require a positive product or operation reference and a closed operation type; unsupported properties or operation types MUST be rejected.
-
-#### Scenario: Persistence remains unavailable without a contract
-- GIVEN product-operation DTOs do not yet enforce the required reference and operation type
-- WHEN persistence is considered for activation
-- THEN the write flow MUST remain disabled

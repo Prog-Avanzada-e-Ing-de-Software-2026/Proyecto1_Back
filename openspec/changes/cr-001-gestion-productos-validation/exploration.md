@@ -6,18 +6,14 @@ Product, line, and brand DTOs normalize denominations before checking their type
 
 The global `ValidationPipe` uses Nest's default exception factory. The installed NestJS 11 implementation flattens `ValidationError[]` into message strings before constructing `BadRequestException`; therefore, the global filter can preserve `message`, but it cannot reliably reconstruct property names from those strings. The filter currently ignores `getResponse()` and emits `exception.message`, which reduces validation failures to `Bad Request Exception`.
 
-`producto-operacion` is scaffold code: its DTOs are empty, its service returns fixed strings, and no write reaches TypeORM. The entity suggests `producto`, a positive `operacionId`, and `tipoOperacion`, but the repository contains no authoritative closed set of operation types.
-
 ### Affected Areas
 
 - `src/modules/gestion-productos/producto/dto/` — unsafe transforms, numeric bounds, conditional values, positive references, and inconsistent messages.
 - `src/modules/gestion-productos/producto/domain/entities/producto.entity.ts` — persistence precision and length evidence for DTO boundaries.
 - `src/modules/gestion-productos/linea/` — fractional minimum stock and conditional validation.
 - `src/modules/gestion-productos/marca/` — safe denomination normalization and aligned create/update rules.
-- `src/modules/gestion-productos/producto-operacion/` — preventive contract gate before persistence is implemented.
 - `src/main.ts` — the `ValidationPipe` exception factory is the last point where structured property paths exist.
 - `src/modules/common/filters/global-exception.filters.ts` — public error-envelope preservation and production-safe output.
-- Product DTO unit tests and HTTP/e2e tests — boundary, transformation, field grouping, and no-persistence evidence.
 
 ### Approaches
 
@@ -27,8 +23,8 @@ The global `ValidationPipe` uses Nest's default exception factory. The installed
    - Effort: Medium
 
 2. **Reusable validation primitives and structured pipe errors** — centralize safe transforms and numeric policies, create `fieldErrors` while `ValidationError[]` still contain property paths, and make the filter preserve the structured HTTP response.
-   - Pros: Deterministic grouping, shared create/update behavior, direct tests against persistence limits, and no reliance on message parsing.
-   - Cons: Touches both bootstrap validation configuration and the filter; recursive error flattening needs focused tests.
+   - Pros: Deterministic grouping, shared create/update behavior, direct alignment with persistence limits, and no reliance on message parsing.
+   - Cons: Touches both bootstrap validation configuration and the filter; recursive error flattening requires careful implementation.
    - Effort: Medium
 
 ### Recommendation
@@ -39,9 +35,9 @@ Match DTO boundaries to persistence: money `0..9,999,999,999.99999` with at most
 
 Build `message` and recursive dot-path `fieldErrors` in a custom `ValidationPipe.exceptionFactory`, then have the global filter use `HttpException.getResponse()` as the public source. Preserve `statusCode`, `timestamp`, and `path`; never emit stack traces or raw exceptions in production. Avoid deriving field names from localized messages.
 
-For `producto-operacion`, define the future minimum shape as `productoId` and `operacionId` positive integers plus an enum-backed `tipoOperacion`. Do not invent enum members from comments and do not enable persistence until the domain owner or an implemented operation module supplies the authoritative set. Unknown fields remain rejected by the existing whitelist configuration.
+Testing is explicitly deferred from CR-001. This change must not create or modify test cases or test files; the project-level `strict_tdd` configuration remains unchanged and applies again when the deferred verification work is authorized.
 
-External `sdd-research` is not needed. Repository code, TypeORM column metadata, installed NestJS source, and the existing specifications are sufficient for the technical design; external sources cannot resolve the two domain-owned questions of percentage meaning and allowed operation types.
+External `sdd-research` is not needed. Repository code, TypeORM column metadata, installed NestJS source, the confirmed equivalence between `Producto.porcentaje` and the domain margin, and the existing specifications are sufficient for the technical design.
 
 ### Risks
 
@@ -49,8 +45,8 @@ External `sdd-research` is not needed. Repository code, TypeORM column metadata,
 - `@IsOptional()` accepts `null`; reusing it unchanged would violate the strict boolean scenarios.
 - JavaScript message parsing would make `fieldErrors` unstable when validator text or language changes.
 - Applying conditional requirements to partial updates must evaluate the effective state; DTO-only checks see only the patch and can require a companion value when a flag is explicitly changed to `true`, but cannot infer an omitted persisted flag.
-- The allowed percentage sign and `tipoOperacion` members remain domain decisions; silently guessing either would create a false contract.
+- The allowed margin sign and exact calculation behavior remain domain decisions; silently guessing either would create a false contract.
 
 ### Ready for Proposal
 
-Yes. The existing proposal and specifications are technically supportable and the change is ready for design. The design should record percentage sign as an unresolved business semantic without blocking precision validation, and keep product-operation persistence gated until the closed operation-type set is defined.
+Yes. The existing proposal and specifications are technically supportable and the change is ready for design. The equivalence between `Producto.porcentaje` and the domain margin is settled; the design should avoid inventing sign, range, calculation, or update behavior beyond confirmed domain evidence while allowing persistence-aligned precision validation.

@@ -9,19 +9,19 @@ CR-001 requires rejecting invalid product-management data before persistence and
 ### In Scope
 - Align product, line, and brand create/update validation with persistence.
 - Enforce strict booleans, numeric precision and boundaries, conditional fields, string lengths, and positive identifiers.
-- Define validation required before product-operation writes can be enabled.
+- Treat `Producto.porcentaje` as the persisted representation of the domain margin, without adding unresolved calculation rules.
 - Preserve field-specific `ValidationPipe` messages through the global filter.
-- Add focused tests using strict RED-GREEN-REFACTOR.
 
 ### Out of Scope
 - Organization, utilities, authentication, user management, and system modules.
-- Enabling unfinished product-operation persistence.
+- The unimplemented `producto-operacion` scaffold, including its DTOs, service, and persistence contract.
+- Creating or modifying test cases or test files; CR-001 verification is deferred to a separate change despite the project-level `strict_tdd` setting.
 - Unrelated business rules, response contracts, or database schemas.
 
 ## Capabilities
 
 ### New Capabilities
-- `product-write-validation`: Valid writes for products, lines, brands, price updates, and product-operation prerequisites.
+- `product-write-validation`: Valid writes for products, lines, brands, and price updates, including the persisted product margin field.
 - `validation-error-contract`: Stable field-specific validation responses after global exception handling.
 
 ### Modified Capabilities
@@ -36,30 +36,28 @@ Use safe DTO transformations and explicit `class-validator` constraints matching
 | Area | Impact | Description |
 |------|--------|-------------|
 | `src/modules/gestion-productos/{producto,linea,marca}/` | Modified | Align DTO and entity-bound write validation. |
-| `src/modules/gestion-productos/producto-operacion/` | Modified | Define preventive DTO validation; persistence remains disabled. |
 | `src/modules/common/filters/global-exception.filters.ts` | Modified | Preserve validation messages and group them by field. |
-| Product and HTTP test suites | New/Modified | Prove rejection and response shape. |
 
 ## Risks
 
 | Risk | Likelihood | Mitigation |
 |------|------------|------------|
-| Clients send coercible invalid values | Medium | Document stricter 400 responses and test accepted representations. |
+| Clients send coercible invalid values | Medium | Document the stricter accepted representations and resulting 400 responses. |
 | Error changes affect consumers | Medium | Retain current fields and add deterministic validation details. |
-| DTO and database precision diverge | Low | Derive boundary tests from entity column definitions. |
+| DTO and database precision diverge | Low | Derive validation boundaries directly from entity column definitions. |
 
 ## Rollback Plan
 
-Revert DTO, filter, and test changes together. No database or data rollback is required.
+Revert DTO and filter changes together. No database or data rollback is required.
 
 ## Dependencies
 
-- Existing NestJS validation and Jest/Supertest infrastructure.
+- Existing NestJS validation infrastructure.
 
 ## Success Criteria
 
 - [ ] Invalid writes return 400 before persistence with field-specific messages.
 - [ ] Valid fractional quantities and supported boolean representations remain accepted.
 - [ ] Development and production share the contract without exposing production internals.
-- [ ] Product-operation persistence remains unavailable until its contract is enforced.
-- [ ] Focused tests, `yarn test`, and `yarn build` pass.
+- [ ] No test cases or test files are created or modified as part of CR-001.
+- [ ] `yarn build` passes.
