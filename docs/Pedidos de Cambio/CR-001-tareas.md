@@ -1,15 +1,19 @@
-# Tareas: validar escrituras de gestión de productos y preservar errores para clientes
+# Tareas: validar solicitudes de gestión de productos y preservar errores para clientes
 
 Esta es la copia en español del plan de implementación de CR-001. El artefacto canónico de OpenSpec permanece en `openspec/changes/cr-001-gestion-productos-validation/tasks.md`.
+
+## Estado de implementación
+
+**En pausa por decisión explícita del proyecto.** Todas las tareas deben permanecer sin marcar y la implementación no debe comenzar hasta que el usuario reanude CR-001 explícitamente.
 
 ## Previsión de carga de revisión
 
 | Campo | Valor |
 |---|---|
-| Líneas modificadas estimadas | 280–380 |
+| Líneas modificadas estimadas | 340–440 |
 | Riesgo de superar el límite de 400 líneas | Medio |
 | PR encadenados recomendados | No |
-| División sugerida | Un único PR con dos unidades de implementación |
+| División sugerida | Un único PR con tres unidades de implementación |
 | Estrategia de entrega | Consultar ante riesgo (`ask-on-risk`) |
 | Estrategia de encadenamiento | Pendiente |
 
@@ -22,14 +26,15 @@ Riesgo de superar el límite de 400 líneas: Medio
 
 | Unidad | Objetivo | PR probable | Comando de prueba específico | Verificación en ejecución | Límite de reversión |
 |---|---|---|---|---|---|
-| 1 | Aplicar los contratos de los DTO de gestión de productos | Único PR | Diferido: no se autorizaron pruebas para CR-001 | No aplica: las pruebas en ejecución están diferidas | Transformadores y cambios de DTO de gestión de productos |
-| 2 | Preservar errores de validación estructurados | Único PR | Diferido: no se autorizaron pruebas para CR-001 | No aplica: las pruebas en ejecución están diferidas | Fábrica de excepciones, configuración del pipe global y cambios del filtro |
+| 1 | Aplicar los contratos de escritura de gestión de productos | Único PR | Diferido: no se autorizaron pruebas para CR-001 | No aplica: las pruebas en ejecución están diferidas | Transformadores compartidos y cambios de DTO de escritura |
+| 2 | Aplicar los contratos de consulta de productos | Único PR | Diferido: no se autorizaron pruebas para CR-001 | No aplica: las pruebas en ejecución están diferidas | Cambios en los tres DTO de búsqueda de productos |
+| 3 | Preservar errores de validación estructurados | Único PR | Diferido: no se autorizaron pruebas para CR-001 | No aplica: las pruebas en ejecución están diferidas | Fábrica de excepciones, configuración del pipe global y cambios del filtro |
 
-Las pruebas quedan diferidas para un cambio autorizado por separado. Estas tareas NO DEBEN crear ni modificar casos o archivos de prueba.
+Las pruebas quedan diferidas para un cambio autorizado por separado. Estas tareas NO DEBEN crear ni modificar casos o archivos de prueba. La implementación también permanece en pausa hasta que se autorice su reanudación explícitamente.
 
 ## Fase 1: base compartida de validación
 
-- [ ] 1.1 Crear `src/modules/gestion-productos/common/validation/product-write.transforms.ts` con normalización de strings que no lance excepciones y conversión estricta de booleanos y sus representaciones textuales admitidas.
+- [ ] 1.1 Crear `src/modules/gestion-productos/common/validation/request-value.transforms.ts` con normalización de strings que no lance excepciones, booleanos estrictos y conversión segura de fecha final inclusiva compartidas por los DTO de escritura y búsqueda.
 
 ## Fase 2: contratos de escritura de productos
 
@@ -38,6 +43,12 @@ Las pruebas quedan diferidas para un cambio autorizado por separado. Estas tarea
 - [ ] 2.3 Alinear en `src/modules/gestion-productos/producto/dto/update-precio.dto.ts` la validación numérica, la precisión, el margen persistido (`porcentaje`) y el usuario positivo, sin exponer ni reparar el flujo inactivo.
 - [ ] 2.4 Actualizar `src/modules/gestion-productos/linea/dto/create-linea.dto.ts` y `src/modules/gestion-productos/linea/dto/update-linea.dto.ts` para manejar denominaciones de forma segura, admitir stock fraccionario no negativo, exigir condicionalmente el stock mínimo, aceptar booleanos estrictos y validar identificadores de auditoría positivos.
 - [ ] 2.5 Actualizar `src/modules/gestion-productos/marca/dto/create-marca.dto.ts` y `src/modules/gestion-productos/marca/dto/update-marca.dto.ts` para manejar denominaciones de forma segura y validar identificadores de auditoría positivos.
+
+## Fase 2A: contratos de búsqueda de productos
+
+- [ ] 2.6 Actualizar `src/modules/gestion-productos/producto/dto/search-producto-rapido.dto.ts` para que `exacto` acepte solo las formas booleanas admitidas y la entrada inválida llegue a validación para producir un 400 controlado.
+- [ ] 2.7 Actualizar `src/modules/gestion-productos/producto/dto/search-producto-pagination-with.dto.ts` para que los indicadores de coincidencia exacta sean estrictos y `conStock`, aunque opcional, omita solo la ausencia real y nunca una entrada inválida.
+- [ ] 2.8 Actualizar `src/modules/gestion-productos/producto/dto/seach-informacion-producto.dto.ts` para que un `fechaHasta` inválido no lance errores ni se acepte silenciosamente, y un valor válido siga siendo inclusivo hasta el final del día UTC.
 
 ## Fase 3: contrato de errores de validación
 

@@ -11,7 +11,7 @@ Ensure DTO validation failures remain actionable after global exception handling
 For every `ValidationPipe` failure, the API MUST return HTTP 400 with `statusCode`, `timestamp`, `path`, a `message` array containing the validator messages, and `fieldErrors` grouping those messages by property. The global exception filter MUST NOT replace them with only `Bad Request Exception`.
 
 #### Scenario: Invalid product request
-- GIVEN a product write request violates one or more DTO rules
+- GIVEN a product write or search request violates one or more DTO rules
 - WHEN the global exception filter produces the response
 - THEN the response MUST retain every validation message and associate it with its field
 
