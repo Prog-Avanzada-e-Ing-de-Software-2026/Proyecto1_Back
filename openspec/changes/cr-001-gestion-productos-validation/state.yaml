@@ -28,30 +28,31 @@ contextFiles:
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/specs/validation-error-contract/spec.md
   design:
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/design.md
-  tasks: []
+  tasks:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-001-gestion-productos-validation/tasks.md
   applyProgress: []
   verifyReport: []
 artifacts:
   proposal: done
   specs: done
   design: done
-  tasks: missing
+  tasks: done
   applyProgress: missing
   verifyReport: missing
 taskProgress:
-  total: 0
+  total: 11
   completed: 0
-  pending: 0
+  pending: 11
   allComplete: false
 dependencies:
   proposal: all_done
   specs: all_done
   design: all_done
-  tasks: ready
-  apply: blocked
+  tasks: all_done
+  apply: ready
   verify: blocked
   archive: blocked
-applyState: blocked
+applyState: ready
 actionContext:
   mode: repo-local
   workspaceRoot: /extra/IdeaProjects/Proyecto1_Back
@@ -68,5 +69,5 @@ remediationState:
   complete: false
   failedEvidenceRevision: ""
   reason: ""
-nextRecommended: tasks
+nextRecommended: apply
 blockedReasons: []
