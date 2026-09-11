@@ -123,8 +123,7 @@ export class SuperLineaService {
   }
 
   private async checkDenominacionExists(denominacion: string) {
-    const exists =
-      await this.createPolicy.checkDenominacionExists(denominacion);
+    const exists = await this.createPolicy.checkDenominacionExists(denominacion);
     if (exists) {
       this.logger.warn(`${this.ENTITY_NAME} conflicto: denominación ya está en uso: ${denominacion}`);
       throw new ConflictException('Denominación ya en uso.');
