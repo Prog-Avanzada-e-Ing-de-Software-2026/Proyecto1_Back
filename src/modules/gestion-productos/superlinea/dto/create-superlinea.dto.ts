@@ -7,11 +7,15 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
+import {
+  IsUniqueDenominacion
+} from 'src/modules/gestion-productos/superlinea/domain/validator/unique-denominacion.validator';
 
 export class CreateSuperLineaDto {
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
+  @IsUniqueDenominacion()
   @IsString({ message: 'La denominación debe ser una cadena de texto.' })
   @IsNotEmpty({ message: 'La denominación no puede estar vacía.' })
   @MaxLength(255, {

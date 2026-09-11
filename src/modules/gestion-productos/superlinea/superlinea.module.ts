@@ -15,6 +15,9 @@ import { SuperLineaRepository } from './infraestructure/repositories/superlinea.
 import {
   PoliticaCreacionSuperLinea
 } from 'src/modules/gestion-productos/superlinea/domain/services/politica-creacion-superlinea.service';
+import {
+  IsUniqueDenominacionConstraint
+} from 'src/modules/gestion-productos/superlinea/domain/validator/unique-denominacion.validator';
 
 @Module({
   imports: [
@@ -29,6 +32,7 @@ import {
     PoliticaCreacionSuperLinea,
     SuperLineaPersistenceAdapter,
     NormalizeDenominacionPipe,
+    IsUniqueDenominacionConstraint,
     {
       provide: 'ISuperLineaRepository',
       useClass: SuperLineaRepository,
