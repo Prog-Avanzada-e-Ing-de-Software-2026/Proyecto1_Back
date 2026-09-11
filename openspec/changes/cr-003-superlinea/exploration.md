@@ -10,7 +10,7 @@ Existing `Linea` tests are only dependency-incomplete construction smoke tests, 
 
 ### Affected Areas
 
-- `src/modules/gestion-productos/superlinea/` — new aggregate module, entity, DTOs, controller, application service, repository contract/adapters, mapper, and domain policies.
+- `src/modules/gestion-productos/superlinea/` — new aggregate module, entity with the established audit attributes, DTOs, controller, application service, repository contract/adapters, mapper, and domain policies.
 - `src/modules/gestion-productos/linea/domain/entities/linea.entity.ts` — required many-to-one association with `SuperLinea` and inverse collection support.
 - `src/modules/gestion-productos/linea/dto/` — required association input and association data in public responses.
 - `src/modules/gestion-productos/linea/application/services/linea.service.ts` — resolve and validate an active `SuperLinea` during registration and modification.
@@ -39,15 +39,16 @@ Existing `Linea` tests are only dependency-incomplete construction smoke tests, 
 
 Use a dedicated `superlinea` module and preserve the existing `domain`, `application`, `infraestructure`, `dto`, and mapper boundaries. Model `Linea -> SuperLinea` as a required many-to-one relation and `SuperLinea -> Linea` as its inverse navigation only; aggregate independence means the `SuperLinea` aggregate must not own or mutate `Linea` state directly. Resolve the referenced active `SuperLinea` before creating or updating a line, and pass the resolved entity to persistence instead of letting the adapter silently accept an unchecked identifier.
 
-Implement denomination uniqueness and deletion protection as explicit domain policies backed by repository contracts, with a database constraint as race-condition protection rather than the sole business check. Follow the established soft-delete and audit pattern, and ensure association lookups exclude deleted `SuperLinea` records. The delete policy should check associations through `ILineaRepository`; the exact treatment of soft-deleted lines remains a business decision.
+Implement denomination uniqueness and deletion protection as explicit domain policies backed by repository contracts, with a database constraint as race-condition protection rather than the sole business check. A `SuperLinea` denomination remains reserved after soft deletion, so application uniqueness lookups must include deleted rows and the database must enforce `UNIQUE (denominacion)`. Do not rely on `UNIQUE (denominacion, deletedAt)` in MySQL because multiple `NULL` values permit duplicate active denominations. Follow the established soft-delete and audit pattern, and ensure association lookups exclude deleted `SuperLinea` records. The delete policy should check associations through `ILineaRepository` and block deletion only when active `Linea` records reference the `SuperLinea`; logically deleted lines must not block it.
+
+The `SuperLinea` audit model must explicitly include `createdAt`, `updatedAt`, `deletedAt`, `usuarioCreated`, `usuarioUpdated`, and `usuarioDeleted`. Creation records `createdAt` and `usuarioCreated`; modification records `updatedAt` and `usuarioUpdated`; logical deletion records `deletedAt` and `usuarioDeleted`. Timestamp management and responsible-user recording must follow the established project audit pattern without introducing additional audit rules.
 
 Use a staged migration: create `super_linea`, add a nullable foreign key, backfill every existing line according to an approved business mapping, and only then change the column to `NOT NULL`. Do not invent a default category or leave the production invariant enforced only in TypeScript. Update seed ordering and fixtures so they create super lines before lines.
 
 ### Risks
 
-- No approved mapping exists for current `linea` rows. A mandatory foreign key cannot be safely deployed until the owner decides whether to provide a mapping or authorize a named fallback `SuperLinea`.
-- CR-003 does not state whether a soft-deleted line should continue blocking deletion of its `SuperLinea`; this changes both repository queries and future restoration semantics.
-- The request does not clarify whether a deleted `SuperLinea` denomination may be reused. Comparable modules currently reject names found through `withDeleted()`, but their composite database indexes do not reliably enforce the same rule for active rows in MySQL.
+- Restoring a logically deleted `Linea` after its associated `SuperLinea` has been deleted requires an explicit future restoration rule and validation.
+- MySQL permits multiple `NULL` values in a unique composite index, so `UNIQUE (denominacion, deletedAt)` would not prevent duplicate active denominations; the migration must enforce uniqueness directly on `denominacion`.
 - The modified update story does not say whether every update request must carry `superLineaId` or whether omission preserves the already-valid association.
 - The consultation story does not define pagination, deleted-record visibility, association shape in `LineaDto`, or whether the backend must return a special empty-result message instead of an empty collection.
 - The requested delete confirmation is a client interaction; the backend can authorize and execute deletion but cannot itself display or require a UI confirmation without an explicit confirmation-token contract.
@@ -63,13 +64,15 @@ Use a staged migration: create `super_linea`, add a nullable foreign key, backfi
 - SuperLinea queries will follow the existing Linea read pattern within gestion-productos: a paginated search endpoint plus a selector-oriented listing.
 - SuperLinea paginated search will default to active records and accept `incluirEliminados=true` to return both active and soft-deleted records; the selector will always return active records only. Unlike the current Linea selector defect, its `total` will reflect the actual result count.
 - Deletion confirmation is a frontend responsibility. The backend will execute the deletion policy when it receives the authorized `DELETE` request, following the existing Linea interaction model; no confirmation token or two-step backend protocol will be introduced.
+- A logically deleted `Linea` will not prevent deletion of its associated `SuperLinea`; only active `Linea` records will block the deletion policy.
+- A `SuperLinea` denomination remains reserved after soft deletion and must be globally unique across active and deleted rows. Application lookups will include deleted records, and the database will enforce `UNIQUE (denominacion)` rather than `UNIQUE (denominacion, deletedAt)`.
+- `SuperLinea` will include the complete established audit model: `createdAt` and `usuarioCreated` for creation, `updatedAt` and `usuarioUpdated` for modification, and `deletedAt` and `usuarioDeleted` for logical deletion.
 - Future CR-003 comparisons and precedents will be limited to `src/modules/gestion-productos` unless authoritative domain documentation provides an explicit rule.
 
 ### Pending Domain Decisions
 
-- The domain owner must determine whether a soft-deleted `Linea` continues to block deletion of its associated `SuperLinea`. This affects deletion policy queries and future restoration behavior.
-- The domain owner must determine whether the denomination of a soft-deleted `SuperLinea` remains reserved or may be reused. Existing modules implement contradictory policies, so CR-003 cannot safely inherit a project-wide convention.
+None.
 
 ### Ready for Proposal
 
-No. All explored technical contracts are confirmed, including migration, update omission, response shape, query behavior, visibility, and frontend-owned deletion confirmation. Proposal work remains blocked only by the two explicit domain-owner decisions: whether soft-deleted Linea records block SuperLinea deletion and whether deleted SuperLinea denominations remain reserved.
+Yes. All explored technical and domain contracts are confirmed, including migration, update omission, response shape, query behavior, visibility, frontend-owned deletion confirmation, active-only deletion blocking, and global denomination uniqueness across active and deleted `SuperLinea` records.
