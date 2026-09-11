@@ -43,6 +43,8 @@ Implement denomination uniqueness and deletion protection as explicit domain pol
 
 The `SuperLinea` audit model must explicitly include `createdAt`, `updatedAt`, `deletedAt`, `usuarioCreated`, `usuarioUpdated`, and `usuarioDeleted`. Creation records `createdAt` and `usuarioCreated`; modification records `updatedAt` and `usuarioUpdated`; logical deletion records `deletedAt` and `usuarioDeleted`. Timestamp management and responsible-user recording must follow the established project audit pattern without introducing additional audit rules.
 
+The `SuperLinea` attribute model consists of a system-generated numeric `id`, a required globally unique `denominacion`, an optional string `observacion`, and the six established audit attributes listed above.
+
 Use a staged migration: create `super_linea`, add a nullable foreign key, backfill every existing line according to an approved business mapping, and only then change the column to `NOT NULL`. Do not invent a default category or leave the production invariant enforced only in TypeScript. Update seed ordering and fixtures so they create super lines before lines.
 
 ### Risks
@@ -67,6 +69,7 @@ Use a staged migration: create `super_linea`, add a nullable foreign key, backfi
 - A logically deleted `Linea` will not prevent deletion of its associated `SuperLinea`; only active `Linea` records will block the deletion policy.
 - A `SuperLinea` denomination remains reserved after soft deletion and must be globally unique across active and deleted rows. Application lookups will include deleted records, and the database will enforce `UNIQUE (denominacion)` rather than `UNIQUE (denominacion, deletedAt)`.
 - `SuperLinea` will include the complete established audit model: `createdAt` and `usuarioCreated` for creation, `updatedAt` and `usuarioUpdated` for modification, and `deletedAt` and `usuarioDeleted` for logical deletion.
+- `SuperLinea` will use a system-generated numeric `id`, require `denominacion`, allow an optional string `observacion`, and include the six confirmed audit attributes.
 - Future CR-003 comparisons and precedents will be limited to `src/modules/gestion-productos` unless authoritative domain documentation provides an explicit rule.
 
 ### Pending Domain Decisions

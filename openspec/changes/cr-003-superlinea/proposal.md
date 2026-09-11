@@ -10,7 +10,7 @@ Introduce `SuperLinea` as an independent aggregate and require every `Linea` to 
 
 - Add `SuperLinea` lifecycle, paginated search, and active-only selector queries.
 - Reserve each `denominacion` globally, including after soft deletion.
-- Record `createdAt`, `updatedAt`, `deletedAt`, `usuarioCreated`, `usuarioUpdated`, and `usuarioDeleted` through the existing audit pattern.
+- Define a system-generated numeric `id`, optional string `observacion`, and record `createdAt`, `updatedAt`, `deletedAt`, `usuarioCreated`, `usuarioUpdated`, and `usuarioDeleted` through the verified `Linea`/`Marca` audit pattern.
 - Require an active `SuperLinea` when creating or reassigning a `Linea`; omission during update preserves the current association, while explicit `null` is rejected.
 - Return `superLinea: { id, denominacion }` in `Linea` responses.
 - Prevent deletion of a `SuperLinea` only while active `Linea` records reference it.
