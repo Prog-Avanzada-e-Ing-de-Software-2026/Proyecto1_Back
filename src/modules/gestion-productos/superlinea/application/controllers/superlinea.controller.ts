@@ -45,13 +45,7 @@ export class SuperLineaController {
   @Roles('Root', 'Administrador', 'Empleado')
   @UsePipes(NormalizeDenominacionSearchPipe)
   search(@Query() dto: PaginationWithDenominacionDto) {
-    const { denominacion = '', skip, take, incluirEliminados } = dto;
-    return this.service.findBy(
-      denominacion,
-      skip,
-      take,
-      incluirEliminados,
-    );
+    return this.service.findBy(dto);
   }
 
   @Get('select')
