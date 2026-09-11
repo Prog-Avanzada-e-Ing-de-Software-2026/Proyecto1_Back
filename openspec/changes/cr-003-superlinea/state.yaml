@@ -1,6 +1,6 @@
 schemaName: gentle-ai.sdd-status
 schemaVersion: 2
-# Operational status: proposal is complete and the change is ready for specification.
+# Operational status: proposal and specifications are complete; the change is ready for design.
 changeName: cr-003-superlinea
 artifactStore: openspec
 planningHome:
@@ -10,7 +10,9 @@ changeRoot: /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superline
 artifactPaths:
   proposal:
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/proposal.md
-  specs: []
+  specs:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/specs/linea-superlinea-association/spec.md
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/specs/superlinea-management/spec.md
   design: []
   tasks: []
   applyProgress: []
@@ -18,14 +20,16 @@ artifactPaths:
 contextFiles:
   proposal:
     - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/proposal.md
-  specs: []
+  specs:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/specs/linea-superlinea-association/spec.md
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/specs/superlinea-management/spec.md
   design: []
   tasks: []
   applyProgress: []
   verifyReport: []
 artifacts:
   proposal: done
-  specs: missing
+  specs: done
   design: missing
   tasks: missing
   applyProgress: missing
@@ -37,7 +41,7 @@ taskProgress:
   allComplete: false
 dependencies:
   proposal: all_done
-  specs: blocked
+  specs: all_done
   design: blocked
   tasks: blocked
   apply: blocked
@@ -60,5 +64,5 @@ remediationState:
   complete: false
   failedEvidenceRevision: ''
   reason: ''
-nextRecommended: spec
+nextRecommended: design
 blockedReasons: []
