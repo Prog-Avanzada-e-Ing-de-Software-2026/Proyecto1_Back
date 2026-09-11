@@ -16,6 +16,7 @@ import { SuperLineaMapper } from '../../mappers/superlinea.mapper';
 import {
   PoliticaCreacionSuperLinea
 } from 'src/modules/gestion-productos/superlinea/domain/services/politica-creacion-superlinea.service';
+import { PaginationWithDenominacionDto } from 'src/modules/common/dto/busquedas/pagination-with-denominacion.dto';
 
 @Injectable()
 export class SuperLineaService {
@@ -53,18 +54,9 @@ export class SuperLineaService {
     );
   }
 
-  async findBy(
-    denominacion: string,
-    skip = 0,
-    take = 10,
-    incluirEliminados = false,
-  ): Promise<{ data: SuperLineaDto[]; total: number }> {
-    const result = await this.repository.findBy(
-      denominacion,
-      skip,
-      take,
-      incluirEliminados,
-    );
+  async findBy(dto: PaginationWithDenominacionDto,): Promise<{ data: SuperLineaDto[]; total: number }> {
+    const query = SuperLineaMapper.toPaginationQuery(dto);
+    const result = await this.repository.findBy(query);
     return {
       data: result.data.map(SuperLineaMapper.toDto),
       total: result.total,
@@ -123,9 +115,12 @@ export class SuperLineaService {
   }
 
   private async checkDenominacionExists(denominacion: string) {
-    const exists = await this.createPolicy.checkDenominacionExists(denominacion);
+    const exists =
+      await this.createPolicy.checkDenominacionExists(denominacion);
     if (exists) {
-      this.logger.warn(`${this.ENTITY_NAME} conflicto: denominación ya está en uso: ${denominacion}`);
+      this.logger.warn(
+        `${this.ENTITY_NAME} conflicto: denominación ya está en uso: ${denominacion}`,
+      );
       throw new ConflictException('Denominación ya en uso.');
     }
   }

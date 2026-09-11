@@ -13,6 +13,9 @@ import { SuperLinea } from '../../domain/entities/superlinea.entity';
 import { ISuperLineaRepository } from '../../domain/interfaces/superlinea.repository.interface';
 import { CreateSuperLineaDto } from '../../dto/create-superlinea.dto';
 import { UpdateSuperLineaDto } from '../../dto/update-superlinea.dto';
+import {
+  ISuperLineaSearchQuery
+} from 'src/modules/gestion-productos/superlinea/domain/interfaces/superlinea.search-query.interface';
 
 @Injectable()
 export class SuperLineaPersistenceAdapter
@@ -71,20 +74,16 @@ export class SuperLineaPersistenceAdapter
         })
         .getOne();
     } catch (error) {
-      handleDatabaseError(
-        this.logger,
-        'findByDenominacionWithDeleted',
-        error,
-      );
+      handleDatabaseError(this.logger, 'findByDenominacionWithDeleted', error);
     }
   }
 
-  async findBy(
-    denominacion: string,
-    skip = 0,
-    take = 10,
-    incluirEliminados = false,
-  ): Promise<{ data: SuperLinea[]; total: number }> {
+  async findBy({
+    denominacion,
+    skip,
+    take,
+    incluirEliminados,
+  }: ISuperLineaSearchQuery): Promise<{ data: SuperLinea[]; total: number }> {
     try {
       const query = this.baseQuery(incluirEliminados);
       this.applyDenominacionFilter(query, denominacion);
@@ -144,9 +143,15 @@ export class SuperLineaPersistenceAdapter
       return {
         id: raw.id,
         detalle: `SuperLínea ${raw.denominacion}`,
-        createdAt: raw.createdAt ? FechaUtils.formatFechaHora(raw.createdAt) : '',
-        updatedAt: raw.updatedAt ? FechaUtils.formatFechaHora(raw.updatedAt) : '',
-        deletedAt: raw.deletedAt ? FechaUtils.formatFechaHora(raw.deletedAt) : '',
+        createdAt: raw.createdAt
+          ? FechaUtils.formatFechaHora(raw.createdAt)
+          : '',
+        updatedAt: raw.updatedAt
+          ? FechaUtils.formatFechaHora(raw.updatedAt)
+          : '',
+        deletedAt: raw.deletedAt
+          ? FechaUtils.formatFechaHora(raw.deletedAt)
+          : '',
         usuarioCreated: raw.usuarioCreated ?? '',
         usuarioUpdated: raw.usuarioUpdated ?? '',
         usuarioDeleted: raw.usuarioDeleted ?? '',

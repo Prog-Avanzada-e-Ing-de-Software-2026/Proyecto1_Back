@@ -6,6 +6,9 @@ import { ISuperLineaRepository } from '../../domain/interfaces/superlinea.reposi
 import { CreateSuperLineaDto } from '../../dto/create-superlinea.dto';
 import { UpdateSuperLineaDto } from '../../dto/update-superlinea.dto';
 import { SuperLineaPersistenceAdapter } from './superlinea.persistence-adapter';
+import {
+  ISuperLineaSearchQuery
+} from 'src/modules/gestion-productos/superlinea/domain/interfaces/superlinea.search-query.interface';
 
 @Injectable()
 export class SuperLineaRepository implements ISuperLineaRepository {
@@ -27,18 +30,8 @@ export class SuperLineaRepository implements ISuperLineaRepository {
     return this.persistence.findByDenominacionWithDeleted(denominacion);
   }
 
-  findBy(
-    denominacion: string,
-    skip: number,
-    take: number,
-    incluirEliminados: boolean,
-  ) {
-    return this.persistence.findBy(
-      denominacion,
-      skip,
-      take,
-      incluirEliminados,
-    );
+  findBy(query: ISuperLineaSearchQuery) {
+    return this.persistence.findBy(query);
   }
 
   findAllFor(denominacion: string) {
