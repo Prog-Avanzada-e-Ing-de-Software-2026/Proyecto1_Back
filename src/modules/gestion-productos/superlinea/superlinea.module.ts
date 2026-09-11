@@ -12,6 +12,9 @@ import { SuperLinea } from './domain/entities/superlinea.entity';
 import { PoliticaEliminacionSuperLinea } from './domain/services/politica-eliminacion-superlinea.service';
 import { SuperLineaPersistenceAdapter } from './infraestructure/repositories/superlinea.persistence-adapter';
 import { SuperLineaRepository } from './infraestructure/repositories/superlinea.repository';
+import {
+  PoliticaCreacionSuperLinea
+} from 'src/modules/gestion-productos/superlinea/domain/services/politica-creacion-superlinea.service';
 
 @Module({
   imports: [
@@ -23,6 +26,7 @@ import { SuperLineaRepository } from './infraestructure/repositories/superlinea.
   providers: [
     SuperLineaService,
     PoliticaEliminacionSuperLinea,
+    PoliticaCreacionSuperLinea,
     SuperLineaPersistenceAdapter,
     NormalizeDenominacionPipe,
     {

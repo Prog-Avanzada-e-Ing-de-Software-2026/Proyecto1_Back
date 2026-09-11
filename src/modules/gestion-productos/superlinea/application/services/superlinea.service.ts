@@ -13,6 +13,9 @@ import { CreateSuperLineaDto } from '../../dto/create-superlinea.dto';
 import { SuperLineaDto } from '../../dto/superlinea.dto';
 import { UpdateSuperLineaDto } from '../../dto/update-superlinea.dto';
 import { SuperLineaMapper } from '../../mappers/superlinea.mapper';
+import {
+  PoliticaCreacionSuperLinea
+} from 'src/modules/gestion-productos/superlinea/domain/services/politica-creacion-superlinea.service';
 
 @Injectable()
 export class SuperLineaService {
@@ -24,10 +27,11 @@ export class SuperLineaService {
     private readonly repository: ISuperLineaRepository,
     private readonly usuarioService: UsuarioService,
     private readonly deletionPolicy: PoliticaEliminacionSuperLinea,
+    private readonly createPolicy: PoliticaCreacionSuperLinea,
   ) {}
 
   async create(dto: CreateSuperLineaDto) {
-    await this.checkDenominacionExists(dto.denominacion, 0);
+    await this.checkDenominacionExists(dto.denominacion);
     await this.repository.create(dto);
     return MessageFrontUtils.createSimple(
       this.ENTITY_NAME,
@@ -39,7 +43,7 @@ export class SuperLineaService {
   async update(id: number, dto: UpdateSuperLineaDto) {
     await this.findEntityById(id);
     if (dto.denominacion) {
-      await this.checkDenominacionExists(dto.denominacion, id);
+      await this.checkDenominacionExists(dto.denominacion);
     }
     const entity = await this.repository.update(id, dto);
     return MessageFrontUtils.createSimple(
@@ -118,13 +122,11 @@ export class SuperLineaService {
     );
   }
 
-  private async checkDenominacionExists(denominacion: string, id: number) {
-    const existing =
-      await this.repository.findByDenominacionWithDeleted(denominacion);
-    if (existing && existing.id !== id) {
-      this.logger.warn(
-        `${this.ENTITY_NAME} conflicto: denominación ya está en uso: ${denominacion}`,
-      );
+  private async checkDenominacionExists(denominacion: string) {
+    const exists =
+      await this.createPolicy.checkDenominacionExists(denominacion);
+    if (exists) {
+      this.logger.warn(`${this.ENTITY_NAME} conflicto: denominación ya está en uso: ${denominacion}`);
       throw new ConflictException('Denominación ya en uso.');
     }
   }
