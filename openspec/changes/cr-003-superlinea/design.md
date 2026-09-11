@@ -37,7 +37,6 @@ Linea query -> join superLinea -> LineaMapper -> { superLinea: { id, denominacio
 | `src/modules/gestion-productos/linea/domain/entities/linea.entity.ts` | Modify | Required `superLinea` relation and `super_linea_id` join column. |
 | `src/modules/gestion-productos/linea/{dto,mappers,application/services,domain/interfaces,infraestructure/repositories}/` | Modify | Write contract, active-parent resolution, joined reads, reduced mapping, and active-reference query. |
 | `src/modules/gestion-productos/linea/linea.module.ts`, `src/app.module.ts` | Modify | Export/import repository tokens and register the new module. |
-| `src/modules/common/seed/seedFamiliaProducto/{seed-familia-producto.module.ts,seed-familia-producto.service.ts}` | Modify | Create/resolve `Temporal` before seeded lines and associate them. |
 | `src/migrations/<timestamp>-AddSuperLineaToLinea.ts` | Create | Schema, backfill, constraints, indexes, and reversible down path. |
 | `src/modules/gestion-productos/{superlinea,linea}/**/*.spec.ts` | Create/Modify | Focused behavior tests derived from all scenarios. |
 
@@ -50,7 +49,7 @@ Linea query -> join superLinea -> LineaMapper -> { superLinea: { id, denominacio
 
 ## Testing Strategy
 
-Strict RED-GREEN-REFACTOR applies to focused service/controller/repository behavior: uniqueness including deleted rows, audit assignment, visibility/counts, empty collections, deletion blocking by active lines only, required/update association semantics, joins, and reduced mapping. Verify migration `up` on populated and empty `linea` tables, constraints, and `down`; finish with `yarn build`. Global `yarn test` and test-infrastructure repair are not CR-003 acceptance gates.
+Strict RED-GREEN-REFACTOR applies to focused service/controller/repository behavior: uniqueness including deleted rows, audit assignment, visibility/counts, empty collections, deletion blocking by active lines only, required/update association semantics, joins, and reduced mapping. Verify migration `up` on populated and empty `linea` tables, constraints, `down`, and direct MySQL create/reassignment/joined-read behavior; finish with `yarn build`. Runtime seeders remain outside this change. Global `yarn test` and test-infrastructure repair are not CR-003 acceptance gates.
 
 ## Threat Matrix
 
