@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { ReferenciaDto } from 'src/modules/common/dto/referencia.dto';
 import {
   IsBoolean,
   IsInt,
@@ -48,5 +49,8 @@ export class LineaDto {
   @ApiProperty({ example: null, description: 'Fecha de eliminación (null si está activa)', nullable: true })
   @IsOptional()
   deletedAt: string | null;
+
+  @ApiProperty({ type: () => ReferenciaDto })
+  superLinea: ReferenciaDto;
 
 }

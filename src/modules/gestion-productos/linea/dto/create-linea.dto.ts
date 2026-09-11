@@ -38,6 +38,11 @@ export class CreateLineaDto {
   @IsInt({ message: 'El usuarioCreatedId debe ser un número entero.' })
   usuarioCreatedId: number;
 
+  @ApiProperty({ example: 1, description: 'ID de la SuperLínea asociada' })
+  @IsNotEmpty({ message: 'El superLineaId es obligatorio.' })
+  @IsInt({ message: 'El superLineaId debe ser un número entero.' })
+  superLineaId: number;
+
   @ApiProperty({
     example: null,
     description: 'Fecha de eliminación (null si está activa)',

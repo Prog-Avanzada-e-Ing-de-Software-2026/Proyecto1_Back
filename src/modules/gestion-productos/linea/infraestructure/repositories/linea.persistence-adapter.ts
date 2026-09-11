@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DatabaseConnectionException } from 'src/modules/common/exceptions/database-connection.exception';
 import { EntityNotFoundException } from 'src/modules/common/exceptions/entity-notFound-exceptions';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, IsNull } from 'typeorm';
 import { CreateLineaDto } from '../../dto/create-linea.dto';
 import { Linea } from '../../domain/entities/linea.entity';
 import { ILineaRepository } from '../../domain/interfaces/linea.repository.interface';
@@ -15,6 +15,7 @@ import { FechaUtils } from 'src/modules/common/utils/date/fecha-utils';
 import { QueryBuilderHelper } from 'src/modules/common/query-builders/query-builder-helpers';
 import { BasePersistenceAdapter } from 'src/modules/common/persistence/base-persistence.adapter';
 import { handleDatabaseError } from 'src/modules/common/query-builders/database-error.helper';
+import { SuperLinea } from '../../../superlinea/domain/entities/superlinea.entity';
 
 @Injectable()
 export class LineaPersistenceAdapter
@@ -36,7 +37,7 @@ export class LineaPersistenceAdapter
   }
 
   @Transactional()
-  async create(data: CreateLineaDto): Promise<Linea> {
+  async create(data: CreateLineaDto, superLinea: SuperLinea): Promise<Linea> {
     const repo = this.uow.getRepository(Linea);
 
     try {
@@ -47,6 +48,8 @@ export class LineaPersistenceAdapter
         stockMinimo: data.stockMinimo,
         usuarioCreatedId: data.usuarioCreatedId,
         observacion: data.observacion,
+        superLinea,
+        superLineaId: superLinea.id,
       });
 
       const entityGuardada = await repo.save(nuevaEntity);
@@ -65,6 +68,7 @@ export class LineaPersistenceAdapter
   async update(
     id: number,
     data: UpdateLineaDto,
+    superLinea?: SuperLinea,
   ): Promise<Linea> {
     const repo = this.uow.getRepository(Linea);
 
@@ -78,9 +82,14 @@ export class LineaPersistenceAdapter
 
     // Actualizar datos simples
     entity.denominacion = data.denominacion ?? entity.denominacion;
-    entity.utilizaStockMinimo = data.utilizaStockMinimo;
-    entity.stockMinimo = data.stockMinimo ?? 0;
-    entity.usuarioCreatedId = data.usuarioCreatedId;
+    entity.utilizaStockMinimo =
+      data.utilizaStockMinimo ?? entity.utilizaStockMinimo;
+    entity.stockMinimo = data.stockMinimo ?? entity.stockMinimo;
+    entity.usuarioUpdatedId = data.usuarioUpdatedId;
+    if (superLinea) {
+      entity.superLinea = superLinea;
+      entity.superLineaId = superLinea.id;
+    }
 
     // Guardar entidad antes de procesar sublíneas (opcional según lógica de negocio)
     const entityActualizada = await repo.save(entity);
@@ -92,6 +101,7 @@ export class LineaPersistenceAdapter
     try {
       const entity = await this.repository
         .createQueryBuilder('linea')
+        .innerJoinAndSelect('linea.superLinea', 'superLinea')
         .where('linea.id = :id', { id })
         .andWhere('linea.deletedAt IS NULL')
         .getOne();
@@ -117,11 +127,18 @@ export class LineaPersistenceAdapter
   async findAllListado(): Promise<Linea[]> {
     try {
       const query = this.baseQuery();
+      query.innerJoinAndSelect(`${this.ALIAS}.superLinea`, 'superLinea');
       QueryBuilderHelper.applyOrder(query, this.ALIAS, 'denominacion', 'ASC');
       return await query.getMany();
     } catch (error) {
       handleDatabaseError(this.logger, 'findAllListado', error);
     }
+  }
+
+  async existsActiveBySuperLinea(superLineaId: number): Promise<boolean> {
+    return this.repository.exists({
+      where: { superLineaId, deletedAt: IsNull() },
+    });
   }
 
   async findByDenominacion(denominacion: string): Promise<Linea | null> {
@@ -179,6 +196,7 @@ export class LineaPersistenceAdapter
   ): Promise<{ data: Linea[]; total: number }> {
     try {
       const query = this.baseQuery(incluirEliminados)
+      query.innerJoinAndSelect(`${this.ALIAS}.superLinea`, 'superLinea');
 
       if (denominacion) {
         query.andWhere(`UPPER(${this.ALIAS}.denominacion) LIKE :denominacion`, {
@@ -199,6 +217,7 @@ export class LineaPersistenceAdapter
   async findAllFor(denominacion: string): Promise<Linea[]> {
     try {
       const query = this.baseQuery()
+      query.innerJoinAndSelect(`${this.ALIAS}.superLinea`, 'superLinea');
       query.andWhere('UPPER(linea.denominacion) LIKE :denominacion', {
         denominacion: `%${denominacion.toUpperCase()}%`,
       });
@@ -215,6 +234,7 @@ export class LineaPersistenceAdapter
     try {
       const query = this.repository
         .createQueryBuilder('linea')
+        .innerJoinAndSelect('linea.superLinea', 'superLinea')
         .where('linea.deletedAt IS NULL')
         .andWhere('linea.sistema = :sistema', { sistema: 0 });
       if (denominacion && denominacion.trim() !== '') {
