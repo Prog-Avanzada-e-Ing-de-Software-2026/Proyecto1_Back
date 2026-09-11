@@ -1,7 +1,7 @@
 schemaName: gentle-ai.sdd-status
 schemaVersion: 2
-# Operational status: planning is complete, but apply is blocked pending the review-chain strategy.
-# Native SDD reports apply-ready; do not launch apply until the user resolves the workload guard.
+# Operational status: planning and delivery strategy are complete; apply is ready when explicitly requested.
+# Use CR-003 as the feature-chain integration boundary and leave the final PR to develop under user control.
 changeName: cr-003-superlinea
 artifactStore: openspec
 planningHome:
@@ -69,6 +69,5 @@ remediationState:
   complete: false
   failedEvidenceRevision: ''
   reason: ''
-nextRecommended: resolve-blockers
-blockedReasons:
-  - The user must choose stacked-to-main, feature-branch-chain, or size-exception before apply because the estimated implementation exceeds the 400-line review budget.
+nextRecommended: apply
+blockedReasons: []

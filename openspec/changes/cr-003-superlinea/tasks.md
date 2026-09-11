@@ -7,21 +7,23 @@
 | Estimated changed lines | 900–1,300 |
 | 400-line budget risk | High |
 | Chained PRs recommended | Yes |
-| Suggested split | PR 1 migration/model → PR 2 SuperLinea lifecycle → PR 3 Linea integration |
+| Suggested split | PR 1 base `CR-003`; PR 2 base PR 1 branch; PR 3 base PR 2 branch |
 | Delivery strategy | ask-on-risk |
-| Chain strategy | pending |
+| Chain strategy | feature-branch-chain |
 
-Decision needed before apply: Yes
+Decision needed before apply: No
 Chained PRs recommended: Yes
-Chain strategy: pending
+Chain strategy: feature-branch-chain
 400-line budget risk: High
+
+Tested child work accumulates into `CR-003`; no partial work merges to `develop`. User manually opens final `CR-003` → `develop` PR only after implementation.
 
 ### Suggested Work Units
 
 | Unit | Goal | Likely PR | Focused test command | Runtime harness | Rollback boundary |
 |---|---|---|---|---|---|
 | 1 | Establish schema and entities | PR 1 | `yarn test --runInBand --runTestsByPath src/migrations/add-superlinea-to-linea.spec.ts` | Apply/revert against empty and populated MySQL 8 fixtures | New migration and entity relation |
-| 2 | Deliver SuperLinea lifecycle | PR 2 | `yarn test --runInBand --runTestsByPath src/modules/gestion-productos/superlinea/application/services/superlinea.service.spec.ts src/modules/gestion-productos/superlinea/application/controllers/superlinea.controller.spec.ts` | Authenticated `/api/superlinea` CRUD/search/select smoke flow | SuperLinea module and Linea active-reference query |
+| 2 | Deliver SuperLinea lifecycle | PR 2 | `yarn test --runInBand --runTestsByPath src/modules/gestion-productos/superlinea/application/services/superlinea.service.spec.ts src/modules/gestion-productos/superlinea/application/controllers/superlinea.controller.spec.ts` | `/api/superlinea` CRUD/search/select flow | SuperLinea module and Linea active-reference query |
 | 3 | Enforce Linea association | PR 3 | `yarn test --runInBand --runTestsByPath src/modules/gestion-productos/linea/application/services/linea.service.spec.ts src/modules/gestion-productos/linea/application/controllers/linea.controller.spec.ts` | Create/update/read Linea plus seed against migrated MySQL 8 | Linea contract, repository joins, and seed changes |
 
 ## Phase 1: Schema Foundation
@@ -46,6 +48,6 @@ Chain strategy: pending
 
 ## Phase 4: Seed and Verification
 
-- [ ] 4.1 **RED:** Create `src/modules/common/seed/seedFamiliaProducto/seed-familia-producto.service.spec.ts` proving `Temporal` is resolved/created before every seeded Linea.
+- [ ] 4.1 **RED:** Create `src/modules/common/seed/seedFamiliaProducto/seed-familia-producto.service.spec.ts` proving `Temporal` is resolved/created before seeded Linea.
 - [ ] 4.2 **GREEN:** Update `src/modules/common/seed/seedFamiliaProducto/seed-familia-producto.service.ts`, `src/modules/common/seed/seedFamiliaProducto/seed-familia-producto.module.ts`, and `src/app.module.ts` to register SuperLinea and seed associations.
-- [ ] 4.3 **REFACTOR:** Run all focused suites above, both MySQL migration fixtures, and `yarn build`; do not use global `yarn test` or repair test infrastructure as CR-003 gates.
+- [ ] 4.3 **REFACTOR:** Run all focused suites above, MySQL migration fixtures, and `yarn build`; do not use global `yarn test` or repair test infrastructure as CR-003 gates.
