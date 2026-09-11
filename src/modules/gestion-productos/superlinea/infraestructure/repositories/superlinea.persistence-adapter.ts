@@ -8,12 +8,7 @@ import { IUnitOfWork } from 'src/modules/common/unit-of-work/iunit-of-work.';
 import { FechaUtils } from 'src/modules/common/utils/date/fecha-utils';
 import { AuditoriaDto } from 'src/modules/gestion-sistema/auditoria/dto/auditoria.dto';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
-import {
-  DataSource,
-  IsNull,
-  Repository,
-  SelectQueryBuilder,
-} from 'typeorm';
+import { IsNull, Repository, SelectQueryBuilder } from 'typeorm';
 import { SuperLinea } from '../../domain/entities/superlinea.entity';
 import { ISuperLineaRepository } from '../../domain/interfaces/superlinea.repository.interface';
 import { CreateSuperLineaDto } from '../../dto/create-superlinea.dto';
@@ -29,7 +24,6 @@ export class SuperLineaPersistenceAdapter
 
   constructor(
     @InjectRepository(SuperLinea) repository: Repository<SuperLinea>,
-    private readonly dataSource: DataSource,
     @Inject('UnitOfWork') public readonly uow: IUnitOfWork,
   ) {
     super(repository);
