@@ -21,6 +21,7 @@ Introduce `SuperLinea` as an independent aggregate and require every `Linea` to 
 - Backend deletion-confirmation protocols.
 - Restoration when a `Linea` parent is deleted.
 - New pricing, stock, CQRS, or domain-event behavior.
+- Runtime seeder integration for `SuperLinea`; existing seeders remain unchanged.
 
 ## Capabilities
 
@@ -43,7 +44,6 @@ Create a dedicated NestJS module following existing boundaries. Coordinate aggre
 |---|---|---|
 | `src/modules/gestion-productos/superlinea/` | New | Aggregate, API, persistence, and tests |
 | `src/modules/gestion-productos/linea/` | Modified | Required association and public contract |
-| `src/modules/common/seed/seedFamiliaProducto/` | Modified | Super-line-first seed ordering |
 | `src/migrations/` | New | Table, backfill, constraint, and indexes |
 | `src/app.module.ts` | Modified | Module registration |
 
