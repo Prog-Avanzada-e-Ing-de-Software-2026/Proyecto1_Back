@@ -1,0 +1,73 @@
+schemaName: gentle-ai.sdd-status
+schemaVersion: 2
+# Operational status: planning and delivery strategy are complete; apply is ready when explicitly requested.
+# Use CR-003 as the feature-chain integration boundary and leave the final PR to develop under user control.
+changeName: cr-003-superlinea
+artifactStore: openspec
+planningHome:
+  mode: repo-local
+  path: /extra/IdeaProjects/Proyecto1_Back/openspec
+changeRoot: /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea
+artifactPaths:
+  proposal:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/proposal.md
+  specs:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/specs/linea-superlinea-association/spec.md
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/specs/superlinea-management/spec.md
+  design:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/design.md
+  tasks:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/tasks.md
+  applyProgress: []
+  verifyReport: []
+contextFiles:
+  proposal:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/proposal.md
+  specs:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/specs/linea-superlinea-association/spec.md
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/specs/superlinea-management/spec.md
+  design:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/design.md
+  tasks:
+    - /extra/IdeaProjects/Proyecto1_Back/openspec/changes/cr-003-superlinea/tasks.md
+  applyProgress: []
+  verifyReport: []
+artifacts:
+  proposal: done
+  specs: done
+  design: done
+  tasks: done
+  applyProgress: missing
+  verifyReport: missing
+taskProgress:
+  total: 14
+  completed: 0
+  pending: 14
+  allComplete: false
+dependencies:
+  proposal: all_done
+  specs: all_done
+  design: all_done
+  tasks: all_done
+  apply: ready
+  verify: blocked
+  archive: blocked
+applyState: ready
+actionContext:
+  mode: repo-local
+  workspaceRoot: /extra/IdeaProjects/Proyecto1_Back
+  allowedEditRoots:
+    - /extra/IdeaProjects/Proyecto1_Back
+relationships:
+  dependsOn: []
+  supersedes: []
+  amends: []
+  conflictsWith: []
+  sameDomainActiveChanges: []
+remediationState:
+  required: false
+  complete: false
+  failedEvidenceRevision: ''
+  reason: ''
+nextRecommended: apply
+blockedReasons: []
