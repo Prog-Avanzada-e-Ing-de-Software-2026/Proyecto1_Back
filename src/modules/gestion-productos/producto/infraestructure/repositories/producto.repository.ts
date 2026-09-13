@@ -162,6 +162,30 @@ export class ProductoRepository implements IProductoRepository {
     );
   }
 
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    return this.persistenceService.busquedaPorCoincidenciaParcial(
+      denominacion,
+      skip,
+      take,
+    );
+  }
+
+  async findProductosBySuperLinea(
+    superLineaId: number,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    return this.persistenceService.findProductosBySuperLinea(
+      superLineaId,
+      skip,
+      take,
+    );
+  }
+
   async existsProductosActivosByMarca(marcaId: number): Promise<boolean> {
     return this.persistenceService.existsProductosActivosByMarca(marcaId);
   }

@@ -252,6 +252,42 @@ export class ProductoService {
     };
   }
 
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: GetProductoDto[]; total: number }> {
+    const result = await this.repository.busquedaPorCoincidenciaParcial(
+      denominacion,
+      skip,
+      take,
+    );
+    return {
+      data: result.data.map((producto) => {
+        return ProductoMapper.toBusquedaDto(producto);
+      }),
+      total: PaginacionUtils.totalItems(result.total),
+    };
+  }
+
+  async findProductosBySuperLinea(
+    superLineaId: number,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: GetProductoDto[]; total: number }> {
+    const result = await this.repository.findProductosBySuperLinea(
+      superLineaId,
+      skip,
+      take,
+    );
+    return {
+      data: result.data.map((producto) => {
+        return ProductoMapper.toBusquedaDto(producto);
+      }),
+      total: PaginacionUtils.totalItems(result.total),
+    };
+  }
+
   async existsProductosActivosByMarca(marcaId: number): Promise<boolean> {
     return this.repository.existsProductosActivosByMarca(marcaId);
   }

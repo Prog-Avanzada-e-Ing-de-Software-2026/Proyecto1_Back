@@ -31,6 +31,8 @@ import { NormalizeDenominacionSearchPipe } from 'src/modules/common/pipes/normal
 import { DenominacionBusquedaDto } from 'src/modules/common/dto/denominacion-busqueda.dto';
 import { SearchProductoRapidoDto } from '../../dto/search-producto-rapido.dto';
 import { ProductoService } from '../services/producto.service';
+import { PaginationWithDenominacionDto } from 'src/modules/common/dto/busquedas/pagination-with-denominacion.dto';
+import { SearchProductoSuperlineaDto } from '../../dto/search-producto-superlinea.dto';
 
 
 @ApiTags('Gestion Productos')
@@ -132,6 +134,43 @@ export class ProductoController {
       skip,
       take,
     );
+  }
+
+  @Get('search-by-denominacion')
+  @Roles(
+    'Root',
+    'Administrador',
+    'Empleado',
+    'Vendedor',
+    'Repartidor',
+    'Repositor',
+  )
+  @ApiOkResponse({
+    description:
+      'Productos activos que coinciden parcialmente por denominación',
+  })
+  async searchByDenominacion(@Query() dto: PaginationWithDenominacionDto) {
+    const { denominacion = '', skip, take } = dto;
+    return this.service.busquedaPorCoincidenciaParcial(
+      denominacion,
+      skip,
+      take,
+    );
+  }
+
+  @Get('search-by-superlinea')
+  @Roles(
+    'Root',
+    'Administrador',
+    'Empleado',
+    'Vendedor',
+    'Repartidor',
+    'Repositor',
+  )
+  @ApiOkResponse({ description: 'Productos activos de una superlínea' })
+  async searchBySuperlinea(@Query() dto: SearchProductoSuperlineaDto) {
+    const { superLineaId, skip, take } = dto;
+    return this.service.findProductosBySuperLinea(superLineaId, skip, take);
   }
 
   @Get('marca/:id')
