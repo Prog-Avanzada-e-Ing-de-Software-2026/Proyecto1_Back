@@ -27,6 +27,10 @@ import { ProductoRelatedEntitiesValidator } from '../../infraestructure/validato
 import { ProductoUniquenessValidator } from '../../infraestructure/validators/producto-uniqueness.validator.ts';
 import { UsuarioValidator } from 'src/modules/common/utils/validation/usuario-validator';
 import { ProductoDeletePolicy } from '../policies/producto-delete.policy';
+import { ActualizacionPrecioDto } from '../../dto/actualizacion-precio.dto';
+import { TipoAumento } from 'src/modules/common/enums/tipo-aumento.emun';
+import { OperacionAjuste } from 'src/modules/common/enums/operacion-ajuste.enum';
+import { BadRequestException } from '@nestjs/common';
 @Injectable()
 export class ProductoService {
   private readonly logger = new Logger(ProductoService.name);
@@ -259,6 +263,80 @@ export class ProductoService {
     return this.repository.existsProductosActivosByLinea(lineaId);
   }
 
+  async actualizarPrecios(
+    dto: ActualizacionPrecioDto,
+    usuario?: any,
+  ): Promise<{ message: string; productos: Array<{ denominacion: string; costo: number; precio: number }> }> {
+    const valor = Number(dto.valor);
+
+    if (!Number.isFinite(valor) || valor <= 0) {
+      throw new BadRequestException('El valor del ajuste debe ser mayor que 0.');
+    }
+
+    if (!usuario?.id) {
+      throw new BadRequestException(
+        'No se pudo identificar al usuario autenticado para la actualización.',
+      );
+    }
+
+    const usuarioAutenticado = await this.usuarioService.findOne(usuario.id);
+    if (!usuarioAutenticado) {
+      throw new NotFoundException('Usuario no encontrado.');
+    }
+
+    const resultado = await this.repository.findBy(
+      '',
+      '',
+      false,
+      '',
+      0,
+      dto.lineaId ?? 0,
+      0,
+      false,
+      0,
+      10000,
+    );
+
+    const productos = dto.lineaId
+      ? resultado.data.filter((producto) => producto.lineaId === dto.lineaId)
+      : resultado.data;
+
+    if (productos.length === 0) {
+      throw new NotFoundException('No se encontraron productos para actualizar.');
+    }
+
+    for (const producto of productos) {
+      const ajuste = valor;
+
+      if (dto.operacion === OperacionAjuste.AUMENTO) {
+        if (dto.tipoAjuste === TipoAumento.PORCENTAJE) {
+          producto.aumentarPrecioPorPorcentaje(ajuste);
+        } else {
+          producto.aumentarPrecioPorMonto(ajuste);
+        }
+      } else {
+        if (dto.tipoAjuste === TipoAumento.PORCENTAJE) {
+          producto.disminuirPrecioPorPorcentaje(ajuste);
+        } else {
+          producto.disminuirPrecioPorMonto(ajuste);
+        }
+      }
+    }
+
+    const productosActualizados = await this.repository.actualizarPrecios(
+      productos,
+      usuarioAutenticado,
+    );
+
+    return {
+      message: 'Actualización de precios realizada correctamente.',
+      productos: productosActualizados.map((producto) => ({
+        denominacion: producto.denominacion,
+        costo: Number(producto.costo ?? 0),
+        precio: Number(producto.precio ?? 0),
+      })),
+    };
+  }
 
   async findByIds(ids: number[]): Promise<Producto[]> {
     return this.repository.findByIds(ids);

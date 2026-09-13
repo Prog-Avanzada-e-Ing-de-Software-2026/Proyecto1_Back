@@ -41,11 +41,11 @@ export class MessageFrontUtils {
     );
   }
  
-  static createActualizacionPrecioMasiva(
+  static createActualizacionPrecio(
     denominacion: string,
   ): MensajeDto {
     return this.create(
-      ` La actualización de precios masiva se realizo : ${denominacion}`,
+      ` La actualización de precios se realizo : ${denominacion}`,
     );
   }
   

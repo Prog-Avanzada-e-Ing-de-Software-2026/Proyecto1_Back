@@ -172,4 +172,53 @@ export class Producto {
 
   @Column({ type: 'text', nullable: true })
   codigoReferencia?: string | null;
+
+  private validarValorAjuste(valor: number): void {
+    if (!Number.isFinite(valor) || valor <= 0) {
+      throw new Error('El valor del ajuste debe ser mayor que 0.');
+    }
+  }
+
+  private actualizarPrecioManteniendoMargen(nuevoPrecio: number): void {
+    if (!Number.isFinite(nuevoPrecio) || nuevoPrecio <= 0) {
+      throw new Error('El precio final debe ser mayor que 0.');
+    }
+
+    const margenActual = this.porcentaje ?? 0;
+    const costoRecalculado =
+      margenActual === 0
+        ? nuevoPrecio
+        : nuevoPrecio / (1 + margenActual / 100);
+
+    if (!Number.isFinite(costoRecalculado) || costoRecalculado <= 0) {
+      throw new Error('El precio final debe ser mayor que 0.');
+    }
+
+    this.precio = Number(nuevoPrecio.toFixed(2));
+    this.costo = Number(costoRecalculado.toFixed(2));
+  }
+
+  aumentarPrecioPorMonto(monto: number): void {
+    this.validarValorAjuste(monto);
+    const nuevoPrecio = (this.precio ?? 0) + monto;
+    this.actualizarPrecioManteniendoMargen(nuevoPrecio);
+  }
+
+  disminuirPrecioPorMonto(monto: number): void {
+    this.validarValorAjuste(monto);
+    const nuevoPrecio = (this.precio ?? 0) - monto;
+    this.actualizarPrecioManteniendoMargen(nuevoPrecio);
+  }
+
+  aumentarPrecioPorPorcentaje(porcentaje: number): void {
+    this.validarValorAjuste(porcentaje);
+    const nuevoPrecio = (this.precio ?? 0) * (1 + porcentaje / 100);
+    this.actualizarPrecioManteniendoMargen(nuevoPrecio);
+  }
+
+  disminuirPrecioPorPorcentaje(porcentaje: number): void {
+    this.validarValorAjuste(porcentaje);
+    const nuevoPrecio = (this.precio ?? 0) * (1 - porcentaje / 100);
+    this.actualizarPrecioManteniendoMargen(nuevoPrecio);
+  }
 }

@@ -136,6 +136,12 @@ export class ProductoRepository implements IProductoRepository {
     return this.persistenceService.actualizarPrecio(id, dto, usuario);
   }
 
+  async actualizarPrecios(
+    productos: Producto[],
+    usuario: Usuario,
+  ): Promise<Producto[]> {
+    return this.persistenceService.actualizarPrecios(productos, usuario);
+  }
 
   async findByDenominacion(denominacion: string): Promise<Producto | null> {
     const entity =

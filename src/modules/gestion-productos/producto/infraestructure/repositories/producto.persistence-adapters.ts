@@ -384,6 +384,21 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
 
   }
 
+  @Transactional()
+  async actualizarPrecios(
+    productos: Producto[],
+    usuario: Usuario,
+  ): Promise<Producto[]> {
+    const repo = this.uow.getRepository(Producto);
+
+    for (const producto of productos) {
+      producto.usuarioUpdated = usuario;
+      await repo.save(producto);
+    }
+
+    return productos;
+  }
+
   async findByDenominacion(denominacion: string): Promise<Producto | null> {
     try {
       const entity = await this.repository.findOne({
