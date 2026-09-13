@@ -82,6 +82,30 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       ]);
     });
 
+    it('matches an accented term against an accented denominación only', async () => {
+      const superLineaId = await createSuperLinea('Almacen');
+      const lineaId = await createLinea('Almacen linea', superLineaId);
+      await createProducto('harína premium', lineaId);
+      await createProducto('Harina integral', lineaId);
+
+      const result = await adapter.busquedaPorCoincidenciaParcial('harína');
+
+      expect(result.total).toBe(1);
+      expect(result.data.map((producto) => producto.denominacion)).toEqual([
+        'harína premium',
+      ]);
+    });
+
+    it('returns an empty page when the term is not contained in any denominación', async () => {
+      const superLineaId = await createSuperLinea('Almacen');
+      const lineaId = await createLinea('Almacen linea', superLineaId);
+      await createProducto('Arroz', lineaId);
+
+      const result = await adapter.busquedaPorCoincidenciaParcial('trigo');
+
+      expect(result).toEqual({ data: [], total: 0 });
+    });
+
     it('returns an empty result for empty or whitespace terms', async () => {
       await expect(
         adapter.busquedaPorCoincidenciaParcial(''),
@@ -157,6 +181,22 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
         'Producto visible',
       ]);
       expect(deletedResult).toEqual({ data: [], total: 0 });
+    });
+
+    it('paginates the superlinea join ten rows at a time while reporting the full total', async () => {
+      const superLineaId = await createSuperLinea('Almacen');
+      const lineaId = await createLinea('Almacen linea', superLineaId);
+      for (let index = 1; index <= 15; index += 1) {
+        await createProducto(`Producto ${String(index).padStart(2, '0')}`, lineaId);
+      }
+
+      const firstPage = await adapter.findProductosBySuperLinea(superLineaId, 0, 10);
+      const secondPage = await adapter.findProductosBySuperLinea(superLineaId, 10, 10);
+
+      expect(firstPage.data).toHaveLength(10);
+      expect(firstPage.total).toBe(15);
+      expect(secondPage.data).toHaveLength(5);
+      expect(secondPage.total).toBe(15);
     });
 
     it('returns an empty result for an unknown superlinea id', async () => {

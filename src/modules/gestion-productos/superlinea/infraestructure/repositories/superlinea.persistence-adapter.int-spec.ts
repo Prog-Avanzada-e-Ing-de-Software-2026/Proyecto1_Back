@@ -74,6 +74,23 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     expect(result.map((option) => option.nombre)).toEqual(['Alfa linea']);
   });
 
+  it('matches an accented term against an accented denominación only', async () => {
+    await createSuperLinea('línea premium');
+    await createSuperLinea('Alfa linea');
+
+    const result = await adapter.busquedaPorCoincidenciaParcial('línea');
+
+    expect(result.map((option) => option.nombre)).toEqual(['línea premium']);
+  });
+
+  it('returns an empty array when the term is not contained in any denominación', async () => {
+    await createSuperLinea('Arroz');
+
+    const result = await adapter.busquedaPorCoincidenciaParcial('trigo');
+
+    expect(result).toEqual([]);
+  });
+
   it('returns an empty array for an empty or whitespace term', async () => {
     await expect(adapter.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
     await expect(adapter.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);

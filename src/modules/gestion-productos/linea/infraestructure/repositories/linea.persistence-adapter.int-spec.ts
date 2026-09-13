@@ -84,6 +84,23 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(result.map((option) => option.nombre)).toEqual(['Alfa harina']);
   });
 
+  it('matches an accented term against an accented denominación only', async () => {
+    await createLinea('harína premium');
+    await createLinea('Alfa harina');
+
+    const result = await adapter.busquedaPorCoincidenciaParcial('harína');
+
+    expect(result.map((option) => option.nombre)).toEqual(['harína premium']);
+  });
+
+  it('returns an empty array when the term is not contained in any denominación', async () => {
+    await createLinea('Arroz');
+
+    const result = await adapter.busquedaPorCoincidenciaParcial('trigo');
+
+    expect(result).toEqual([]);
+  });
+
   it('returns an empty array for an empty or whitespace term', async () => {
     await expect(adapter.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
     await expect(adapter.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);
