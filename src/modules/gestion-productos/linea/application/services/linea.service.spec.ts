@@ -1,7 +1,9 @@
 import { NotFoundException } from '@nestjs/common';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { ILineaRepository } from '../../domain/interfaces/linea.repository.interface';
 import { Linea } from '../../domain/entities/linea.entity';
 import { SuperLinea } from '../../../superlinea/domain/entities/superlinea.entity';
+import { LineaMapper } from '../../mappers/linea.mapper';
 import { LineaService } from './linea.service';
 
 describe('LineaService SuperLinea association', () => {
@@ -37,6 +39,7 @@ describe('LineaService SuperLinea association', () => {
       findByDenominacionWith: jest.fn(),
       findByDenominacionFiltered: jest.fn(),
       findByIdConAuditoria: jest.fn(),
+      busquedaPorCoincidenciaParcial: jest.fn(),
       remove: jest.fn(),
     };
     superLineaRepository = { findOne: jest.fn() };
@@ -144,5 +147,66 @@ describe('LineaService SuperLinea association', () => {
     await expect(service.findAllFor('')).resolves.toEqual(
       expect.objectContaining({ data: [expect.objectContaining({ superLinea: expected })] }),
     );
+  });
+
+  it('delegates selection search and returns the slim options from the repository', async () => {
+    const options: SelectOption[] = [
+      { codigo: 1, nombre: 'Harinas', descripcion: '' },
+    ];
+    repository.busquedaPorCoincidenciaParcial.mockResolvedValue(options);
+
+    await expect(
+      service.busquedaPorCoincidenciaParcial('harina'),
+    ).resolves.toEqual(options);
+    expect(repository.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith(
+      'harina',
+    );
+  });
+
+  it('returns an empty result for an empty or whitespace-only term', async () => {
+    repository.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
+
+    await expect(service.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
+    await expect(service.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);
+  });
+
+  it('passes the term verbatim so accent-sensitive matching is preserved', async () => {
+    repository.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
+
+    await service.busquedaPorCoincidenciaParcial('harína');
+
+    expect(repository.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith(
+      'harína',
+    );
+  });
+});
+
+describe('LineaMapper.toSelectOption', () => {
+  it('maps a Línea to the slim selection shape (codigo/nombre/descripcion)', () => {
+    const entity = Object.assign(new Linea(), {
+      id: 7,
+      denominacion: 'Harinas',
+      observacion: 'Harinas y derivados',
+    });
+
+    expect(LineaMapper.toSelectOption(entity)).toEqual({
+      codigo: 7,
+      nombre: 'Harinas',
+      descripcion: 'Harinas y derivados',
+    });
+  });
+
+  it('coalesces a null observacion into an empty description', () => {
+    const entity = Object.assign(new Linea(), {
+      id: 8,
+      denominacion: 'Harinas',
+      observacion: undefined,
+    });
+
+    expect(LineaMapper.toSelectOption(entity)).toEqual({
+      codigo: 8,
+      nombre: 'Harinas',
+      descripcion: '',
+    });
   });
 });

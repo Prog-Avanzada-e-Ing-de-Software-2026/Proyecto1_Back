@@ -13,6 +13,7 @@ describe('LineaController SuperLinea contract', () => {
     findDtoById: jest.fn(),
     findByDenominacionFiltered: jest.fn(),
     findByIdConAuditoria: jest.fn(),
+    busquedaPorCoincidenciaParcial: jest.fn(),
     remove: jest.fn(),
   };
 
@@ -81,5 +82,27 @@ describe('LineaController SuperLinea contract', () => {
       .send({ utilizaStockMinimo: false, usuarioUpdatedId: 8, superLineaId: null })
       .expect(400);
     expect(service.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns slim selection options for /api/linea/select', async () => {
+    service.busquedaPorCoincidenciaParcial.mockResolvedValue([
+      { codigo: 1, nombre: 'Harinas', descripcion: '' },
+    ]);
+
+    await request(app.getHttpServer())
+      .get('/api/linea/select?denominacion=harina')
+      .expect(200, [{ codigo: 1, nombre: 'Harinas', descripcion: '' }]);
+    expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith(
+      'harina',
+    );
+  });
+
+  it('passes an empty term and returns an empty array when denominacion is omitted', async () => {
+    service.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
+
+    await request(app.getHttpServer())
+      .get('/api/linea/select')
+      .expect(200, []);
+    expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith('');
   });
 });

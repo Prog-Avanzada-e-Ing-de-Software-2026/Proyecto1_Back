@@ -6,6 +6,7 @@ import { UpdateLineaDto } from '../../dto/update-linea.dto';
 import { DatabaseConnectionException } from 'src/modules/common/exceptions/database-connection.exception';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
 import { AuditoriaDto } from 'src/modules/gestion-sistema/auditoria/dto/auditoria.dto';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { LineaPersistenceAdapter } from './linea.persistence-adapter';
 import { SuperLinea } from '../../../superlinea/domain/entities/superlinea.entity';
 
@@ -61,6 +62,14 @@ export class LineaRepository implements ILineaRepository {
 
   async findAllSinSistemaFor(denominacion: string): Promise<Linea[]> {
     return this.persistenceService.findAllSinSistemaFor(denominacion);
+  }
+
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+  ): Promise<SelectOption[]> {
+    return this.persistenceService.busquedaPorCoincidenciaParcial(
+      denominacion,
+    );
   }
 
   async existsActiveBySuperLinea(superLineaId: number): Promise<boolean> {

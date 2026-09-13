@@ -3,6 +3,7 @@ import { CreateLineaDto } from '../../dto/create-linea.dto';
 import { UpdateLineaDto } from '../../dto/update-linea.dto';
 import { Linea } from '../entities/linea.entity';
 import { AuditoriaDto } from 'src/modules/gestion-sistema/auditoria/dto/auditoria.dto';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { SuperLinea } from '../../../superlinea/domain/entities/superlinea.entity';
 
 export interface ILineaRepository {
@@ -21,6 +22,8 @@ export interface ILineaRepository {
     take: number,
     incluirEliminados: boolean
   ): Promise<{ data: Linea[]; total: number } >;
+
+  busquedaPorCoincidenciaParcial(denominacion: string): Promise<SelectOption[]>;
 
   findByIdConAuditoria(id: number):  Promise<AuditoriaDto | null> ;
   update(
