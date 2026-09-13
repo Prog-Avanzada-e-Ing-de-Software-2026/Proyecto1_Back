@@ -58,6 +58,12 @@ export interface IProductoRepository {
     dto: UpdatePrecioDto,
     usuario: Usuario,
   ): Promise<void>;
+
+  actualizarPrecios(
+    productos: Producto[],
+    usuario: Usuario,
+  ): Promise<Producto[]>;
+
   remove(data: Producto, usuario: Usuario): Promise<Producto>;
 
   isCodigoProveedorDuplicado(

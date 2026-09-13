@@ -31,7 +31,8 @@ import { NormalizeDenominacionSearchPipe } from 'src/modules/common/pipes/normal
 import { DenominacionBusquedaDto } from 'src/modules/common/dto/denominacion-busqueda.dto';
 import { SearchProductoRapidoDto } from '../../dto/search-producto-rapido.dto';
 import { ProductoService } from '../services/producto.service';
-
+import { ActualizacionPrecioDto } from '../../dto/actualizacion-precio.dto';
+import { CurrentUser } from 'src/modules/common/decorators/current-user.decorator';
 
 @ApiTags('Gestion Productos')
 @Controller('producto')
@@ -179,6 +180,15 @@ export class ProductoController {
     return this.service.remove(id, usuarioId);
   }
 
+  @Post('actualizar-precios')
+  @Roles('Root', 'Administrador', 'Empleado')
+  async actualizarPrecios(
+    @Body() dto: ActualizacionPrecioDto,
+    @CurrentUser() usuario: any,
+  ) {
+    this.logger.log('Actualizando precios...');
+    return this.service.actualizarPrecios(dto, usuario);
+  }
 
   @Get(':id/audit')
   @Roles('Root', 'Administrador', 'Empleado')
