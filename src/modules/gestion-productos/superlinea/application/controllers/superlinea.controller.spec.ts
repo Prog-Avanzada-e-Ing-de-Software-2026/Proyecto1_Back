@@ -64,6 +64,14 @@ describe('SuperLineaController', () => {
     expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith('');
   });
 
+  it('rejects non-whitelisted query params on /api/superlinea/select', async () => {
+    await request(app.getHttpServer())
+      .get('/api/superlinea/select?desconocido=1')
+      .expect(400);
+
+    expect(service.busquedaPorCoincidenciaParcial).not.toHaveBeenCalled();
+  });
+
   it('routes detail and audit queries', async () => {
     service.findDtoById.mockResolvedValue({ id: 1, denominacion: 'Herramientas' });
     service.findByIdConAuditoria.mockResolvedValue({ id: 1 });

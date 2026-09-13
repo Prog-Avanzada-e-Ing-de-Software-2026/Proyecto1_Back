@@ -105,4 +105,12 @@ describe('LineaController SuperLinea contract', () => {
       .expect(200, []);
     expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith('');
   });
+
+  it('rejects non-whitelisted query params on /api/linea/select', async () => {
+    await request(app.getHttpServer())
+      .get('/api/linea/select?desconocido=1')
+      .expect(400);
+
+    expect(service.busquedaPorCoincidenciaParcial).not.toHaveBeenCalled();
+  });
 });

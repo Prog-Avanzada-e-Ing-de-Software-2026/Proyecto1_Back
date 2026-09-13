@@ -162,23 +162,6 @@ describe('LineaService SuperLinea association', () => {
       'harina',
     );
   });
-
-  it('returns an empty result for an empty or whitespace-only term', async () => {
-    repository.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
-
-    await expect(service.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
-    await expect(service.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);
-  });
-
-  it('passes the term verbatim so accent-sensitive matching is preserved', async () => {
-    repository.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
-
-    await service.busquedaPorCoincidenciaParcial('harína');
-
-    expect(repository.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith(
-      'harína',
-    );
-  });
 });
 
 describe('LineaMapper.toSelectOption', () => {

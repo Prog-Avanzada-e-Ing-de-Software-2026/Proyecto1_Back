@@ -74,6 +74,15 @@ describe('ProductoController search endpoints', () => {
     );
   });
 
+  it('GET /api/producto/search-by-denominacion rejects an out-of-range take', async () => {
+    await request(app.getHttpServer())
+      .get('/api/producto/search-by-denominacion')
+      .query({ denominacion: 'harina', skip: 0, take: 0 })
+      .expect(400);
+
+    expect(service.busquedaPorCoincidenciaParcial).not.toHaveBeenCalled();
+  });
+
   it('GET /api/producto/search-by-superlinea returns products of the selected superlínea (10 per page)', async () => {
     service.findProductosBySuperLinea.mockResolvedValue({
       data: [{ id: 2, denominacion: 'Arroz' }],
