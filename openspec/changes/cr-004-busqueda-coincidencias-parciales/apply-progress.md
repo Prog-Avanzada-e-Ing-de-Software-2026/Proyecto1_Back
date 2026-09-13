@@ -154,3 +154,20 @@
 - **Boundary**: one module per slice; PR 1 also carries the CR-004 SDD change artifacts
 - **Chain strategy**: feature-branch-chain — PR #1 targets tracker `CR-004`; PR #2 targets PR #1's branch; PR #3 targets PR #2's branch; PR #4 targets PR #3's branch
 - **Review budget**: each slice ≤400 authored lines; PR 2 (producto, 453) already accepted as `size:exception`
+
+## Testing Strategy Compliance (applied post-apply)
+
+The team testing strategy (`docs/Estrategia_de_Testing.md`) was applied to CR-004. Scope is the `gestion-productos` module; `ProductoOperacion` and non-product modules stay out of scope.
+
+| Layer | Artifacts | Type |
+|-------|-----------|------|
+| Endpoints | `producto`/`linea`/`superlinea` `.controller.spec.ts` | Integration — one success + one failure path per endpoint |
+| Services | `producto`/`linea`/`superlinea` `.service.spec.ts` | Unit with mocks — only methods with logic/decisions |
+| Persistence | `producto`/`linea`/`superlinea` `.persistence-adapter*.int-spec.ts` + `add-superlinea-to-linea.int-spec.ts` | Real integration (MySQL 8 via Testcontainers) |
+| DTO | `select-linea.dto.spec.ts`, `search-producto-superlinea.dto.spec.ts` | Unit — declarative validation values |
+
+- Integration harness: `test/integration/` + `jest.config.integration.js`; run with `corepack yarn test:integration`.
+- Unit: `corepack yarn test` → 25 suites / 83 tests green (remaining failures are pre-existing and unrelated to CR-004).
+- Integration: `corepack yarn test:integration` → 4 suites / 23 tests green.
+- Build: `corepack yarn build` → exit 0.
+- Deferred: a dedicated `SelectSuperLineaDto` unit spec (identical to `SelectLineaDto`; contract covered at the endpoint layer). Risk: low.
