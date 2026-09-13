@@ -191,7 +191,7 @@ export class Producto {
         : nuevoPrecio / (1 + margenActual / 100);
 
     if (!Number.isFinite(costoRecalculado) || costoRecalculado <= 0) {
-      throw new Error('El precio final debe ser mayor que 0.');
+      throw new Error('El costo final debe ser mayor que 0.');
     }
 
     this.precio = Number(nuevoPrecio.toFixed(2));

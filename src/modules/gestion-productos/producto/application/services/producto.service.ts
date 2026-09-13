@@ -269,10 +269,6 @@ export class ProductoService {
   ): Promise<{ message: string; productos: Array<{ denominacion: string; costo: number; precio: number }> }> {
     const valor = Number(dto.valor);
 
-    if (!Number.isFinite(valor) || valor <= 0) {
-      throw new BadRequestException('El valor del ajuste debe ser mayor que 0.');
-    }
-
     if (!usuario?.id) {
       throw new BadRequestException(
         'No se pudo identificar al usuario autenticado para la actualización.',
@@ -297,9 +293,7 @@ export class ProductoService {
       10000,
     );
 
-    const productos = dto.lineaId
-      ? resultado.data.filter((producto) => producto.lineaId === dto.lineaId)
-      : resultado.data;
+    const productos = resultado.data;
 
     if (productos.length === 0) {
       throw new NotFoundException('No se encontraron productos para actualizar.');
