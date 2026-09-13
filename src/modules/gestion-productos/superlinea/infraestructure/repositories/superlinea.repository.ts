@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AuditoriaDto } from 'src/modules/gestion-sistema/auditoria/dto/auditoria.dto';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
 import { SuperLinea } from '../../domain/entities/superlinea.entity';
 import { ISuperLineaRepository } from '../../domain/interfaces/superlinea.repository.interface';
@@ -36,6 +37,10 @@ export class SuperLineaRepository implements ISuperLineaRepository {
 
   findAllFor(denominacion: string) {
     return this.persistence.findAllFor(denominacion);
+  }
+
+  busquedaPorCoincidenciaParcial(denominacion: string): Promise<SelectOption[]> {
+    return this.persistence.busquedaPorCoincidenciaParcial(denominacion);
   }
 
   findByIdConAuditoria(id: number): Promise<AuditoriaDto | null> {

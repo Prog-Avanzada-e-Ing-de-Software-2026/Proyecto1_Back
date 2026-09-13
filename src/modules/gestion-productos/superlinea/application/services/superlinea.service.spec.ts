@@ -1,7 +1,9 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { SuperLineaService } from './superlinea.service';
 import { ISuperLineaRepository } from '../../domain/interfaces/superlinea.repository.interface';
 import { PoliticaEliminacionSuperLinea } from '../../domain/services/politica-eliminacion-superlinea.service';
+import { PoliticaCreacionSuperLinea } from '../../domain/services/politica-creacion-superlinea.service';
 import { UsuarioService } from 'src/modules/gestion-usuario/usuario/application/services/usuario.service';
 import { SuperLinea } from '../../domain/entities/superlinea.entity';
 
@@ -9,6 +11,7 @@ describe('SuperLineaService', () => {
   let service: SuperLineaService;
   let repository: jest.Mocked<ISuperLineaRepository>;
   let deletionPolicy: jest.Mocked<PoliticaEliminacionSuperLinea>;
+  let createPolicy: jest.Mocked<PoliticaCreacionSuperLinea>;
   let usuarioService: jest.Mocked<Pick<UsuarioService, 'findOne'>>;
 
   const entity = (overrides: Partial<SuperLinea> = {}): SuperLinea =>
@@ -36,10 +39,14 @@ describe('SuperLineaService', () => {
       findAllFor: jest.fn(),
       findByIdConAuditoria: jest.fn(),
       remove: jest.fn(),
+      busquedaPorCoincidenciaParcial: jest.fn(),
     };
     deletionPolicy = {
       tieneLineasActivas: jest.fn(),
     } as unknown as jest.Mocked<PoliticaEliminacionSuperLinea>;
+    createPolicy = {
+      checkDenominacionExists: jest.fn(),
+    } as unknown as jest.Mocked<PoliticaCreacionSuperLinea>;
     usuarioService = {
       findOne: jest.fn(),
     };
@@ -47,11 +54,12 @@ describe('SuperLineaService', () => {
       repository,
       usuarioService as unknown as UsuarioService,
       deletionPolicy,
+      createPolicy,
     );
   });
 
   it('creates a unique active super line with its generated id', async () => {
-    repository.findByDenominacionWithDeleted.mockResolvedValue(null);
+    createPolicy.checkDenominacionExists.mockResolvedValue(false);
     repository.create.mockResolvedValue(entity());
 
     await expect(
@@ -67,7 +75,7 @@ describe('SuperLineaService', () => {
   });
 
   it('accepts an omitted observation and preserves one when supplied', async () => {
-    repository.findByDenominacionWithDeleted.mockResolvedValue(null);
+    createPolicy.checkDenominacionExists.mockResolvedValue(false);
     repository.create.mockResolvedValue(entity({ observacion: undefined }));
     repository.findOne.mockResolvedValue(entity());
     repository.update.mockResolvedValue(entity({ observacion: 'Industrial' }));
@@ -88,9 +96,7 @@ describe('SuperLineaService', () => {
   });
 
   it('rejects creation with a denomination reserved by a deleted record', async () => {
-    repository.findByDenominacionWithDeleted.mockResolvedValue(
-      entity({ deletedAt: new Date('2026-09-09T10:00:00.000Z') }),
-    );
+    createPolicy.checkDenominacionExists.mockResolvedValue(true);
 
     await expect(
       service.create({ denominacion: 'Herramientas', usuarioCreatedId: 7 }),
@@ -100,7 +106,7 @@ describe('SuperLineaService', () => {
 
   it('allows an update that retains the entity own denomination', async () => {
     repository.findOne.mockResolvedValue(entity());
-    repository.findByDenominacionWithDeleted.mockResolvedValue(entity());
+    createPolicy.checkDenominacionExists.mockResolvedValue(false);
     repository.update.mockResolvedValue(entity({ observacion: 'Updated' }));
 
     await expect(
@@ -116,7 +122,7 @@ describe('SuperLineaService', () => {
   });
 
   it('passes the responsible user id when creating', async () => {
-    repository.findByDenominacionWithDeleted.mockResolvedValue(null);
+    createPolicy.checkDenominacionExists.mockResolvedValue(false);
     repository.create.mockResolvedValue(entity());
 
     await service.create({ denominacion: 'Herramientas', usuarioCreatedId: 7 });
@@ -160,7 +166,7 @@ describe('SuperLineaService', () => {
   it('searches active records by default and returns the active total', async () => {
     repository.findBy.mockResolvedValue({ data: [entity()], total: 1 });
 
-    await expect(service.findBy('herra', 0, 10)).resolves.toEqual({
+    await expect(service.findBy({ denominacion: 'herra', skip: 0, take: 10 })).resolves.toEqual({
       data: [
         {
           id: 1,
@@ -171,7 +177,12 @@ describe('SuperLineaService', () => {
       ],
       total: 1,
     });
-    expect(repository.findBy).toHaveBeenCalledWith('herra', 0, 10, false);
+    expect(repository.findBy).toHaveBeenCalledWith({
+      denominacion: 'herra',
+      skip: 0,
+      take: 10,
+      incluirEliminados: false,
+    });
   });
 
   it('searches active and deleted records when requested', async () => {
@@ -182,11 +193,21 @@ describe('SuperLineaService', () => {
     });
     repository.findBy.mockResolvedValue({ data: [entity(), deleted], total: 2 });
 
-    const result = await service.findBy('herra', 0, 10, true);
+    const result = await service.findBy({
+      denominacion: 'herra',
+      skip: 0,
+      take: 10,
+      incluirEliminados: true,
+    });
 
     expect(result.total).toBe(2);
     expect(result.data[1].deletedAt).toBe('2026-09-09T10:00:00.000Z');
-    expect(repository.findBy).toHaveBeenCalledWith('herra', 0, 10, true);
+    expect(repository.findBy).toHaveBeenCalledWith({
+      denominacion: 'herra',
+      skip: 0,
+      take: 10,
+      incluirEliminados: true,
+    });
   });
 
   it('returns only active selector records and their actual count', async () => {
@@ -208,7 +229,7 @@ describe('SuperLineaService', () => {
     repository.findBy.mockResolvedValue({ data: [], total: 0 });
     repository.findAllFor.mockResolvedValue([]);
 
-    await expect(service.findBy('missing', 0, 10)).resolves.toEqual({
+    await expect(service.findBy({ denominacion: 'missing', skip: 0, take: 10 })).resolves.toEqual({
       data: [],
       total: 0,
     });
@@ -252,5 +273,68 @@ describe('SuperLineaService', () => {
     await expect(service.findByIdConAuditoria(99)).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('delegates selection search and returns the slim options from the repository', async () => {
+    const options: SelectOption[] = [
+      { codigo: 1, nombre: 'Almacén', descripcion: 'Productos varios' },
+    ];
+    repository.busquedaPorCoincidenciaParcial.mockResolvedValue(options);
+
+    await expect(
+      service.busquedaPorCoincidenciaParcial('almacen'),
+    ).resolves.toEqual(options);
+    expect(repository.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith(
+      'almacen',
+    );
+  });
+
+  it('returns an empty result for an empty or whitespace-only term', async () => {
+    repository.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
+
+    await expect(service.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
+    await expect(service.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);
+  });
+
+  it('passes the term verbatim so accent-sensitive matching is preserved', async () => {
+    repository.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
+
+    await service.busquedaPorCoincidenciaParcial('harína');
+
+    expect(repository.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith(
+      'harína',
+    );
+  });
+});
+
+describe('SuperLineaMapper.toSelectOption', () => {
+  const { SuperLineaMapper } = require('../../mappers/superlinea.mapper');
+
+  it('maps a SuperLínea to the slim selection shape (codigo/nombre/descripcion)', () => {
+    const sl = Object.assign(new SuperLinea(), {
+      id: 7,
+      denominacion: 'Almacén',
+      observacion: 'Productos varios',
+    });
+
+    expect(SuperLineaMapper.toSelectOption(sl)).toEqual({
+      codigo: 7,
+      nombre: 'Almacén',
+      descripcion: 'Productos varios',
+    });
+  });
+
+  it('coalesces a null observacion into an empty description', () => {
+    const sl = Object.assign(new SuperLinea(), {
+      id: 8,
+      denominacion: 'Almacén',
+      observacion: undefined,
+    });
+
+    expect(SuperLineaMapper.toSelectOption(sl)).toEqual({
+      codigo: 8,
+      nombre: 'Almacén',
+      descripcion: '',
+    });
   });
 });

@@ -1,5 +1,6 @@
 import { AuditoriaDto } from 'src/modules/gestion-sistema/auditoria/dto/auditoria.dto';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { CreateSuperLineaDto } from '../../dto/create-superlinea.dto';
 import { UpdateSuperLineaDto } from '../../dto/update-superlinea.dto';
 import { SuperLinea } from '../entities/superlinea.entity';
@@ -16,6 +17,7 @@ export interface ISuperLineaRepository {
   ): Promise<SuperLinea | null>;
   findBy(query: ISuperLineaSearchQuery): Promise<{ data: SuperLinea[]; total: number }>;
   findAllFor(denominacion: string): Promise<SuperLinea[]>;
+  busquedaPorCoincidenciaParcial(denominacion: string): Promise<SelectOption[]>;
   findByIdConAuditoria(id: number): Promise<AuditoriaDto | null>;
   remove(data: SuperLinea, usuario: Usuario): Promise<SuperLinea>;
 }
