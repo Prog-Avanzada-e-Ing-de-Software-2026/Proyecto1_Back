@@ -54,6 +54,7 @@ describe('ProductoService - actualización masiva', () => {
       {} as any,
       {} as any,
       {} as any,
+      {} as any,
     );
 
     const result = await service.actualizarPrecios(
