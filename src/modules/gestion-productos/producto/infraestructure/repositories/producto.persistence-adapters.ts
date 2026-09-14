@@ -182,11 +182,11 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         marca,
       });
 
-      if (precio !== undefined) {
+      if (precio !== undefined && precio !== entity.precio) {
         entity.cambiarPrecio(precio, MotivoCambioPrecio.ActualizacionDePrecioDirecta);
       }
 
-      entity.usuarioUpdated = usuario; 
+      entity.usuarioUpdated = usuario;
       const entityActualizada = await repo.save(entity);
 
 

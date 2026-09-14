@@ -21,7 +21,7 @@ Extend the existing `producto` module: add the `CambioPrecio` entity and `Motivo
 PUT /producto/:id (con precio)
   -> ProductoPersistenceAdapter.update
   -> findOne (leftJoinAndSelect cambiosPrecio)
-  -> Producto.cambiarPrecio(precio, ActualizacionDePrecioDirecta)
+  -> Producto.cambiarPrecio(precio, ActualizacionDePrecioDirecta)  // solo si precio !== producto.precio
   -> repo.save(producto)   // cascade insert del CambioPrecio, misma transacción
 
 POST /producto/actualizar-precios
@@ -60,6 +60,7 @@ GET /producto/:id/historial-precios
 
 - `CambioPrecio`: generated numeric `id`, required `producto` relation, `precioAnterior`/`precioNuevo` as `MonetarioColumn()` (decimal 15,5), required `fecha` timestamp (with time), required `motivo`.
 - `Producto.cambiarPrecio(precioNuevo, motivo)`: throws when `motivo` is missing or the price is not finite/positive or continuity fails; records `precioAnterior = precio` before updating; `fecha = new Date()`.
+- `ProductoPersistenceAdapter.update`: calls `cambiarPrecio` only when the DTO `precio` differs from the current `Producto.precio`, so an unchanged price records nothing.
 - `Producto.obtenerUltimoCambioPrecio()`: returns the recorded change with the greatest `fecha` strictly before now, or `undefined`.
 - `findBy(..., incluirCambiosPrecio: boolean = false)` and `findHistorialPrecios(id, skip, take): Promise<CambioPrecio[]>`.
 - `CambioPrecioDto`: `fecha`, `precioAnterior`, `precioNuevo`, `motivo`.
@@ -80,3 +81,8 @@ Create `cambio_precio`, index `producto_id` and `fecha`, and a `FK_cambio_precio
 ## Open Questions
 
 None.
+
+## Known Technical Debt
+
+- `Producto.precio = margen + costo` remains a convenience invariant driven by the DTO/entity spread; it is not a strict domain invariant with its own tests, and can be violated independently of a recorded `CambioPrecio`. It was pre-existing and is out of CR-007 scope.
+- The PUT write feeder is orchestrated inside `ProductoPersistenceAdapter.update`: the adapter decides which DTO fields feed domain mutations and applies the "record only when the price differs" rule when calling `cambiarPrecio`. That is application/domain semantics living in infrastructure (the same pre-existing pattern used for the whole create/update flow) and duplicated venture points; a future refactor could migrate the update orchestration to an application service. Out of CR-007 scope.

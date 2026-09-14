@@ -8,22 +8,30 @@ Define how `Producto` records `CambioPrecio` entries, how every price mutation m
 
 ### Requirement: Persist a price change per mutation
 
-The system MUST record a `CambioPrecio` with `precioAnterior`, `precioNuevo`, `fecha` (including time), and `motivo` every time a product price changes, and MUST mutate `Producto.precio` through `cambiarPrecio(precioNuevo, motivo)` only.
+The system MUST record a `CambioPrecio` with `precioAnterior`, `precioNuevo`, `fecha` (including time), and `motivo` every time a product price actually changes, MUST NOT record an entry when the requested price equals the current price, and MUST mutate `Producto.precio` through `cambiarPrecio(precioNuevo, motivo)` only.
 
-#### Scenario: Route a margin-preserving adjustment
+#### Scenario: Route a margin-preserving bulk adjustment
 
 - GIVEN a `Producto` with a margin and a current price
-- WHEN an authorized user runs any price adjustment that preserves the margin
+- WHEN a bulk price adjustment (global or per line) applies a margin-preserving adjustment
 - THEN the system MUST recalculate the derived cost
 - AND MUST record a `CambioPrecio` whose `precioAnterior` equals the previous price, `precioNuevo` equals the adjusted price, `fecha` is set to the current date and time, and `motivo` is the supplied reason
 - AND MUST update `Producto.precio` to the adjusted price
 
 #### Scenario: Route a direct PUT price change
 
-- GIVEN an authorized user sends a product update that includes `precio`
+- GIVEN an authorized user sends a product update that includes `precio` differing from the current price
 - WHEN the update is persisted
 - THEN the system MUST record a `CambioPrecio` with `motivo = ActualizacionDePrecioDirecta` before saving
 - AND MUST NOT apply the raw DTO price over the recorded change
+- AND MUST NOT recalculate the cost
+
+#### Scenario: Skip a no-op direct price change
+
+- GIVEN an authorized user sends a product update that includes `precio` equal to the current price
+- WHEN the update is persisted
+- THEN the system MUST NOT record a `CambioPrecio`
+- AND MUST NOT mutate `Producto.precio`
 
 #### Scenario: Route a bulk adjustment with a line scope
 

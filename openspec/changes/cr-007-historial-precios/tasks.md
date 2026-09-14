@@ -19,8 +19,8 @@
 
 - [ ] 2.1 **RED:** Extend `producto.entity.spec.ts` for motive-aware margin methods and `producto.service.masivo.spec.ts` for global (no line) and per-line motive selection.
 - [ ] 2.2 **GREEN:** Update margin methods to accept and forward `motivo`; select `ActualizacionDePrecioGlobal` / `ActualizacionDePrecioPorLinea` in `ProductoService.actualizarPrecios`.
-- [ ] 2.3 **RED:** Extend product persistence/service specs: PUT with `precio` records `ActualizacionDePrecioDirecta` before save and excludes the raw price from the entity merge; regular search does not load changes.
-- [ ] 2.4 **GREEN:** Add `leftJoinAndSelect('producto.cambiosPrecio', ...)` to `findOne`; add `incluirCambiosPrecio` flag to `findBy` (interface, repository, adapter); wire the PUT call to `cambiarPrecio()` in `update()`.
+- [ ] 2.3 **RED:** Extend product persistence/service specs: PUT with `precio` records `ActualizacionDePrecioDirecta` before save only when it differs from the current price (equal price is a no-op) and excludes the raw price from the entity merge; regular search does not load changes.
+- [ ] 2.4 **GREEN:** Add `leftJoinAndSelect('producto.cambiosPrecio', ...)` to `findOne`; add `incluirCambiosPrecio` flag to `findBy` (interface, repository, adapter); wire the PUT call to `cambiarPrecio()` in `update()` only when the DTO price differs from the current price.
 - [ ] 2.5 **REFACTOR:** Rerun focused suites plus `yarn build`; record the `precio = margen + costo` debt in the change notes.
 
 ## Phase 3: Paginated Price History Endpoint
