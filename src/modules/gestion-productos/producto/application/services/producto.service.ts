@@ -31,6 +31,10 @@ import { ActualizacionPrecioDto } from '../../dto/actualizacion-precio.dto';
 import { TipoAumento } from 'src/modules/common/enums/tipo-aumento.emun';
 import { OperacionAjuste } from 'src/modules/common/enums/operacion-ajuste.enum';
 import { BadRequestException } from '@nestjs/common';
+import { MotivoCambioPrecio } from '../../enums/motivo-cambio-precio.enum';
+import { PaginationDto } from 'src/modules/common/dto/pagination.dto';
+import { CambioPrecioDto } from '../../dto/cambio-precio.dto';
+import { CambioPrecioMapper } from '../../mappers/cambio-precio.mapper';
 @Injectable()
 export class ProductoService {
   private readonly logger = new Logger(ProductoService.name);
@@ -199,6 +203,17 @@ export class ProductoService {
     return entity;
   }
 
+  async getHistorialPrecios(
+    id: number,
+    paginacion: PaginationDto,
+  ): Promise<CambioPrecioDto[]> {
+    await this.findEntityById(id);
+    const skip = paginacion.skip ?? 0;
+    const take = paginacion.take ?? 10;
+    const cambios = await this.repository.findHistorialPrecios(id, skip, take);
+    return cambios.map((cambio) => CambioPrecioMapper.toDto(cambio));
+  }
+
   async remove(id: number, usuarioId: number) {
     const entity = await this.findEntityById(id);
 
@@ -291,6 +306,7 @@ export class ProductoService {
       false,
       0,
       10000,
+      true,
     );
 
     const productos = resultado.data;
@@ -299,20 +315,24 @@ export class ProductoService {
       throw new NotFoundException('No se encontraron productos para actualizar.');
     }
 
+    const motivo = dto.lineaId
+      ? MotivoCambioPrecio.ActualizacionDePrecioPorLinea
+      : MotivoCambioPrecio.ActualizacionDePrecioGlobal;
+
     for (const producto of productos) {
       const ajuste = valor;
 
       if (dto.operacion === OperacionAjuste.AUMENTO) {
         if (dto.tipoAjuste === TipoAumento.PORCENTAJE) {
-          producto.aumentarPrecioPorPorcentaje(ajuste);
+          producto.aumentarPrecioPorPorcentaje(ajuste, motivo);
         } else {
-          producto.aumentarPrecioPorMonto(ajuste);
+          producto.aumentarPrecioPorMonto(ajuste, motivo);
         }
       } else {
         if (dto.tipoAjuste === TipoAumento.PORCENTAJE) {
-          producto.disminuirPrecioPorPorcentaje(ajuste);
+          producto.disminuirPrecioPorPorcentaje(ajuste, motivo);
         } else {
-          producto.disminuirPrecioPorMonto(ajuste);
+          producto.disminuirPrecioPorMonto(ajuste, motivo);
         }
       }
     }

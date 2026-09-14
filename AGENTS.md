@@ -75,7 +75,8 @@ OpenSpec artifacts live under `openspec/`; `openspec/config.yaml` defines the pr
 - Derive test cases from acceptance criteria and observable contracts.
 - The OpenSpec default is strict TDD: RED -> GREEN -> REFACTOR. Follow it unless the active change explicitly documents a scoped exception.
 - Use Jest and `@nestjs/testing` for unit tests and Supertest for HTTP behavior.
-- Testcontainers is not currently installed. Do not introduce or claim it is available without an explicit dependency and environment decision.
+- MySQL integration specs (e.g. migrations) use Testcontainers: `testcontainers` and `@testcontainers/mysql` are pinned to v10 because v12 requires Node >= 22 and local development runs Node 20. Each spec starts one ephemeral MySQL 8 container and connects as `root` (`getRootPassword()`), so per-suite databases are reachable. Requires Docker running; tests are skipped-or-fail locally without it, never silently pass.
+- Running specs: `yarn test` collects coverage and can mask failures. Prefer `node node_modules/jest/bin/jest.js --runTestsByPath <spec> --coverage=false` per file, or `corepack yarn` for package operations. `yarn.cmd`/`yarn.ps1` can mangle paths that contain non-ASCII characters (e.g. the `año` in this repository path), so bypass them for Jest runs.
 - Keep each commit buildable and passing the relevant tests when tests exist.
 - Run the narrowest relevant tests first, then `yarn build`; expand verification according to the change's blast radius.
 - Never claim a check passed unless its command actually completed successfully.

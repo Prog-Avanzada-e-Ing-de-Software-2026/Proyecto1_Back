@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   Index,
   JoinColumn,
 } from 'typeorm';
@@ -18,6 +19,8 @@ import { MonetarioColumn } from 'src/modules/common/decorators/monetario-column.
 import { CantidadColumn } from 'src/modules/common/decorators/cantidad-column.decorator';
 import { PorcentajeColumn } from 'src/modules/common/decorators/porcentaje-column.decorator';
 import { Proveedor } from 'src/modules/organizacion/proveedor/domain/entities/proveedor.entity';
+import { CambioPrecio } from './cambio-precio.entity';
+import { MotivoCambioPrecio } from '../../enums/motivo-cambio-precio.enum';
 
 @Entity('producto')
 export class Producto {
@@ -173,13 +176,22 @@ export class Producto {
   @Column({ type: 'text', nullable: true })
   codigoReferencia?: string | null;
 
+  // ========== CAMBIOS DE PRECIO ==========
+  @OneToMany(() => CambioPrecio, (cambioPrecio) => cambioPrecio.producto, {
+    cascade: ['insert'],
+  })
+  cambiosPrecio: CambioPrecio[];
+
   private validarValorAjuste(valor: number): void {
     if (!Number.isFinite(valor) || valor <= 0) {
       throw new Error('El valor del ajuste debe ser mayor que 0.');
     }
   }
 
-  private actualizarPrecioManteniendoMargen(nuevoPrecio: number): void {
+  private actualizarPrecioManteniendoMargen(
+    nuevoPrecio: number,
+    motivo: MotivoCambioPrecio,
+  ): void {
     if (!Number.isFinite(nuevoPrecio) || nuevoPrecio <= 0) {
       throw new Error('El precio final debe ser mayor que 0.');
     }
@@ -194,31 +206,90 @@ export class Producto {
       throw new Error('El costo final debe ser mayor que 0.');
     }
 
-    this.precio = Number(nuevoPrecio.toFixed(2));
     this.costo = Number(costoRecalculado.toFixed(2));
+    this.cambiarPrecio(nuevoPrecio, motivo);
   }
 
-  aumentarPrecioPorMonto(monto: number): void {
+  aumentarPrecioPorMonto(
+    monto: number,
+    motivo: MotivoCambioPrecio,
+  ): void {
     this.validarValorAjuste(monto);
     const nuevoPrecio = (this.precio ?? 0) + monto;
-    this.actualizarPrecioManteniendoMargen(nuevoPrecio);
+    this.actualizarPrecioManteniendoMargen(nuevoPrecio, motivo);
   }
 
-  disminuirPrecioPorMonto(monto: number): void {
+  disminuirPrecioPorMonto(
+    monto: number,
+    motivo: MotivoCambioPrecio,
+  ): void {
     this.validarValorAjuste(monto);
     const nuevoPrecio = (this.precio ?? 0) - monto;
-    this.actualizarPrecioManteniendoMargen(nuevoPrecio);
+    this.actualizarPrecioManteniendoMargen(nuevoPrecio, motivo);
   }
 
-  aumentarPrecioPorPorcentaje(porcentaje: number): void {
+  aumentarPrecioPorPorcentaje(
+    porcentaje: number,
+    motivo: MotivoCambioPrecio,
+  ): void {
     this.validarValorAjuste(porcentaje);
     const nuevoPrecio = (this.precio ?? 0) * (1 + porcentaje / 100);
-    this.actualizarPrecioManteniendoMargen(nuevoPrecio);
+    this.actualizarPrecioManteniendoMargen(nuevoPrecio, motivo);
   }
 
-  disminuirPrecioPorPorcentaje(porcentaje: number): void {
+  disminuirPrecioPorPorcentaje(
+    porcentaje: number,
+    motivo: MotivoCambioPrecio,
+  ): void {
     this.validarValorAjuste(porcentaje);
     const nuevoPrecio = (this.precio ?? 0) * (1 - porcentaje / 100);
-    this.actualizarPrecioManteniendoMargen(nuevoPrecio);
+    this.actualizarPrecioManteniendoMargen(nuevoPrecio, motivo);
+  }
+
+  obtenerUltimoCambioPrecio(): CambioPrecio | undefined {
+    if (!this.cambiosPrecio || this.cambiosPrecio.length === 0) {
+      return undefined;
+    }
+    const fechaActual = new Date();
+    return this.cambiosPrecio
+      .filter(
+        (cambio) => cambio.fecha.getTime() < fechaActual.getTime(),
+      )
+      .reduce(
+        (ultimo, cambio) =>
+          !ultimo || cambio.fecha.getTime() > ultimo.fecha.getTime()
+            ? cambio
+            : ultimo,
+        undefined as CambioPrecio | undefined,
+      );
+  }
+
+  cambiarPrecio(precioNuevo: number, motivo: MotivoCambioPrecio | undefined): void {
+    if (!motivo) {
+      throw new Error('El motivo del cambio de precio es obligatorio.');
+    }
+    if (!Number.isFinite(precioNuevo) || precioNuevo <= 0) {
+      throw new Error('El nuevo precio debe ser mayor que 0.');
+    }
+
+    const fecha = new Date();
+    const precioAnterior = this.precio ?? 0;
+    const ultimoCambio = this.obtenerUltimoCambioPrecio();
+    if (ultimoCambio && ultimoCambio.precioNuevo !== precioAnterior) {
+      throw new Error(
+        'El último cambio de precio no coincide con el precio actual del producto.',
+      );
+    }
+
+    const cambio = new CambioPrecio();
+    cambio.precioAnterior = precioAnterior;
+    cambio.precioNuevo = Number(precioNuevo.toFixed(2));
+    cambio.fecha = fecha;
+    cambio.motivo = motivo;
+    cambio.producto = this;
+
+    this.cambiosPrecio = this.cambiosPrecio ?? [];
+    this.cambiosPrecio.push(cambio);
+    this.precio = Number(precioNuevo.toFixed(2));
   }
 }
