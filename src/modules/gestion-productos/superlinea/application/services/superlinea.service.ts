@@ -75,7 +75,9 @@ export class SuperLineaService {
   async busquedaPorCoincidenciaParcial(
     denominacion: string,
   ): Promise<SelectOption[]> {
-    return this.repository.busquedaPorCoincidenciaParcial(denominacion);
+    const superLineas =
+      await this.repository.busquedaPorCoincidenciaParcial(denominacion);
+    return superLineas.map(SuperLineaMapper.toSelectOption);
   }
 
   async findDtoById(id: number): Promise<SuperLineaDto> {

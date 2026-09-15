@@ -112,7 +112,9 @@ export class LineaService {
   async busquedaPorCoincidenciaParcial(
     denominacion: string,
   ): Promise<SelectOption[]> {
-    return this.repository.busquedaPorCoincidenciaParcial(denominacion);
+    const lineas =
+      await this.repository.busquedaPorCoincidenciaParcial(denominacion);
+    return lineas.map(LineaMapper.toSelectOption);
   }
 
   async findByIdConAuditoria(id: number) {

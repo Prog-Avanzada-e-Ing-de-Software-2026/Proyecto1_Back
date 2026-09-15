@@ -149,15 +149,26 @@ describe('LineaService SuperLinea association', () => {
     );
   });
 
-  it('delegates selection search and returns the slim options from the repository', async () => {
-    const options: SelectOption[] = [
-      { codigo: 1, nombre: 'Harinas', descripcion: '' },
+  it('maps repository entities into the slim selection shape', async () => {
+    const expected: SelectOption[] = [
+      { codigo: 1, nombre: 'Harinas', descripcion: 'Harinas y derivados' },
     ];
-    repository.busquedaPorCoincidenciaParcial.mockResolvedValue(options);
+    repository.busquedaPorCoincidenciaParcial.mockResolvedValue([
+      Object.assign(line(), {
+        id: 1,
+        denominacion: 'Harinas',
+        observacion: 'Harinas y derivados',
+      }),
+    ]);
 
-    await expect(
-      service.busquedaPorCoincidenciaParcial('harina'),
-    ).resolves.toEqual(options);
+    const result = await service.busquedaPorCoincidenciaParcial('harina');
+
+    expect(result).toEqual(expected);
+    expect(Object.keys(result[0]).sort()).toEqual([
+      'codigo',
+      'descripcion',
+      'nombre',
+    ]);
     expect(repository.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith(
       'harina',
     );

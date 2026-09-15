@@ -149,7 +149,7 @@ export class ProductoController {
     description:
       'Productos activos que coinciden parcialmente por denominación',
   })
-  async searchByDenominacion(@Query() dto: PaginationWithDenominacionDto) {
+  async searchByPartialDenominacion(@Query() dto: PaginationWithDenominacionDto) {
     const { denominacion = '', skip, take } = dto;
     return this.service.busquedaPorCoincidenciaParcial(
       denominacion,

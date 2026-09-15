@@ -53,7 +53,7 @@ export class SuperLineaController {
   @ApiOkResponse({
     description: 'SuperLíneas activas que coinciden parcialmente por denominación',
   })
-  select(@Query() dto: SelectSuperLineaDto) {
+  searchForSelection(@Query() dto: SelectSuperLineaDto) {
     const { denominacion = '' } = dto;
     return this.service.busquedaPorCoincidenciaParcial(denominacion);
   }

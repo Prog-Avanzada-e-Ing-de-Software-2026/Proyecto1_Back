@@ -1,5 +1,4 @@
 import { DataSource } from 'typeorm';
-import { SelectOption } from 'src/modules/common/interface/select-option';
 import {
   createInitializedTestDataSource,
   createUnitOfWorkStub,
@@ -53,26 +52,25 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     return result.insertId as number;
   }
 
-  it('returns the slim SelectOption shape and matches case-insensitively', async () => {
+  it('returns matching entities and matches case-insensitively', async () => {
     const firstId = await createLinea('Alfa harina', 'obs A');
     await createLinea('HARINA mayus', 'obs B');
 
     const result = await adapter.busquedaPorCoincidenciaParcial('harina');
 
     expect(result).toHaveLength(2);
-    for (const option of result) {
-      expect(Object.keys(option).sort()).toEqual([
-        'codigo',
-        'descripcion',
-        'nombre',
-      ]);
+    for (const linea of result) {
+      expect(linea).toBeInstanceOf(Linea);
     }
-    const expected: SelectOption = {
-      codigo: firstId,
-      nombre: 'Alfa harina',
-      descripcion: 'obs A',
-    };
-    expect(result).toContainEqual(expected);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: firstId,
+          denominacion: 'Alfa harina',
+          observacion: 'obs A',
+        }),
+      ]),
+    );
   });
 
   it('is accent-sensitive', async () => {
@@ -81,7 +79,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
 
     const result = await adapter.busquedaPorCoincidenciaParcial('harina');
 
-    expect(result.map((option) => option.nombre)).toEqual(['Alfa harina']);
+    expect(result.map((linea) => linea.denominacion)).toEqual(['Alfa harina']);
   });
 
   it('matches an accented term against an accented denominación only', async () => {
@@ -90,7 +88,9 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
 
     const result = await adapter.busquedaPorCoincidenciaParcial('harína');
 
-    expect(result.map((option) => option.nombre)).toEqual(['harína premium']);
+    expect(result.map((linea) => linea.denominacion)).toEqual([
+      'harína premium',
+    ]);
   });
 
   it('returns an empty array when the term is not contained in any denominación', async () => {
@@ -112,7 +112,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
 
     const result = await adapter.busquedaPorCoincidenciaParcial('harina');
 
-    expect(result.map((option) => option.nombre)).toEqual(['Alfa harina']);
+    expect(result.map((linea) => linea.denominacion)).toEqual(['Alfa harina']);
   });
 
   it('orders results ascending by denominacion', async () => {
@@ -122,7 +122,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
 
     const result = await adapter.busquedaPorCoincidenciaParcial('harina');
 
-    expect(result.map((option) => option.nombre)).toEqual([
+    expect(result.map((linea) => linea.denominacion)).toEqual([
       'Alfa harina',
       'Beta harina',
       'Gamma harina',

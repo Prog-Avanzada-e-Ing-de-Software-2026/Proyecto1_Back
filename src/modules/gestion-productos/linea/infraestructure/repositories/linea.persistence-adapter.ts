@@ -15,8 +15,6 @@ import { FechaUtils } from 'src/modules/common/utils/date/fecha-utils';
 import { QueryBuilderHelper } from 'src/modules/common/query-builders/query-builder-helpers';
 import { BasePersistenceAdapter } from 'src/modules/common/persistence/base-persistence.adapter';
 import { handleDatabaseError } from 'src/modules/common/query-builders/database-error.helper';
-import { SelectOption } from 'src/modules/common/interface/select-option';
-import { LineaMapper } from '../../mappers/linea.mapper';
 import { SuperLinea } from '../../../superlinea/domain/entities/superlinea.entity';
 
 @Injectable()
@@ -255,7 +253,7 @@ export class LineaPersistenceAdapter
 
   async busquedaPorCoincidenciaParcial(
     denominacion: string,
-  ): Promise<SelectOption[]> {
+  ): Promise<Linea[]> {
     const termino = denominacion?.trim() ?? '';
     if (!termino) {
       return [];
@@ -271,8 +269,7 @@ export class LineaPersistenceAdapter
       );
       QueryBuilderHelper.applyOrder(query, this.ALIAS, 'denominacion', 'ASC');
 
-      const lineas = await query.getMany();
-      return lineas.map((linea) => LineaMapper.toSelectOption(linea));
+      return await query.getMany();
     } catch (error) {
       handleDatabaseError(this.logger, 'busquedaPorCoincidenciaParcial', error);
     }

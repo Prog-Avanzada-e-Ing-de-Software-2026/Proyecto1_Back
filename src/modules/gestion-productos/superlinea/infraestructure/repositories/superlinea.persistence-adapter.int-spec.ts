@@ -1,5 +1,4 @@
 import { DataSource } from 'typeorm';
-import { SelectOption } from 'src/modules/common/interface/select-option';
 import {
   createInitializedTestDataSource,
   createUnitOfWorkStub,
@@ -43,26 +42,25 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     return result.insertId as number;
   }
 
-  it('returns the slim SelectOption shape and matches case-insensitively', async () => {
+  it('returns matching entities and matches case-insensitively', async () => {
     const firstId = await createSuperLinea('Alfa linea', 'obs A');
     await createSuperLinea('LINEA mayus', 'obs B');
 
     const result = await adapter.busquedaPorCoincidenciaParcial('linea');
 
     expect(result).toHaveLength(2);
-    for (const option of result) {
-      expect(Object.keys(option).sort()).toEqual([
-        'codigo',
-        'descripcion',
-        'nombre',
-      ]);
+    for (const superLinea of result) {
+      expect(superLinea).toBeInstanceOf(SuperLinea);
     }
-    const expected: SelectOption = {
-      codigo: firstId,
-      nombre: 'Alfa linea',
-      descripcion: 'obs A',
-    };
-    expect(result).toContainEqual(expected);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: firstId,
+          denominacion: 'Alfa linea',
+          observacion: 'obs A',
+        }),
+      ]),
+    );
   });
 
   it('is accent-sensitive', async () => {
@@ -71,7 +69,9 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
 
     const result = await adapter.busquedaPorCoincidenciaParcial('linea');
 
-    expect(result.map((option) => option.nombre)).toEqual(['Alfa linea']);
+    expect(result.map((superLinea) => superLinea.denominacion)).toEqual([
+      'Alfa linea',
+    ]);
   });
 
   it('matches an accented term against an accented denominación only', async () => {
@@ -80,7 +80,9 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
 
     const result = await adapter.busquedaPorCoincidenciaParcial('línea');
 
-    expect(result.map((option) => option.nombre)).toEqual(['línea premium']);
+    expect(result.map((superLinea) => superLinea.denominacion)).toEqual([
+      'línea premium',
+    ]);
   });
 
   it('returns an empty array when the term is not contained in any denominación', async () => {
@@ -102,7 +104,9 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
 
     const result = await adapter.busquedaPorCoincidenciaParcial('linea');
 
-    expect(result.map((option) => option.nombre)).toEqual(['Alfa linea']);
+    expect(result.map((superLinea) => superLinea.denominacion)).toEqual([
+      'Alfa linea',
+    ]);
   });
 
   it('orders results ascending by denominacion', async () => {
@@ -112,7 +116,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
 
     const result = await adapter.busquedaPorCoincidenciaParcial('linea');
 
-    expect(result.map((option) => option.nombre)).toEqual([
+    expect(result.map((superLinea) => superLinea.denominacion)).toEqual([
       'Alfa linea',
       'Beta linea',
       'Gamma linea',

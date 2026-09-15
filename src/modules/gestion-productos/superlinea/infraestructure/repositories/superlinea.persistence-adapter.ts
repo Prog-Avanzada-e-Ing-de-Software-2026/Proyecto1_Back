@@ -7,14 +7,12 @@ import { handleDatabaseError } from 'src/modules/common/query-builders/database-
 import { IUnitOfWork } from 'src/modules/common/unit-of-work/iunit-of-work.';
 import { FechaUtils } from 'src/modules/common/utils/date/fecha-utils';
 import { AuditoriaDto } from 'src/modules/gestion-sistema/auditoria/dto/auditoria.dto';
-import { SelectOption } from 'src/modules/common/interface/select-option';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
 import { DataSource, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
 import { SuperLinea } from '../../domain/entities/superlinea.entity';
 import { ISuperLineaRepository } from '../../domain/interfaces/superlinea.repository.interface';
 import { CreateSuperLineaDto } from '../../dto/create-superlinea.dto';
 import { UpdateSuperLineaDto } from '../../dto/update-superlinea.dto';
-import { SuperLineaMapper } from '../../mappers/superlinea.mapper';
 import {
   ISuperLineaSearchQuery
 } from 'src/modules/gestion-productos/superlinea/domain/interfaces/superlinea.search-query.interface';
@@ -109,7 +107,9 @@ export class SuperLineaPersistenceAdapter
     }
   }
 
-  async busquedaPorCoincidenciaParcial(denominacion: string): Promise<SelectOption[]> {
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+  ): Promise<SuperLinea[]> {
     const termino = denominacion?.trim() ?? '';
     if (!termino) {
       return [];
@@ -125,8 +125,7 @@ export class SuperLineaPersistenceAdapter
       );
       QueryBuilderHelper.applyOrder(query, this.ALIAS, 'denominacion', 'ASC');
 
-      const superLineas = await query.getMany();
-      return superLineas.map((sl) => SuperLineaMapper.toSelectOption(sl));
+      return await query.getMany();
     } catch (error) {
       handleDatabaseError(this.logger, 'busquedaPorCoincidenciaParcial', error);
     }

@@ -65,7 +65,7 @@ export class LineaController {
   @ApiOkResponse({
     description: 'Líneas activas que coinciden parcialmente por denominación',
   })
-  select(@Query() dto: SelectLineaDto) {
+  searchForSelection(@Query() dto: SelectLineaDto) {
     const { denominacion = '' } = dto;
     return this.service.busquedaPorCoincidenciaParcial(denominacion);
   }
