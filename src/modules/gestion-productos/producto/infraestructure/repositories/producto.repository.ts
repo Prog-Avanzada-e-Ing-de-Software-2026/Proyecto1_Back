@@ -10,6 +10,7 @@ import { DatabaseConnectionException } from 'src/modules/common/exceptions/datab
 import { IUnitOfWork } from 'src/modules/common/unit-of-work/iunit-of-work.';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
 import { UpdatePrecioDto } from '../../dto/update-precio.dto';
+import { CambioPrecio } from '../../domain/entities/cambio-precio.entity';
 
 @Injectable()
 export class ProductoRepository implements IProductoRepository {
@@ -81,6 +82,7 @@ export class ProductoRepository implements IProductoRepository {
     conStock: boolean,
     skip: number,
     take: number,
+    incluirCambiosPrecio?: boolean,
   ): Promise<{ data: Producto[]; total: number }> {
     return this.persistenceService.findBy(
       denominacion,
@@ -93,6 +95,7 @@ export class ProductoRepository implements IProductoRepository {
       conStock,
       skip,
       take,
+      incluirCambiosPrecio,
     );
   }
 
@@ -141,6 +144,14 @@ export class ProductoRepository implements IProductoRepository {
     usuario: Usuario,
   ): Promise<Producto[]> {
     return this.persistenceService.actualizarPrecios(productos, usuario);
+  }
+
+  async findHistorialPrecios(
+    id: number,
+    skip: number,
+    take: number,
+  ): Promise<CambioPrecio[]> {
+    return this.persistenceService.findHistorialPrecios(id, skip, take);
   }
 
   async findByDenominacion(denominacion: string): Promise<Producto | null> {
