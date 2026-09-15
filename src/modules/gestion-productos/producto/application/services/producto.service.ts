@@ -400,6 +400,7 @@ export class ProductoService {
       denominacion: dto.denominacion,
       marcaId: dto.marcaId,
       lineaId: dto.lineaId,
+      presentacionId: dto.presentacionId,
       alicuotaIva: dto.alicuotaIva,
     });
 
@@ -463,8 +464,8 @@ export class ProductoService {
       denominacion: dto.denominacion ?? productoActual.denominacion,
       marcaId: dto.marcaId ?? productoActual.marcaId,
       lineaId: dto.lineaId ?? productoActual.lineaId,
+      presentacionId: dto.presentacionId ?? productoActual.presentacionId,
       alicuotaIva: dto.alicuotaIva ?? productoActual.alicuotaIva,
-
     });
 
     // Validar unicidad (excluyendo el ID actual)
