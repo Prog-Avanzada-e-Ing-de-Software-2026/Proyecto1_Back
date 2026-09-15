@@ -14,6 +14,7 @@ import { CreateProductoDto } from '../../dto/create-producto.dto';
 import { UpdatePrecioDto } from '../../dto/update-precio.dto';
 import { UpdateProductoDto } from '../../dto/update-producto.dto';
 import { ProductoMapper } from '../../mappers/producto.mapper';
+import { QueryBuilderHelper } from 'src/modules/common/query-builders/query-builder-helpers';
 
 
 @Injectable()
@@ -437,6 +438,72 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
       query.andWhere('producto.deletedAt IS NULL');
       query.orderBy('producto.denominacion', 'ASC');
       // Paginación
+      query.skip(skip).take(take);
+
+      const [data, total] = await query.getManyAndCount();
+
+      return { data, total };
+    } catch (error) {
+      throw new DatabaseConnectionException(
+        'Error al conectar con la base de datos.',
+      );
+    }
+  }
+
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    const termino = denominacion?.trim() ?? '';
+    if (!termino) {
+      return { data: [], total: 0 };
+    }
+
+    try {
+      const query = this.repository
+        .createQueryBuilder('producto')
+        .leftJoinAndSelect('producto.marca', 'marca')
+        .leftJoinAndSelect('producto.linea', 'linea')
+        .where('producto.deletedAt IS NULL');
+
+      QueryBuilderHelper.applyPartialCoincidence(
+        query,
+        'producto',
+        'denominacion',
+        termino,
+      );
+
+      query.orderBy('producto.denominacion', 'ASC');
+      query.skip(skip).take(take);
+
+      const [data, total] = await query.getManyAndCount();
+
+      return { data, total };
+    } catch (error) {
+      throw new DatabaseConnectionException(
+        'Error al conectar con la base de datos.',
+      );
+    }
+  }
+
+  async findProductosBySuperLinea(
+    superLineaId: number,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    try {
+      const query = this.repository
+        .createQueryBuilder('producto')
+        .leftJoinAndSelect('producto.marca', 'marca')
+        .leftJoinAndSelect('producto.linea', 'linea')
+        .leftJoinAndSelect('linea.superLinea', 'superLinea')
+        .where('superLinea.id = :superLineaId', { superLineaId })
+        .andWhere('producto.deletedAt IS NULL')
+        .andWhere('linea.deletedAt IS NULL')
+        .andWhere('superLinea.deletedAt IS NULL');
+
+      query.orderBy('producto.denominacion', 'ASC');
       query.skip(skip).take(take);
 
       const [data, total] = await query.getManyAndCount();

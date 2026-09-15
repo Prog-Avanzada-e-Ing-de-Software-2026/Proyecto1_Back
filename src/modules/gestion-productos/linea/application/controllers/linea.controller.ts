@@ -25,6 +25,7 @@ import { LineaService } from '../services/linea.service';
 import { CreateLineaDto } from '../../dto/create-linea.dto';
 import { LineaDto } from '../../dto/linea.dto';
 import { UpdateLineaDto } from '../../dto/update-linea.dto';
+import { SelectLineaDto } from '../../dto/select-linea.dto';
 
 @ApiTags('Gestion Productos')
 @Controller('linea')
@@ -57,6 +58,16 @@ export class LineaController {
       take,
       incluirEliminados,
     );
+  }
+
+  @Get('select')
+  @Roles('Root', 'Administrador', 'Empleado')
+  @ApiOkResponse({
+    description: 'Líneas activas que coinciden parcialmente por denominación',
+  })
+  searchForSelection(@Query() dto: SelectLineaDto) {
+    const { denominacion = '' } = dto;
+    return this.service.busquedaPorCoincidenciaParcial(denominacion);
   }
 
   @Get(':id')

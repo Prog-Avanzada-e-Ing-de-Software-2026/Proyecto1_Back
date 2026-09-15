@@ -50,9 +50,12 @@ export class SuperLineaController {
 
   @Get('select')
   @Roles('Root', 'Administrador', 'Empleado')
-  @UsePipes(NormalizeDenominacionSearchPipe)
-  select(@Query() dto: SelectSuperLineaDto) {
-    return this.service.findAllFor(dto.denominacion ?? '');
+  @ApiOkResponse({
+    description: 'SuperLíneas activas que coinciden parcialmente por denominación',
+  })
+  searchForSelection(@Query() dto: SelectSuperLineaDto) {
+    const { denominacion = '' } = dto;
+    return this.service.busquedaPorCoincidenciaParcial(denominacion);
   }
 
   @Get(':id/audit')

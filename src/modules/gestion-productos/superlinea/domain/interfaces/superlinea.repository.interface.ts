@@ -16,6 +16,7 @@ export interface ISuperLineaRepository {
   ): Promise<SuperLinea | null>;
   findBy(query: ISuperLineaSearchQuery): Promise<{ data: SuperLinea[]; total: number }>;
   findAllFor(denominacion: string): Promise<SuperLinea[]>;
+  busquedaPorCoincidenciaParcial(denominacion: string): Promise<SuperLinea[]>;
   findByIdConAuditoria(id: number): Promise<AuditoriaDto | null>;
   remove(data: SuperLinea, usuario: Usuario): Promise<SuperLinea>;
 }

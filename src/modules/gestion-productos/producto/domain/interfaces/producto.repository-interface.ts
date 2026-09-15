@@ -71,6 +71,18 @@ export interface IProductoRepository {
     take: number,
   ): Promise<{ data: Producto[]; total: number }>;
 
+  busquedaPorCoincidenciaParcial(
+    denominacion: string,
+    skip: number,
+    take: number,
+  ): Promise<{ data: Producto[]; total: number }>;
+
+  findProductosBySuperLinea(
+    superLineaId: number,
+    skip: number,
+    take: number,
+  ): Promise<{ data: Producto[]; total: number }>;
+
   existsByDenominacion(
     denominacion: string,
     excludeId?: number,
