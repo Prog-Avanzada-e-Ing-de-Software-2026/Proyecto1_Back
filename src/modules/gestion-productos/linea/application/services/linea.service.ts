@@ -19,6 +19,7 @@ import { LineaMapper } from '../../mappers/linea.mapper';
 import { PoliticaEliminacionLinea } from '../../domain/services/politica-eliminacion-linea.service';
 import { Linea } from '../../domain/entities/linea.entity';
 import { ISuperLineaRepository } from '../../../superlinea/domain/interfaces/superlinea.repository.interface';
+import { SuperLinea } from 'src/modules/gestion-productos/superlinea/domain/entities/superlinea.entity';
 
 @Injectable()
 export class LineaService {
@@ -107,6 +108,10 @@ export class LineaService {
       data,
       total: 1,
     };
+  }
+
+  async findAllForSuperLineas(denominacion: string): Promise<SuperLinea[]> {
+    return await this.superLineaRepository.findAllFor(denominacion);
   }
 
   async busquedaPorCoincidenciaParcial(

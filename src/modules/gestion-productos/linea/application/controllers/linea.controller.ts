@@ -78,6 +78,14 @@ export class LineaController {
     return this.service.findDtoById(+id);
   }
 
+  @Get('find-all-for-superlinea/select')
+  @Roles('Root', 'Administrador', 'Empleado')
+  @UsePipes(NormalizeDenominacionSearchPipe)
+  findAllForSuperLineas(@Query() dto: SelectLineaDto) {
+    const { denominacion = '' } = dto;
+    return this.service.findAllForSuperLineas(denominacion);
+  }
+
   @Put(':id')
   @Roles('Root', 'Administrador', 'Empleado')
   @UsePipes(NormalizeDenominacionPipe)
