@@ -107,6 +107,30 @@ export class SuperLineaPersistenceAdapter
     }
   }
 
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+  ): Promise<SuperLinea[]> {
+    const termino = denominacion?.trim() ?? '';
+    if (!termino) {
+      return [];
+    }
+
+    try {
+      const query = this.baseQuery();
+      QueryBuilderHelper.applyPartialCoincidence(
+        query,
+        this.ALIAS,
+        'denominacion',
+        termino,
+      );
+      QueryBuilderHelper.applyOrder(query, this.ALIAS, 'denominacion', 'ASC');
+
+      return await query.getMany();
+    } catch (error) {
+      handleDatabaseError(this.logger, 'busquedaPorCoincidenciaParcial', error);
+    }
+  }
+
   async findByIdConAuditoria(id: number): Promise<AuditoriaDto | null> {
     try {
       const raw = await this.repository

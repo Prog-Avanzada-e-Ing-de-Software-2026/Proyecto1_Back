@@ -1,8 +1,6 @@
-import { config } from 'dotenv';
 import { DataSource } from 'typeorm';
 import { AddSuperLineaToLinea1789091969000 } from './1789091969000-AddSuperLineaToLinea';
-
-config({ path: '.env' });
+import { readConnectionFile } from '../../test/integration/test-datasource';
 
 describe('AddSuperLineaToLinea1789091969000 migration', () => {
   const databaseName = `cr003_migration_${process.pid}`;
@@ -160,12 +158,15 @@ describe('AddSuperLineaToLinea1789091969000 migration', () => {
   }
 
   function createDataSource(database?: string): DataSource {
+    const connection = readConnectionFile();
+    // This spec creates and drops its own throwaway database, which the
+    // container's application user cannot do; root is provided by the harness.
     return new DataSource({
       type: 'mysql',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT ?? 3306),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
+      host: connection.host,
+      port: connection.port,
+      username: connection.rootUsername,
+      password: connection.rootPassword,
       database,
       logging: false,
     });

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthService } from './application/services/auth.service';
 import { AuthController } from './application/controllers/auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, type JwtSignOptions } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsuarioModule } from '../usuario/usuario.module';
@@ -19,7 +19,7 @@ import { RolModule } from '../rol/rol.module';
     inject: [ConfigService],
     useFactory: async (configService: ConfigService) => ({
       secret: configService.get<string>('JWT_SECRET'),
-      signOptions: { expiresIn: configService.get<string>('JWT_EXPIRATION_ACCESS') }, // Valor por defecto
+      signOptions: { expiresIn: configService.get<JwtSignOptions['expiresIn']>('JWT_EXPIRATION_ACCESS') }, // Valor por defecto
     }),
   }),
   UsuarioModule,

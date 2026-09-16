@@ -28,4 +28,16 @@ export class QueryBuilderHelper {
   ): SelectQueryBuilder<T> {
     return query.orderBy(`${alias}.${campo}`, orden);
   }
+
+  static applyPartialCoincidence<T extends ObjectLiteral>(
+    query: SelectQueryBuilder<T>,
+    alias: string,
+    campo: string,
+    termino: string,
+  ): SelectQueryBuilder<T> {
+    return query.andWhere(
+      `LOWER(${alias}.${campo}) COLLATE utf8mb4_bin LIKE CONCAT('%', LOWER(:termino), '%') COLLATE utf8mb4_bin`,
+      { termino },
+    );
+  }
 }

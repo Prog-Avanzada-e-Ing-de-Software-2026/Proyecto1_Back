@@ -1,7 +1,9 @@
 import { NotFoundException } from '@nestjs/common';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { ILineaRepository } from '../../domain/interfaces/linea.repository.interface';
 import { Linea } from '../../domain/entities/linea.entity';
 import { SuperLinea } from '../../../superlinea/domain/entities/superlinea.entity';
+import { LineaMapper } from '../../mappers/linea.mapper';
 import { LineaService } from './linea.service';
 
 describe('LineaService SuperLinea association', () => {
@@ -37,6 +39,7 @@ describe('LineaService SuperLinea association', () => {
       findByDenominacionWith: jest.fn(),
       findByDenominacionFiltered: jest.fn(),
       findByIdConAuditoria: jest.fn(),
+      busquedaPorCoincidenciaParcial: jest.fn(),
       remove: jest.fn(),
     };
     superLineaRepository = { findOne: jest.fn() };
@@ -144,5 +147,60 @@ describe('LineaService SuperLinea association', () => {
     await expect(service.findAllFor('')).resolves.toEqual(
       expect.objectContaining({ data: [expect.objectContaining({ superLinea: expected })] }),
     );
+  });
+
+  it('maps repository entities into the slim selection shape', async () => {
+    const expected: SelectOption[] = [
+      { codigo: 1, nombre: 'Harinas', descripcion: 'Harinas y derivados' },
+    ];
+    repository.busquedaPorCoincidenciaParcial.mockResolvedValue([
+      Object.assign(line(), {
+        id: 1,
+        denominacion: 'Harinas',
+        observacion: 'Harinas y derivados',
+      }),
+    ]);
+
+    const result = await service.busquedaPorCoincidenciaParcial('harina');
+
+    expect(result).toEqual(expected);
+    expect(Object.keys(result[0]).sort()).toEqual([
+      'codigo',
+      'descripcion',
+      'nombre',
+    ]);
+    expect(repository.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith(
+      'harina',
+    );
+  });
+});
+
+describe('LineaMapper.toSelectOption', () => {
+  it('maps a Línea to the slim selection shape (codigo/nombre/descripcion)', () => {
+    const entity = Object.assign(new Linea(), {
+      id: 7,
+      denominacion: 'Harinas',
+      observacion: 'Harinas y derivados',
+    });
+
+    expect(LineaMapper.toSelectOption(entity)).toEqual({
+      codigo: 7,
+      nombre: 'Harinas',
+      descripcion: 'Harinas y derivados',
+    });
+  });
+
+  it('coalesces a null observacion into an empty description', () => {
+    const entity = Object.assign(new Linea(), {
+      id: 8,
+      denominacion: 'Harinas',
+      observacion: undefined,
+    });
+
+    expect(LineaMapper.toSelectOption(entity)).toEqual({
+      codigo: 8,
+      nombre: 'Harinas',
+      descripcion: '',
+    });
   });
 });
