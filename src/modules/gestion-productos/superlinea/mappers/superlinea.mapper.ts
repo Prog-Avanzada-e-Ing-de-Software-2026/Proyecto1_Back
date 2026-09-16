@@ -1,5 +1,6 @@
 import { SuperLinea } from '../domain/entities/superlinea.entity';
 import { SuperLineaDto } from '../dto/superlinea.dto';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { PaginationWithDenominacionDto } from 'src/modules/common/dto/busquedas/pagination-with-denominacion.dto';
 import {
   ISuperLineaSearchQuery
@@ -12,6 +13,14 @@ export class SuperLineaMapper {
       denominacion: entity.denominacion,
       observacion: entity.observacion ?? '',
       deletedAt: entity.deletedAt?.toISOString() ?? null,
+    };
+  }
+
+  static toSelectOption(entity: SuperLinea): SelectOption {
+    return {
+      codigo: entity.id,
+      nombre: entity.denominacion,
+      descripcion: entity.observacion ?? '',
     };
   }
 

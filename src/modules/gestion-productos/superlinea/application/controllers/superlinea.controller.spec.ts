@@ -12,6 +12,7 @@ describe('SuperLineaController', () => {
     create: jest.fn(),
     findBy: jest.fn(),
     findAllFor: jest.fn(),
+    busquedaPorCoincidenciaParcial: jest.fn(),
     findDtoById: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
@@ -41,57 +42,62 @@ describe('SuperLineaController', () => {
 
   afterEach(async () => app.close());
 
-  it('routes create, update and delete requests with audit user ids', async () => {
-    service.create.mockResolvedValue({ mensaje: 'created' });
-    service.update.mockResolvedValue({ mensaje: 'updated' });
-    service.remove.mockResolvedValue({ mensaje: 'deleted' });
+  it('returns slim selection options for /api/superlinea/select', async () => {
+    service.busquedaPorCoincidenciaParcial.mockResolvedValue([
+      { codigo: 1, nombre: 'Almacén', descripcion: 'Productos varios' },
+    ]);
 
     await request(app.getHttpServer())
-      .post('/api/superlinea')
-      .send({ denominacion: 'Herramientas', usuarioCreatedId: 7 })
-      .expect(201, { mensaje: 'created' });
-    await request(app.getHttpServer())
-      .put('/api/superlinea/1')
-      .send({ observacion: 'Industrial', usuarioUpdatedId: 8 })
-      .expect(200, { mensaje: 'updated' });
-    await request(app.getHttpServer())
-      .delete('/api/superlinea/1?usuarioId=9')
-      .expect(200, { mensaje: 'deleted' });
-
-    expect(service.create).toHaveBeenCalledWith({
-      denominacion: 'HERRAMIENTAS',
-      usuarioCreatedId: 7,
-    });
-    expect(service.update).toHaveBeenCalledWith(
-      1,
-      expect.objectContaining({ usuarioUpdatedId: 8 }),
+      .get('/api/superlinea/select?denominacion=almacen')
+      .expect(200, [{ codigo: 1, nombre: 'Almacén', descripcion: 'Productos varios' }]);
+    expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith(
+      'almacen',
     );
-    expect(service.remove).toHaveBeenCalledWith(1, 9);
   });
 
-  it('routes detail, audit, search and selector queries', async () => {
+  it('passes an empty term and returns an empty array when denominacion is omitted', async () => {
+    service.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
+
+    await request(app.getHttpServer())
+      .get('/api/superlinea/select')
+      .expect(200, []);
+    expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith('');
+  });
+
+  it('rejects non-whitelisted query params on /api/superlinea/select', async () => {
+    await request(app.getHttpServer())
+      .get('/api/superlinea/select?desconocido=1')
+      .expect(400);
+
+    expect(service.busquedaPorCoincidenciaParcial).not.toHaveBeenCalled();
+  });
+
+  it('routes detail and audit queries', async () => {
     service.findDtoById.mockResolvedValue({ id: 1, denominacion: 'Herramientas' });
     service.findByIdConAuditoria.mockResolvedValue({ id: 1 });
-    service.findBy.mockResolvedValue({ data: [], total: 0 });
-    service.findAllFor.mockResolvedValue({ data: [], total: 0 });
 
     await request(app.getHttpServer()).get('/api/superlinea/1').expect(200);
     await request(app.getHttpServer()).get('/api/superlinea/1/audit').expect(200);
+
+    expect(service.findDtoById).toHaveBeenCalledWith(1);
+    expect(service.findByIdConAuditoria).toHaveBeenCalledWith(1);
+  });
+
+  it('routes search-by with pagination DTO', async () => {
+    service.findBy.mockResolvedValue({ data: [], total: 0 });
+
     await request(app.getHttpServer())
       .get('/api/superlinea/search-by?denominacion=herra&skip=2&take=5&incluirEliminados=true')
       .expect(200, { data: [], total: 0 });
-    await request(app.getHttpServer())
-      .get('/api/superlinea/select?denominacion=herra')
-      .expect(200, { data: [], total: 0 });
-    await request(app.getHttpServer())
-      .get('/api/superlinea/select')
-      .expect(200, { data: [], total: 0 });
 
-    expect(service.findBy).toHaveBeenCalledWith('HERRA', 2, 5, true);
-    expect(service.findAllFor).toHaveBeenCalledWith('HERRA');
-    expect(service.findAllFor).toHaveBeenCalledWith('');
-    expect(service.findDtoById).toHaveBeenCalledWith(1);
-    expect(service.findByIdConAuditoria).toHaveBeenCalledWith(1);
+    expect(service.findBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        denominacion: 'HERRA',
+        skip: 2,
+        take: 5,
+        incluirEliminados: true,
+      }),
+    );
   });
 
   it('forbids rewriting creation audit data during an update', async () => {

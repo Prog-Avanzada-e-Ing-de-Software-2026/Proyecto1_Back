@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { MessageFrontUtils } from 'src/modules/common/utils/message/message-front.util';
 import { UsuarioService } from 'src/modules/gestion-usuario/usuario/application/services/usuario.service';
 import { ISuperLineaRepository } from '../../domain/interfaces/superlinea.repository.interface';
@@ -69,6 +70,14 @@ export class SuperLineaService {
     const entities = await this.repository.findAllFor(denominacion);
     const data = entities.map(SuperLineaMapper.toDto);
     return { data, total: data.length };
+  }
+
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+  ): Promise<SelectOption[]> {
+    const superLineas =
+      await this.repository.busquedaPorCoincidenciaParcial(denominacion);
+    return superLineas.map(SuperLineaMapper.toSelectOption);
   }
 
   async findDtoById(id: number): Promise<SuperLineaDto> {

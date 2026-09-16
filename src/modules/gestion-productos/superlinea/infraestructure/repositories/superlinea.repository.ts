@@ -38,6 +38,10 @@ export class SuperLineaRepository implements ISuperLineaRepository {
     return this.persistence.findAllFor(denominacion);
   }
 
+  busquedaPorCoincidenciaParcial(denominacion: string): Promise<SuperLinea[]> {
+    return this.persistence.busquedaPorCoincidenciaParcial(denominacion);
+  }
+
   findByIdConAuditoria(id: number): Promise<AuditoriaDto | null> {
     return this.persistence.findByIdConAuditoria(id);
   }

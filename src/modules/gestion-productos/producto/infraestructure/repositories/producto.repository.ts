@@ -11,6 +11,7 @@ import { DatabaseConnectionException } from 'src/modules/common/exceptions/datab
 import { IUnitOfWork } from 'src/modules/common/unit-of-work/iunit-of-work.';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
 import { UpdatePrecioDto } from '../../dto/update-precio.dto';
+import { CambioPrecio } from '../../domain/entities/cambio-precio.entity';
 
 @Injectable()
 export class ProductoRepository implements IProductoRepository {
@@ -84,6 +85,7 @@ export class ProductoRepository implements IProductoRepository {
     conStock: boolean,
     skip: number,
     take: number,
+    incluirCambiosPrecio?: boolean,
   ): Promise<{ data: Producto[]; total: number }> {
     return this.persistenceService.findBy(
       denominacion,
@@ -96,6 +98,7 @@ export class ProductoRepository implements IProductoRepository {
       conStock,
       skip,
       take,
+      incluirCambiosPrecio,
     );
   }
 
@@ -146,6 +149,14 @@ export class ProductoRepository implements IProductoRepository {
     return this.persistenceService.actualizarPrecios(productos, usuario);
   }
 
+  async findHistorialPrecios(
+    id: number,
+    skip: number,
+    take: number,
+  ): Promise<CambioPrecio[]> {
+    return this.persistenceService.findHistorialPrecios(id, skip, take);
+  }
+
   async findByDenominacion(denominacion: string): Promise<Producto | null> {
     const entity =
       await this.persistenceService.findByDenominacion(denominacion);
@@ -166,6 +177,30 @@ export class ProductoRepository implements IProductoRepository {
     this.logger.log(`Buscando o ${denominacion}  skip=${skip}, take=${take}`);
     return this.persistenceService.findByDenominacionCodigoProveedorFiltered(
       denominacion,
+      skip,
+      take,
+    );
+  }
+
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    return this.persistenceService.busquedaPorCoincidenciaParcial(
+      denominacion,
+      skip,
+      take,
+    );
+  }
+
+  async findProductosBySuperLinea(
+    superLineaId: number,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    return this.persistenceService.findProductosBySuperLinea(
+      superLineaId,
       skip,
       take,
     );

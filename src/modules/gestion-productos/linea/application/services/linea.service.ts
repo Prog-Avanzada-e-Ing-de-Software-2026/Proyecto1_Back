@@ -10,6 +10,7 @@ import { UsuarioService } from 'src/modules/gestion-usuario/usuario/application/
 import { ensureNotSistemaEntity } from 'src/modules/common/utils/atrituto-sistema';
 import { PaginacionUtils } from 'src/modules/common/utils/pagination/paginacion-utils';
 import { MessageFrontUtils } from 'src/modules/common/utils/message/message-front.util';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { ILineaRepository } from '../../domain/interfaces/linea.repository.interface';
 import { CreateLineaDto } from '../../dto/create-linea.dto';
 import { UpdateLineaDto } from '../../dto/update-linea.dto';
@@ -18,6 +19,7 @@ import { LineaMapper } from '../../mappers/linea.mapper';
 import { PoliticaEliminacionLinea } from '../../domain/services/politica-eliminacion-linea.service';
 import { Linea } from '../../domain/entities/linea.entity';
 import { ISuperLineaRepository } from '../../../superlinea/domain/interfaces/superlinea.repository.interface';
+import { SuperLinea } from 'src/modules/gestion-productos/superlinea/domain/entities/superlinea.entity';
 
 @Injectable()
 export class LineaService {
@@ -106,6 +108,18 @@ export class LineaService {
       data,
       total: 1,
     };
+  }
+
+  async findAllForSuperLineas(denominacion: string): Promise<SuperLinea[]> {
+    return await this.superLineaRepository.findAllFor(denominacion);
+  }
+
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+  ): Promise<SelectOption[]> {
+    const lineas =
+      await this.repository.busquedaPorCoincidenciaParcial(denominacion);
+    return lineas.map(LineaMapper.toSelectOption);
   }
 
   async findByIdConAuditoria(id: number) {

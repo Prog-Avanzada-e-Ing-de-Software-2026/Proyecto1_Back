@@ -15,6 +15,9 @@ import { CreateProductoDto } from '../../dto/create-producto.dto';
 import { UpdatePrecioDto } from '../../dto/update-precio.dto';
 import { UpdateProductoDto } from '../../dto/update-producto.dto';
 import { ProductoMapper } from '../../mappers/producto.mapper';
+import { QueryBuilderHelper } from 'src/modules/common/query-builders/query-builder-helpers';
+import { CambioPrecio } from '../../domain/entities/cambio-precio.entity';
+import { MotivoCambioPrecio } from '../../enums/motivo-cambio-precio.enum';
 
 
 @Injectable()
@@ -26,6 +29,8 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
   constructor(
     @InjectRepository(Producto)
     private readonly repository: Repository<Producto>,
+    @InjectRepository(CambioPrecio)
+    private readonly cambioPrecioRepository: Repository<CambioPrecio>,
     private readonly dataSource: DataSource,
     @Inject('UnitOfWork') public readonly uow: IUnitOfWork,
   ) { }
@@ -88,6 +93,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         .leftJoinAndSelect('producto.linea', 'linea')
         .leftJoinAndSelect('producto.marca', 'marca')
         .innerJoinAndSelect('producto.presentacion', 'presentacion')
+        .leftJoinAndSelect('producto.cambiosPrecio', 'cambiosPrecio')
         .where('producto.id = :id', { id })
         .andWhere('producto.deletedAt IS NULL')
         .getOne();
@@ -182,18 +188,24 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         presentacionId: _presentacionId,
         ...dataSinPresentacionId
       } = data;
+      const { precio, ...dataSinItems } = data;
 
       Object.assign(entity, dataSinPresentacionId, {
         linea,
         marca,
       });
 
+      if (precio !== undefined && precio !== entity.precio) {
+        entity.cambiarPrecio(precio, MotivoCambioPrecio.ActualizacionDePrecioDirecta);
+      }
+
+      entity.usuarioUpdated = usuario;
       if (presentacion) {
         entity.presentacion = presentacion;
         entity.presentacionId = presentacion.id;
       }
 
-      entity.usuarioUpdated = usuario; 
+      entity.usuarioUpdated = usuario;
       const entityActualizada = await repo.save(entity);
 
 
@@ -240,6 +252,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
     conStock: boolean,
     skip: number,
     take: number,
+    incluirCambiosPrecio = false,
   ): Promise<{ data: Producto[]; total: number }> {
     this.logger.warn(`llega`);
     const query = this.repository
@@ -247,6 +260,10 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
       .leftJoinAndSelect('producto.marca', 'marca')
       .leftJoinAndSelect('producto.linea', 'linea')
       .innerJoinAndSelect('producto.presentacion', 'presentacion')
+
+    if (incluirCambiosPrecio) {
+      query.leftJoinAndSelect('producto.cambiosPrecio', 'cambiosPrecio');
+    }
 
     if (denominacion || codigoProveedor || codigoReferencia) {
       const condiciones: string[] = [];
@@ -414,6 +431,28 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
     return productos;
   }
 
+  async findHistorialPrecios(
+    id: number,
+    skip: number,
+    take: number,
+  ): Promise<CambioPrecio[]> {
+    try {
+      return await this.cambioPrecioRepository
+        .createQueryBuilder('cambioPrecio')
+        .innerJoin('cambioPrecio.producto', 'producto')
+        .where('producto.id = :id', { id })
+        .orderBy('cambioPrecio.fecha', 'DESC')
+        .addOrderBy('cambioPrecio.id', 'DESC')
+        .skip(skip)
+        .take(take)
+        .getMany();
+    } catch (error) {
+      throw new DatabaseConnectionException(
+        'Error al conectar con la base de datos.',
+      );
+    }
+  }
+
   async findByDenominacion(denominacion: string): Promise<Producto | null> {
     try {
       const entity = await this.repository.findOne({
@@ -468,6 +507,72 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
       query.andWhere('producto.deletedAt IS NULL');
       query.orderBy('producto.denominacion', 'ASC');
       // Paginación
+      query.skip(skip).take(take);
+
+      const [data, total] = await query.getManyAndCount();
+
+      return { data, total };
+    } catch (error) {
+      throw new DatabaseConnectionException(
+        'Error al conectar con la base de datos.',
+      );
+    }
+  }
+
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    const termino = denominacion?.trim() ?? '';
+    if (!termino) {
+      return { data: [], total: 0 };
+    }
+
+    try {
+      const query = this.repository
+        .createQueryBuilder('producto')
+        .leftJoinAndSelect('producto.marca', 'marca')
+        .leftJoinAndSelect('producto.linea', 'linea')
+        .where('producto.deletedAt IS NULL');
+
+      QueryBuilderHelper.applyPartialCoincidence(
+        query,
+        'producto',
+        'denominacion',
+        termino,
+      );
+
+      query.orderBy('producto.denominacion', 'ASC');
+      query.skip(skip).take(take);
+
+      const [data, total] = await query.getManyAndCount();
+
+      return { data, total };
+    } catch (error) {
+      throw new DatabaseConnectionException(
+        'Error al conectar con la base de datos.',
+      );
+    }
+  }
+
+  async findProductosBySuperLinea(
+    superLineaId: number,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    try {
+      const query = this.repository
+        .createQueryBuilder('producto')
+        .leftJoinAndSelect('producto.marca', 'marca')
+        .leftJoinAndSelect('producto.linea', 'linea')
+        .leftJoinAndSelect('linea.superLinea', 'superLinea')
+        .where('superLinea.id = :superLineaId', { superLineaId })
+        .andWhere('producto.deletedAt IS NULL')
+        .andWhere('linea.deletedAt IS NULL')
+        .andWhere('superLinea.deletedAt IS NULL');
+
+      query.orderBy('producto.denominacion', 'ASC');
       query.skip(skip).take(take);
 
       const [data, total] = await query.getManyAndCount();

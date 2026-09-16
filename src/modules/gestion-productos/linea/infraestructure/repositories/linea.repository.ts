@@ -63,6 +63,14 @@ export class LineaRepository implements ILineaRepository {
     return this.persistenceService.findAllSinSistemaFor(denominacion);
   }
 
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+  ): Promise<Linea[]> {
+    return this.persistenceService.busquedaPorCoincidenciaParcial(
+      denominacion,
+    );
+  }
+
   async existsActiveBySuperLinea(superLineaId: number): Promise<boolean> {
     return this.persistenceService.existsActiveBySuperLinea(superLineaId);
   }

@@ -22,6 +22,8 @@ export interface ILineaRepository {
     incluirEliminados: boolean
   ): Promise<{ data: Linea[]; total: number } >;
 
+  busquedaPorCoincidenciaParcial(denominacion: string): Promise<Linea[]>;
+
   findByIdConAuditoria(id: number):  Promise<AuditoriaDto | null> ;
   update(
     id: number,

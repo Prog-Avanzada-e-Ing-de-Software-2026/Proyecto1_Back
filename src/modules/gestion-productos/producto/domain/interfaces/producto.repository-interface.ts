@@ -7,6 +7,7 @@ import { UpdateProductoDto } from '../../dto/update-producto.dto';
 import { IUnitOfWork } from 'src/modules/common/unit-of-work/iunit-of-work.';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
 import { UpdatePrecioDto } from '../../dto/update-precio.dto';
+import { CambioPrecio } from '../entities/cambio-precio.entity';
 
 export interface IProductoRepository {
 
@@ -33,6 +34,7 @@ export interface IProductoRepository {
     conStock: boolean,
     skip: number,
     take: number,
+    incluirCambiosPrecio?: boolean,
   ): Promise<{ data: Producto[]; total: number }>;
 
   findByRapido(
@@ -67,6 +69,12 @@ export interface IProductoRepository {
     usuario: Usuario,
   ): Promise<Producto[]>;
 
+  findHistorialPrecios(
+    id: number,
+    skip: number,
+    take: number,
+  ): Promise<CambioPrecio[]>;
+
   remove(data: Producto, usuario: Usuario): Promise<Producto>;
 
   isCodigoProveedorDuplicado(
@@ -76,6 +84,18 @@ export interface IProductoRepository {
 
   findByDenominacionCodigoProveedorFiltered(
     denominacion: string,
+    skip: number,
+    take: number,
+  ): Promise<{ data: Producto[]; total: number }>;
+
+  busquedaPorCoincidenciaParcial(
+    denominacion: string,
+    skip: number,
+    take: number,
+  ): Promise<{ data: Producto[]; total: number }>;
+
+  findProductosBySuperLinea(
+    superLineaId: number,
     skip: number,
     take: number,
   ): Promise<{ data: Producto[]; total: number }>;

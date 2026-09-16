@@ -25,6 +25,7 @@ import { LineaService } from '../services/linea.service';
 import { CreateLineaDto } from '../../dto/create-linea.dto';
 import { LineaDto } from '../../dto/linea.dto';
 import { UpdateLineaDto } from '../../dto/update-linea.dto';
+import { SelectLineaDto } from '../../dto/select-linea.dto';
 
 @ApiTags('Gestion Productos')
 @Controller('linea')
@@ -59,12 +60,30 @@ export class LineaController {
     );
   }
 
+  @Get('select')
+  @Roles('Root', 'Administrador', 'Empleado')
+  @ApiOkResponse({
+    description: 'Líneas activas que coinciden parcialmente por denominación',
+  })
+  searchForSelection(@Query() dto: SelectLineaDto) {
+    const { denominacion = '' } = dto;
+    return this.service.busquedaPorCoincidenciaParcial(denominacion);
+  }
+
   @Get(':id')
   @ApiOkResponse({ type: LineaDto })
   @Roles('Root', 'Administrador', 'Empleado')
   findOne(@Param('id', ParseIntPipe) id: number): Promise<LineaDto> {
     this.logger.log(`Buscando  ${this.ENTITY_NAME} con ID: ${id}`);
     return this.service.findDtoById(+id);
+  }
+
+  @Get('find-all-for-superlinea/select')
+  @Roles('Root', 'Administrador', 'Empleado')
+  @UsePipes(NormalizeDenominacionSearchPipe)
+  findAllForSuperLineas(@Query() dto: SelectLineaDto) {
+    const { denominacion = '' } = dto;
+    return this.service.findAllForSuperLineas(denominacion);
   }
 
   @Put(':id')

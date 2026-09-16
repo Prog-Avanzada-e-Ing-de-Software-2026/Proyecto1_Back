@@ -31,8 +31,12 @@ import { NormalizeDenominacionSearchPipe } from 'src/modules/common/pipes/normal
 import { DenominacionBusquedaDto } from 'src/modules/common/dto/denominacion-busqueda.dto';
 import { SearchProductoRapidoDto } from '../../dto/search-producto-rapido.dto';
 import { ProductoService } from '../services/producto.service';
+import { PaginationWithDenominacionDto } from 'src/modules/common/dto/busquedas/pagination-with-denominacion.dto';
+import { SearchProductoSuperlineaDto } from '../../dto/search-producto-superlinea.dto';
 import { ActualizacionPrecioDto } from '../../dto/actualizacion-precio.dto';
 import { CurrentUser } from 'src/modules/common/decorators/current-user.decorator';
+import { PaginationDto } from 'src/modules/common/dto/pagination.dto';
+import { CambioPrecioDto } from '../../dto/cambio-precio.dto';
 
 @ApiTags('Gestion Productos')
 @Controller('producto')
@@ -135,6 +139,43 @@ export class ProductoController {
     );
   }
 
+  @Get('search-by-denominacion')
+  @Roles(
+    'Root',
+    'Administrador',
+    'Empleado',
+    'Vendedor',
+    'Repartidor',
+    'Repositor',
+  )
+  @ApiOkResponse({
+    description:
+      'Productos activos que coinciden parcialmente por denominación',
+  })
+  async searchByPartialDenominacion(@Query() dto: PaginationWithDenominacionDto) {
+    const { denominacion = '', skip, take } = dto;
+    return this.service.busquedaPorCoincidenciaParcial(
+      denominacion,
+      skip,
+      take,
+    );
+  }
+
+  @Get('search-by-superlinea')
+  @Roles(
+    'Root',
+    'Administrador',
+    'Empleado',
+    'Vendedor',
+    'Repartidor',
+    'Repositor',
+  )
+  @ApiOkResponse({ description: 'Productos activos de una superlínea' })
+  async searchBySuperlinea(@Query() dto: SearchProductoSuperlineaDto) {
+    const { superLineaId, skip, take } = dto;
+    return this.service.findProductosBySuperLinea(superLineaId, skip, take);
+  }
+
   @Get('marca/:id')
   @Roles('Root', 'Administrador', 'Empleado')
   async getMarcaDelProducto(@Param('id', ParseIntPipe) id: number) {
@@ -201,5 +242,19 @@ export class ProductoController {
   ): Promise<AuditoriaDto> {
     const data = await this.service.findByIdConAuditoria(id);
     return data;
+  }
+
+  @Get(':id/historial-precios')
+  @Roles('Root', 'Administrador', 'Empleado')
+  @ApiOkResponse({
+    description: 'Historial de cambios de precio del producto',
+    type: CambioPrecioDto,
+    isArray: true,
+  })
+  async historialPrecios(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() paginacion: PaginationDto,
+  ): Promise<CambioPrecioDto[]> {
+    return this.service.getHistorialPrecios(id, paginacion);
   }
 }
