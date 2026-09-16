@@ -149,7 +149,7 @@ describe('LineaService SuperLinea association', () => {
     );
   });
 
-  it('maps repository entities into the slim selection shape', async () => {
+  it('CP-82 - Mapea las entidades a la forma de selección (código, nombre y descripción)', async () => {
     const expected: SelectOption[] = [
       { codigo: 1, nombre: 'Harinas', descripcion: 'Harinas y derivados' },
     ];
@@ -176,7 +176,7 @@ describe('LineaService SuperLinea association', () => {
 });
 
 describe('LineaMapper.toSelectOption', () => {
-  it('maps a Línea to the slim selection shape (codigo/nombre/descripcion)', () => {
+  it('CP-82 - Mapea una Línea a la forma de selección (código, nombre y descripción)', () => {
     const entity = Object.assign(new Linea(), {
       id: 7,
       denominacion: 'Harinas',
@@ -190,7 +190,7 @@ describe('LineaMapper.toSelectOption', () => {
     });
   });
 
-  it('coalesces a null observacion into an empty description', () => {
+  it('CP-82 - Una observación nula se transforma en una descripción vacía', () => {
     const entity = Object.assign(new Linea(), {
       id: 8,
       denominacion: 'Harinas',

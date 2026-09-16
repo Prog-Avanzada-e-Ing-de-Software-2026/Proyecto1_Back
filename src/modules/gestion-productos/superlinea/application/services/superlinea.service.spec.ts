@@ -275,7 +275,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('maps repository entities into the slim selection shape', async () => {
+  it('CP-87 - Mapea las entidades a la forma de selección (código, nombre y descripción)', async () => {
     const expected: SelectOption[] = [
       { codigo: 1, nombre: 'Almacén', descripcion: 'Productos varios' },
     ];
@@ -304,7 +304,7 @@ describe('SuperLineaService', () => {
 describe('SuperLineaMapper.toSelectOption', () => {
   const { SuperLineaMapper } = require('../../mappers/superlinea.mapper');
 
-  it('maps a SuperLínea to the slim selection shape (codigo/nombre/descripcion)', () => {
+  it('CP-87 - Mapea una SuperLínea a la forma de selección (código, nombre y descripción)', () => {
     const sl = Object.assign(new SuperLinea(), {
       id: 7,
       denominacion: 'Almacén',
@@ -318,7 +318,7 @@ describe('SuperLineaMapper.toSelectOption', () => {
     });
   });
 
-  it('coalesces a null observacion into an empty description', () => {
+  it('CP-87 - Una observación nula se transforma en una descripción vacía', () => {
     const sl = Object.assign(new SuperLinea(), {
       id: 8,
       denominacion: 'Almacén',

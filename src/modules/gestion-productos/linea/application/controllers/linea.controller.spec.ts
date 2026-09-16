@@ -84,7 +84,7 @@ describe('LineaController SuperLinea contract', () => {
     expect(service.update).toHaveBeenCalledTimes(1);
   });
 
-  it('returns slim selection options for /api/linea/select', async () => {
+  it('CP-82 - /api/linea/select devuelve las opciones de selección (código, nombre y descripción)', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue([
       { codigo: 1, nombre: 'Harinas', descripcion: '' },
     ]);
@@ -97,7 +97,7 @@ describe('LineaController SuperLinea contract', () => {
     );
   });
 
-  it('passes an empty term and returns an empty array when denominacion is omitted', async () => {
+  it('CP-86 - Sin término, /api/linea/select devuelve una colección vacía', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
 
     await request(app.getHttpServer())
@@ -106,7 +106,7 @@ describe('LineaController SuperLinea contract', () => {
     expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith('');
   });
 
-  it('rejects non-whitelisted query params on /api/linea/select', async () => {
+  it('CP-79 - Rechazar parámetros no admitidos en /api/linea/select', async () => {
     await request(app.getHttpServer())
       .get('/api/linea/select?desconocido=1')
       .expect(400);

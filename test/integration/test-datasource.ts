@@ -13,6 +13,7 @@ import type { TestDatabaseConfig } from './connection';
 // through the native require, which is not transpiled under Jest.
 import { Linea } from 'src/modules/gestion-productos/linea/domain/entities/linea.entity';
 import { Marca } from 'src/modules/gestion-productos/marca/domain/entities/marca.entity';
+import { CambioPrecio } from 'src/modules/gestion-productos/producto/domain/entities/cambio-precio.entity';
 import { Producto } from 'src/modules/gestion-productos/producto/domain/entities/producto.entity';
 import { ProductoOperacion } from 'src/modules/gestion-productos/producto-operacion/entities/producto-operacion.entity';
 import { SuperLinea } from 'src/modules/gestion-productos/superlinea/domain/entities/superlinea.entity';
@@ -34,6 +35,7 @@ import { ProveedorOperacion } from 'src/modules/organizacion/proveedor-operacion
 
 import { Init1787269586538 } from 'src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from 'src/migrations/1789091969000-AddSuperLineaToLinea';
+import { AddCambioPrecioToProducto1789351169000 } from 'src/migrations/1789351169000-AddCambioPrecioToProducto';
 
 export {
   getSharedContainer,
@@ -53,6 +55,7 @@ export const TEST_ENTITIES = [
   Linea,
   Marca,
   Producto,
+  CambioPrecio,
   ProductoOperacion,
   SuperLinea,
   ConfiguracionSistema,
@@ -75,11 +78,13 @@ export const TEST_ENTITIES = [
 export const TEST_MIGRATIONS = [
   Init1787269586538,
   AddSuperLineaToLinea1789091969000,
+  AddCambioPrecioToProducto1789351169000,
 ];
 
 /** Tables owned by the CR-004 persistence specs, cleaned between tests. */
 export const TEST_TABLES = [
   'producto',
+  'cambio_precio',
   'producto_operacion',
   'linea',
   'super_linea',

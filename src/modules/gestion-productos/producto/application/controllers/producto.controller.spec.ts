@@ -36,7 +36,7 @@ describe('ProductoController search endpoints', () => {
 
   afterEach(async () => app.close());
 
-  it('GET /api/producto/search-by-denominacion returns paginated matches (10 per page)', async () => {
+  it('CP-67 - Devolver los productos cuya denominación contiene el término (paginado de a 10)', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue({
       data: [{ id: 7, denominacion: 'Harina integral' }],
       total: 1,
@@ -55,7 +55,7 @@ describe('ProductoController search endpoints', () => {
     );
   });
 
-  it('GET /api/producto/search-by-denominacion passes the accent-sensitive term through', async () => {
+  it('CP-71 - El endpoint propaga el término con tilde tal cual lo recibe', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue({
       data: [],
       total: 0,
@@ -74,7 +74,7 @@ describe('ProductoController search endpoints', () => {
     );
   });
 
-  it('GET /api/producto/search-by-denominacion rejects an out-of-range take', async () => {
+  it('CP-78 - Rechazar una paginación inválida (take fuera de rango)', async () => {
     await request(app.getHttpServer())
       .get('/api/producto/search-by-denominacion')
       .query({ denominacion: 'harina', skip: 0, take: 0 })
@@ -83,7 +83,7 @@ describe('ProductoController search endpoints', () => {
     expect(service.busquedaPorCoincidenciaParcial).not.toHaveBeenCalled();
   });
 
-  it('GET /api/producto/search-by-superlinea returns products of the selected superlínea (10 per page)', async () => {
+  it('CP-90 - Traer los productos de la superlínea incluyendo todas sus líneas (paginado de a 10)', async () => {
     service.findProductosBySuperLinea.mockResolvedValue({
       data: [{ id: 2, denominacion: 'Arroz' }],
       total: 1,
@@ -98,7 +98,7 @@ describe('ProductoController search endpoints', () => {
     expect(service.findProductosBySuperLinea).toHaveBeenCalledWith(5, 0, 10);
   });
 
-  it('GET /api/producto/search-by-superlinea rejects a missing superLineaId', async () => {
+  it('CP-93 - El identificador de superlínea es obligatorio (400 sin superLineaId)', async () => {
     await request(app.getHttpServer())
       .get('/api/producto/search-by-superlinea')
       .query({ skip: 0, take: 10 })

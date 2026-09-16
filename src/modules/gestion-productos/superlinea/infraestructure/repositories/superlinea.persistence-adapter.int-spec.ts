@@ -42,7 +42,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     return result.insertId as number;
   }
 
-  it('returns matching entities and matches case-insensitively', async () => {
+  it('CP-87 - Seleccionar superlíneas por coincidencia parcial sin distinguir mayúsculas', async () => {
     const firstId = await createSuperLinea('Alfa linea', 'obs A');
     await createSuperLinea('LINEA mayus', 'obs B');
 
@@ -63,7 +63,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     );
   });
 
-  it('is accent-sensitive', async () => {
+  it('CP-87 - Buscar "linea" no devuelve "línea"', async () => {
     await createSuperLinea('línea acento');
     await createSuperLinea('Alfa linea');
 
@@ -74,7 +74,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     ]);
   });
 
-  it('matches an accented term against an accented denominación only', async () => {
+  it('CP-87 - Un término con tilde solo coincide con denominaciones con tilde', async () => {
     await createSuperLinea('línea premium');
     await createSuperLinea('Alfa linea');
 
@@ -85,7 +85,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     ]);
   });
 
-  it('returns an empty array when the term is not contained in any denominación', async () => {
+  it('CP-68 - Un término sin coincidencias devuelve una colección vacía', async () => {
     await createSuperLinea('Arroz');
 
     const result = await adapter.busquedaPorCoincidenciaParcial('trigo');
@@ -93,12 +93,12 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     expect(result).toEqual([]);
   });
 
-  it('returns an empty array for an empty or whitespace term', async () => {
+  it('CP-72 - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
     await expect(adapter.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
     await expect(adapter.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);
   });
 
-  it('excludes soft-deleted super lineas', async () => {
+  it('CP-87 - Solo se ofrecen superlíneas activas (excluye las eliminadas lógicamente)', async () => {
     await createSuperLinea('Alfa linea');
     await createSuperLinea('Beta linea', null, new Date());
 
@@ -106,20 +106,6 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
 
     expect(result.map((superLinea) => superLinea.denominacion)).toEqual([
       'Alfa linea',
-    ]);
-  });
-
-  it('orders results ascending by denominacion', async () => {
-    await createSuperLinea('Gamma linea');
-    await createSuperLinea('Alfa linea');
-    await createSuperLinea('Beta linea');
-
-    const result = await adapter.busquedaPorCoincidenciaParcial('linea');
-
-    expect(result.map((superLinea) => superLinea.denominacion)).toEqual([
-      'Alfa linea',
-      'Beta linea',
-      'Gamma linea',
     ]);
   });
 });

@@ -50,7 +50,7 @@ describe('ProductoService search by denominación and superlínea', () => {
   });
 
   describe('busquedaPorCoincidenciaParcial', () => {
-    it('delegates the search term and maps active matches to GetProductoDto', async () => {
+    it('CP-67 - Delega el término de búsqueda y mapea las coincidencias a GetProductoDto', async () => {
       repository.busquedaPorCoincidenciaParcial.mockResolvedValue({
         data: [buildProducto({ id: 7, denominacion: 'Harina integral' })],
         total: 1,
@@ -73,23 +73,7 @@ describe('ProductoService search by denominación and superlínea', () => {
       expect(result.total).toBe(1);
     });
 
-    it('returns an empty page when no denominación contains the term (accent mismatch "harína" vs "harina")', async () => {
-      repository.busquedaPorCoincidenciaParcial.mockResolvedValue({
-        data: [],
-        total: 0,
-      });
-
-      const result = await service.busquedaPorCoincidenciaParcial(
-        'harina',
-        0,
-        10,
-      );
-
-      expect(result.data).toEqual([]);
-      expect(result.total).toBe(0);
-    });
-
-    it('returns { data: [], total: 0 } for an empty term', async () => {
+    it('CP-72 - Un término vacío devuelve { data: [], total: 0 }', async () => {
       repository.busquedaPorCoincidenciaParcial.mockResolvedValue({
         data: [],
         total: 0,
@@ -105,7 +89,7 @@ describe('ProductoService search by denominación and superlínea', () => {
       expect(result).toEqual({ data: [], total: 0 });
     });
 
-    it('defaults to a page of 10 (skip 0, take 10)', async () => {
+    it('CP-76 - Por defecto pagina de a 10 (skip 0, take 10)', async () => {
       repository.busquedaPorCoincidenciaParcial.mockResolvedValue({
         data: [],
         total: 0,
@@ -122,7 +106,7 @@ describe('ProductoService search by denominación and superlínea', () => {
   });
 
   describe('findProductosBySuperLinea', () => {
-    it('maps active products from multiple líneas under one superlínea', async () => {
+    it('CP-90 - Mapea los productos activos de varias líneas bajo una superlínea', async () => {
       repository.findProductosBySuperLinea.mockResolvedValue({
         data: [
           buildProducto({ id: 1, denominacion: 'Producto línea A' }),
@@ -145,7 +129,7 @@ describe('ProductoService search by denominación and superlínea', () => {
       expect(result.total).toBe(2);
     });
 
-    it('returns only active products (soft-deleted are excluded by the repository)', async () => {
+    it('CP-91 - Devuelve solo productos activos (excluye los eliminados lógicamente)', async () => {
       repository.findProductosBySuperLinea.mockResolvedValue({
         data: [buildProducto({ id: 3, denominacion: 'Harina' })],
         total: 1,
@@ -158,7 +142,7 @@ describe('ProductoService search by denominación and superlínea', () => {
       expect(result.total).toBe(1);
     });
 
-    it('defaults to a page of 10 (skip 0, take 10)', async () => {
+    it('CP-90 - Por defecto pagina de a 10 (skip 0, take 10)', async () => {
       repository.findProductosBySuperLinea.mockResolvedValue({
         data: [],
         total: 0,

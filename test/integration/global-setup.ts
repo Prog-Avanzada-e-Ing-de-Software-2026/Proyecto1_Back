@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import { setSharedContainer, writeConnectionFile } from './connection';
 import { Init1787269586538 } from '../../src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from '../../src/migrations/1789091969000-AddSuperLineaToLinea';
+import { AddCambioPrecioToProducto1789351169000 } from '../../src/migrations/1789351169000-AddCambioPrecioToProducto';
 
 /**
  * Starts one MySQL 8 container for the whole integration run, applies the real
@@ -41,7 +42,11 @@ export default async function globalSetup(): Promise<void> {
     password: config.password,
     database: config.database,
     entities: [],
-    migrations: [Init1787269586538, AddSuperLineaToLinea1789091969000],
+    migrations: [
+      Init1787269586538,
+      AddSuperLineaToLinea1789091969000,
+      AddCambioPrecioToProducto1789351169000,
+    ],
     synchronize: false,
     logging: false,
   });
