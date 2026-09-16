@@ -31,6 +31,8 @@ import { ActualizacionPrecioDto } from '../../dto/actualizacion-precio.dto';
 import { TipoAumento } from 'src/modules/common/enums/tipo-aumento.emun';
 import { OperacionAjuste } from 'src/modules/common/enums/operacion-ajuste.enum';
 import { BadRequestException } from '@nestjs/common';
+import { IPresentacionRepository } from 'src/modules/gestion-productos/presentacion/domain/interfaces/presentacion.repository.interface';
+import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 import { MotivoCambioPrecio } from '../../enums/motivo-cambio-precio.enum';
 import { PaginationDto } from 'src/modules/common/dto/pagination.dto';
 import { CambioPrecioDto } from '../../dto/cambio-precio.dto';
@@ -59,6 +61,8 @@ export class ProductoService {
 
     private readonly productoDeletePolicy: ProductoDeletePolicy,
 
+    @Inject('IPresentacionRepository')
+    private readonly presentacionRepository: IPresentacionRepository,
   ) { }
 
   private readonly ENTITY_NAME = 'Producto';
@@ -72,13 +76,13 @@ export class ProductoService {
     const { marca, linea, usuario } =
       await this.validarYPrepararCreacion(dto);
 
-
+    const presentacion = await this.findActivePresentacion(dto.presentacionId);
 
     const entity = await this.repository.create(
       dto,
       linea,
       marca,
-
+      presentacion,
       usuario,
     );
 
@@ -95,12 +99,17 @@ export class ProductoService {
     const { marca, linea, usuario } =
       await this.validarYPrepararActualizacion(id, dto);
 
+    const presentacion =
+      dto.presentacionId === undefined
+        ? undefined
+        : await this.findActivePresentacion(dto.presentacionId);
+
     const entity = await this.repository.update(
       id,
       dto,
       linea,
       marca,
-
+      presentacion,
       usuario,
     );
 
@@ -447,6 +456,7 @@ export class ProductoService {
       denominacion: dto.denominacion,
       marcaId: dto.marcaId,
       lineaId: dto.lineaId,
+      presentacionId: dto.presentacionId,
       alicuotaIva: dto.alicuotaIva,
     });
 
@@ -499,7 +509,8 @@ export class ProductoService {
 
     if (
       productoActual.lineaId == null ||
-      productoActual.marcaId == null
+      productoActual.marcaId == null ||
+      productoActual.presentacionId == null
     ) {
       throw new InternalServerErrorException('Producto en estado inválido');
     }
@@ -509,8 +520,8 @@ export class ProductoService {
       denominacion: dto.denominacion ?? productoActual.denominacion,
       marcaId: dto.marcaId ?? productoActual.marcaId,
       lineaId: dto.lineaId ?? productoActual.lineaId,
+      presentacionId: dto.presentacionId ?? productoActual.presentacionId,
       alicuotaIva: dto.alicuotaIva ?? productoActual.alicuotaIva,
-
     });
 
     // Validar unicidad (excluyendo el ID actual)
@@ -542,6 +553,16 @@ export class ProductoService {
     );
 
     return { marca, linea, usuario };
+  }
+
+  private async findActivePresentacion(id: number): Promise<Presentacion> {
+    const presentacion = await this.presentacionRepository.findOne(id);
+    if (!presentacion) {
+      throw new NotFoundException(
+        `Presentación con ID ${id} no encontrada o eliminada.`,
+      );
+    }
+    return presentacion;
   }
 
 

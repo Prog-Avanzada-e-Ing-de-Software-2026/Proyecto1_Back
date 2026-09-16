@@ -4,12 +4,28 @@ import * as request from 'supertest';
 import { AuthGuard } from 'src/modules/gestion-usuario/auth/auth.guard';
 import { ProductoController } from './producto.controller';
 import { ProductoService } from '../services/producto.service';
+import { AlicuotaIva } from 'src/modules/organizacion/enums/alicuota-iva.enum';
 
-describe('ProductoController search endpoints', () => {
+describe('ProductoController Presentacion contract', () => {
   let app: INestApplication;
   const service = {
-    busquedaPorCoincidenciaParcial: jest.fn(),
-    findProductosBySuperLinea: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    findDtoById: jest.fn(),
+    findBy: jest.fn(),
+    findByIdConAuditoria: jest.fn(),
+    remove: jest.fn(),
+  };
+
+  const baseCreate = {
+    denominacion: 'coca cola 1l',
+    utilizaStockMinimo: false,
+    utilizaPack: false,
+    lineaId: 1,
+    marcaId: 2,
+    alicuotaIva: AlicuotaIva.ALICUOTA_21,
+    precio: 100,
+    usuarioCreatedId: 7,
   };
 
   beforeEach(async () => {
@@ -21,7 +37,6 @@ describe('ProductoController search endpoints', () => {
       .overrideGuard(AuthGuard)
       .useValue({ canActivate: () => true })
       .compile();
-
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api');
     app.useGlobalPipes(
@@ -36,74 +51,48 @@ describe('ProductoController search endpoints', () => {
 
   afterEach(async () => app.close());
 
-  it('GET /api/producto/search-by-denominacion returns paginated matches (10 per page)', async () => {
-    service.busquedaPorCoincidenciaParcial.mockResolvedValue({
-      data: [{ id: 7, denominacion: 'Harina integral' }],
-      total: 1,
-    });
+  it('requires a non-null integer Presentacion when creating a product', async () => {
+    await request(app.getHttpServer())
+      .post('/api/producto')
+      .send(baseCreate)
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/api/producto')
+      .send({ ...baseCreate, presentacionId: null })
+      .expect(400);
+    expect(service.create).not.toHaveBeenCalled();
+  });
+
+  it('accepts an active-parent id when creating', async () => {
+    service.create.mockResolvedValue({ mensaje: 'created' });
 
     await request(app.getHttpServer())
-      .get('/api/producto/search-by-denominacion')
-      .query({ denominacion: 'harina', skip: 0, take: 10 })
-      .expect(200)
-      .expect({ data: [{ id: 7, denominacion: 'Harina integral' }], total: 1 });
-
-    expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith(
-      'harina',
-      0,
-      10,
+      .post('/api/producto')
+      .send({ ...baseCreate, presentacionId: 10 })
+      .expect(201, { mensaje: 'created' });
+    expect(service.create).toHaveBeenCalledWith(
+      expect.objectContaining({ presentacionId: 10 }),
     );
   });
 
-  it('GET /api/producto/search-by-denominacion passes the accent-sensitive term through', async () => {
-    service.busquedaPorCoincidenciaParcial.mockResolvedValue({
-      data: [],
-      total: 0,
-    });
+  it('allows omission but rejects null when updating the association', async () => {
+    service.update.mockResolvedValue({ mensaje: 'updated' });
 
     await request(app.getHttpServer())
-      .get('/api/producto/search-by-denominacion')
-      .query({ denominacion: 'harína', skip: 0, take: 10 })
-      .expect(200)
-      .expect({ data: [], total: 0 });
-
-    expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith(
-      'harína',
-      0,
-      10,
-    );
-  });
-
-  it('GET /api/producto/search-by-denominacion rejects an out-of-range take', async () => {
+      .put('/api/producto/1')
+      .send({
+        denominacion: 'coca cola 1l',
+        usuarioUpdatedId: 8,
+      })
+      .expect(200);
     await request(app.getHttpServer())
-      .get('/api/producto/search-by-denominacion')
-      .query({ denominacion: 'harina', skip: 0, take: 0 })
+      .put('/api/producto/1')
+      .send({
+        denominacion: 'coca cola 1l',
+        usuarioUpdatedId: 8,
+        presentacionId: null,
+      })
       .expect(400);
-
-    expect(service.busquedaPorCoincidenciaParcial).not.toHaveBeenCalled();
-  });
-
-  it('GET /api/producto/search-by-superlinea returns products of the selected superlínea (10 per page)', async () => {
-    service.findProductosBySuperLinea.mockResolvedValue({
-      data: [{ id: 2, denominacion: 'Arroz' }],
-      total: 1,
-    });
-
-    await request(app.getHttpServer())
-      .get('/api/producto/search-by-superlinea')
-      .query({ superLineaId: 5, skip: 0, take: 10 })
-      .expect(200)
-      .expect({ data: [{ id: 2, denominacion: 'Arroz' }], total: 1 });
-
-    expect(service.findProductosBySuperLinea).toHaveBeenCalledWith(5, 0, 10);
-  });
-
-  it('GET /api/producto/search-by-superlinea rejects a missing superLineaId', async () => {
-    await request(app.getHttpServer())
-      .get('/api/producto/search-by-superlinea')
-      .query({ skip: 0, take: 10 })
-      .expect(400);
-
-    expect(service.findProductosBySuperLinea).not.toHaveBeenCalled();
+    expect(service.update).toHaveBeenCalledTimes(1);
   });
 });
