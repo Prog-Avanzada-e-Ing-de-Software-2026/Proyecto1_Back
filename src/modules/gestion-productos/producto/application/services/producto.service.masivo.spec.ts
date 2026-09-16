@@ -8,8 +8,8 @@ function crearProducto(id: number, denominacion: string, lineaId?: number): Prod
   const producto = new Producto();
   producto.id = id;
   producto.denominacion = denominacion;
-  producto.costo = 100;
-  producto.precio = 100;
+  producto.costo = id === 2 ? 200 : 100;
+  producto.precio = id === 2 ? 200 : 100;
   producto.porcentaje = 20;
   if (lineaId !== undefined) {
     producto.lineaId = lineaId;
@@ -37,22 +37,32 @@ function crearRepo(productos: Producto[]) {
   } as any;
 }
 
-    const usuarioService = { findOne: jest.fn().mockResolvedValue(usuario) } as any;
+function crearService(repo: any, usuario: any) {
+  const usuarioService = { findOne: jest.fn().mockResolvedValue(usuario) } as any;
 
-    const service = new ProductoService(
-      repo,
-      {} as any,
-      {} as any,
-      {} as any,
-      usuarioService,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-    );
+  return new ProductoService(
+    repo,
+    {} as any,
+    {} as any,
+    {} as any,
+    usuarioService,
+    {} as any,
+    {} as any,
+    {} as any,
+    {} as any,
+    {} as any,
+    {} as any,
+    {} as any,
+  );
+}
+
+describe('ProductoService - actualización masiva de precios', () => {
+  it('debe actualizar precios globalmente y conservar el margen', async () => {
+    const producto1 = crearProducto(1, 'A');
+    const producto2 = crearProducto(2, 'B');
+    const usuario = { id: 7 } as any;
+    const repo = crearRepo([producto1, producto2]);
+    const service = crearService(repo, usuario);
 
     const result = await service.actualizarPrecios(
       {
@@ -81,7 +91,6 @@ function crearRepo(productos: Producto[]) {
 
   it('debe usar el motivo por línea cuando la actualización está filtrada por línea', async () => {
     const producto = crearProducto(1, 'A', 5);
-
     const usuario = { id: 7 } as any;
     const repo = crearRepo([producto]);
     const service = crearService(repo, usuario);
