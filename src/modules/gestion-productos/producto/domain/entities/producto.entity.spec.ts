@@ -143,4 +143,49 @@ describe('Producto - actualización de precio', () => {
       producto.cambiarPrecio(150, MotivoCambioPrecio.ActualizacionDePrecioGlobal),
     ).toThrow('El último cambio de precio no coincide con el precio actual del producto.');
   });
+
+  describe('Historial de precios - Casos de prueba (unitarios)', () => {
+    it('CP-03 - Detectar inconsistencia en la continuidad del historial de precios', () => {
+      const producto = new Producto();
+      producto.precio = 100;
+
+      const cambio = new CambioPrecio();
+      cambio.precioAnterior = 80;
+      cambio.precioNuevo = 80;
+      cambio.fecha = new Date(Date.now() - 1000);
+      producto.cambiosPrecio = [cambio];
+
+      expect(producto.precio).toBe(100);
+      expect(() =>
+        producto.cambiarPrecio(120, MotivoCambioPrecio.ActualizacionDePrecioDirecta),
+      ).toThrow('El último cambio de precio no coincide con el precio actual del producto.');
+      expect(producto.precio).toBe(100);
+      expect(producto.cambiosPrecio).toHaveLength(1);
+    });
+
+    it.each([0, -10])(
+      'CP-04 - Intentar cambiar el precio a %s (no positivo)',
+      (precioInvalido) => {
+        const producto = new Producto();
+        producto.precio = 100;
+
+        expect(() =>
+          producto.cambiarPrecio(precioInvalido, MotivoCambioPrecio.ActualizacionDePrecioDirecta),
+        ).toThrow('El nuevo precio debe ser mayor que 0.');
+        expect(producto.precio).toBe(100);
+        expect(producto.cambiosPrecio ?? []).toHaveLength(0);
+      },
+    );
+
+    it('CP-07 - Intentar cambiar el precio sin informar el motivo', () => {
+      const producto = new Producto();
+      producto.precio = 100;
+
+      expect(() => producto.cambiarPrecio(120, undefined)).toThrow(
+        'El motivo del cambio de precio es obligatorio.',
+      );
+      expect(producto.precio).toBe(100);
+      expect(producto.cambiosPrecio ?? []).toHaveLength(0);
+    });
+  });
 });
