@@ -15,6 +15,8 @@ import { UpdatePrecioDto } from '../../dto/update-precio.dto';
 import { UpdateProductoDto } from '../../dto/update-producto.dto';
 import { ProductoMapper } from '../../mappers/producto.mapper';
 import { QueryBuilderHelper } from 'src/modules/common/query-builders/query-builder-helpers';
+import { CambioPrecio } from '../../domain/entities/cambio-precio.entity';
+import { MotivoCambioPrecio } from '../../enums/motivo-cambio-precio.enum';
 
 
 @Injectable()
@@ -26,6 +28,8 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
   constructor(
     @InjectRepository(Producto)
     private readonly repository: Repository<Producto>,
+    @InjectRepository(CambioPrecio)
+    private readonly cambioPrecioRepository: Repository<CambioPrecio>,
     private readonly dataSource: DataSource,
     @Inject('UnitOfWork') public readonly uow: IUnitOfWork,
   ) { }
@@ -81,6 +85,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         .createQueryBuilder('producto')
         .leftJoinAndSelect('producto.linea', 'linea')
         .leftJoinAndSelect('producto.marca', 'marca')
+        .leftJoinAndSelect('producto.cambiosPrecio', 'cambiosPrecio')
         .where('producto.id = :id', { id })
         .andWhere('producto.deletedAt IS NULL')
         .getOne();
@@ -171,17 +176,18 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
       if (!entity) {
         throw new NotFoundException(`EL prodcuto con ID ${id} no encontrada`);
       }
-      const {
-
-        ...dataSinItems
-      } = data;
+      const { precio, ...dataSinItems } = data;
 
       Object.assign(entity, dataSinItems, {
         linea,
         marca,
       });
 
-      entity.usuarioUpdated = usuario; 
+      if (precio !== undefined && precio !== entity.precio) {
+        entity.cambiarPrecio(precio, MotivoCambioPrecio.ActualizacionDePrecioDirecta);
+      }
+
+      entity.usuarioUpdated = usuario;
       const entityActualizada = await repo.save(entity);
 
 
@@ -228,12 +234,17 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
     conStock: boolean,
     skip: number,
     take: number,
+    incluirCambiosPrecio = false,
   ): Promise<{ data: Producto[]; total: number }> {
     this.logger.warn(`llega`);
     const query = this.repository
       .createQueryBuilder('producto')
       .leftJoinAndSelect('producto.marca', 'marca')
       .leftJoinAndSelect('producto.linea', 'linea')
+
+    if (incluirCambiosPrecio) {
+      query.leftJoinAndSelect('producto.cambiosPrecio', 'cambiosPrecio');
+    }
 
     if (denominacion || codigoProveedor || codigoReferencia) {
       const condiciones: string[] = [];
@@ -383,6 +394,43 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
 
     await repo.save(entity);
 
+  }
+
+  @Transactional()
+  async actualizarPrecios(
+    productos: Producto[],
+    usuario: Usuario,
+  ): Promise<Producto[]> {
+    const repo = this.uow.getRepository(Producto);
+
+    for (const producto of productos) {
+      producto.usuarioUpdated = usuario;
+      await repo.save(producto);
+    }
+
+    return productos;
+  }
+
+  async findHistorialPrecios(
+    id: number,
+    skip: number,
+    take: number,
+  ): Promise<CambioPrecio[]> {
+    try {
+      return await this.cambioPrecioRepository
+        .createQueryBuilder('cambioPrecio')
+        .innerJoin('cambioPrecio.producto', 'producto')
+        .where('producto.id = :id', { id })
+        .orderBy('cambioPrecio.fecha', 'DESC')
+        .addOrderBy('cambioPrecio.id', 'DESC')
+        .skip(skip)
+        .take(take)
+        .getMany();
+    } catch (error) {
+      throw new DatabaseConnectionException(
+        'Error al conectar con la base de datos.',
+      );
+    }
   }
 
   async findByDenominacion(denominacion: string): Promise<Producto | null> {

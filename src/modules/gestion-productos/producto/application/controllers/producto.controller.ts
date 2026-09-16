@@ -33,7 +33,10 @@ import { SearchProductoRapidoDto } from '../../dto/search-producto-rapido.dto';
 import { ProductoService } from '../services/producto.service';
 import { PaginationWithDenominacionDto } from 'src/modules/common/dto/busquedas/pagination-with-denominacion.dto';
 import { SearchProductoSuperlineaDto } from '../../dto/search-producto-superlinea.dto';
-
+import { ActualizacionPrecioDto } from '../../dto/actualizacion-precio.dto';
+import { CurrentUser } from 'src/modules/common/decorators/current-user.decorator';
+import { PaginationDto } from 'src/modules/common/dto/pagination.dto';
+import { CambioPrecioDto } from '../../dto/cambio-precio.dto';
 
 @ApiTags('Gestion Productos')
 @Controller('producto')
@@ -218,6 +221,15 @@ export class ProductoController {
     return this.service.remove(id, usuarioId);
   }
 
+  @Post('actualizar-precios')
+  @Roles('Root', 'Administrador', 'Empleado')
+  async actualizarPrecios(
+    @Body() dto: ActualizacionPrecioDto,
+    @CurrentUser() usuario: any,
+  ) {
+    this.logger.log('Actualizando precios...');
+    return this.service.actualizarPrecios(dto, usuario);
+  }
 
   @Get(':id/audit')
   @Roles('Root', 'Administrador', 'Empleado')
@@ -230,5 +242,19 @@ export class ProductoController {
   ): Promise<AuditoriaDto> {
     const data = await this.service.findByIdConAuditoria(id);
     return data;
+  }
+
+  @Get(':id/historial-precios')
+  @Roles('Root', 'Administrador', 'Empleado')
+  @ApiOkResponse({
+    description: 'Historial de cambios de precio del producto',
+    type: CambioPrecioDto,
+    isArray: true,
+  })
+  async historialPrecios(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() paginacion: PaginationDto,
+  ): Promise<CambioPrecioDto[]> {
+    return this.service.getHistorialPrecios(id, paginacion);
   }
 }
