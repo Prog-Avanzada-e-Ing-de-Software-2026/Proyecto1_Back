@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { RegistrarUsuarioDto } from '../../dto/register.dto';
 import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import { LoginDto } from '../../dto/login.dto';
 import { ConfigService } from '@nestjs/config';
 import { UsuarioService } from '../../../usuario/application/services/usuario.service';
@@ -60,11 +60,11 @@ export class AuthService {
     }
 
     // Obtener tiempos de expiración desde las variables de entorno
-    const accessTokenExp = this.configService.get<string>(
+    const accessTokenExp = this.configService.get<JwtSignOptions['expiresIn']>(
       'JWT_EXPIRATION_ACCESS',
       '60s',
     );
-    const refreshTokenExp = this.configService.get<string>(
+    const refreshTokenExp = this.configService.get<JwtSignOptions['expiresIn']>(
       'JWT_EXPIRATION_REFRESH',
       '7d',
     );
@@ -147,11 +147,11 @@ export class AuthService {
     };
 
 
-    const accessTokenExp = this.configService.get<string>(
+    const accessTokenExp = this.configService.get<JwtSignOptions['expiresIn']>(
       'JWT_EXPIRATION_ACCESS',
       '60s',
     );
-    const refreshTokenExp = this.configService.get<string>(
+    const refreshTokenExp = this.configService.get<JwtSignOptions['expiresIn']>(
       'JWT_EXPIRATION_REFRESH',
       '7d',
     );
