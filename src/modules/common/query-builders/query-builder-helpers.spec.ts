@@ -8,7 +8,7 @@ describe('QueryBuilderHelper.applyPartialCoincidence', () => {
     return { query, andWhere };
   }
 
-  it('emits a case-insensitive, accent-sensitive containment fragment with its parameter', () => {
+  it('CP-70 - Genera un fragmento de contención que no distingue mayúsculas de minúsculas', () => {
     const { query, andWhere } = createMockQueryBuilder();
 
     const result = QueryBuilderHelper.applyPartialCoincidence(
@@ -26,27 +26,35 @@ describe('QueryBuilderHelper.applyPartialCoincidence', () => {
     expect(result).toBe(query);
   });
 
-  it('interpolates a different alias and campo into the fragment', () => {
+  it('CP-74 - Escapa el comodín % para que el término se busque literal', () => {
     const { query, andWhere } = createMockQueryBuilder();
 
-    QueryBuilderHelper.applyPartialCoincidence(query, 'l', 'denominacion', 'integral');
+    QueryBuilderHelper.applyPartialCoincidence(
+      query,
+      'producto',
+      'denominacion',
+      '%',
+    );
 
     expect(andWhere).toHaveBeenCalledWith(
-      "LOWER(l.denominacion) COLLATE utf8mb4_bin LIKE CONCAT('%', LOWER(:termino), '%') COLLATE utf8mb4_bin",
-      { termino: 'integral' },
+      "LOWER(producto.denominacion) COLLATE utf8mb4_bin LIKE CONCAT('%', LOWER(:termino), '%') COLLATE utf8mb4_bin",
+      { termino: '\\%' },
     );
   });
 
-  it('returns the same query builder instance to preserve chaining', () => {
-    const { query } = createMockQueryBuilder();
+  it('CP-75 - Escapa el comodín _ para que el término se busque literal', () => {
+    const { query, andWhere } = createMockQueryBuilder();
 
-    const result = QueryBuilderHelper.applyPartialCoincidence(
+    QueryBuilderHelper.applyPartialCoincidence(
       query,
-      'p',
+      'producto',
       'denominacion',
-      'harina',
+      '_',
     );
 
-    expect(result).toBe(query);
+    expect(andWhere).toHaveBeenCalledWith(
+      "LOWER(producto.denominacion) COLLATE utf8mb4_bin LIKE CONCAT('%', LOWER(:termino), '%') COLLATE utf8mb4_bin",
+      { termino: '\\_' },
+    );
   });
 });

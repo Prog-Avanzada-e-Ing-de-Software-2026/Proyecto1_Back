@@ -52,7 +52,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     return result.insertId as number;
   }
 
-  it('returns matching entities and matches case-insensitively', async () => {
+  it('CP-84 - La selección de líneas no distingue mayúsculas de minúsculas', async () => {
     const firstId = await createLinea('Alfa harina', 'obs A');
     await createLinea('HARINA mayus', 'obs B');
 
@@ -73,7 +73,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     );
   });
 
-  it('is accent-sensitive', async () => {
+  it('CP-83 - Buscar "harina" no devuelve "harína"', async () => {
     await createLinea('harína acento');
     await createLinea('Alfa harina');
 
@@ -82,7 +82,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(result.map((linea) => linea.denominacion)).toEqual(['Alfa harina']);
   });
 
-  it('matches an accented term against an accented denominación only', async () => {
+  it('CP-83 - Un término con tilde solo coincide con denominaciones con tilde', async () => {
     await createLinea('harína premium');
     await createLinea('Alfa harina');
 
@@ -93,7 +93,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     ]);
   });
 
-  it('returns an empty array when the term is not contained in any denominación', async () => {
+  it('CP-68 - Un término sin coincidencias devuelve una colección vacía', async () => {
     await createLinea('Arroz');
 
     const result = await adapter.busquedaPorCoincidenciaParcial('trigo');
@@ -101,12 +101,12 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(result).toEqual([]);
   });
 
-  it('returns an empty array for an empty or whitespace term', async () => {
+  it('CP-72 - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
     await expect(adapter.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
     await expect(adapter.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);
   });
 
-  it('excludes soft-deleted lineas', async () => {
+  it('CP-85 - Solo se ofrecen líneas activas (excluye las eliminadas lógicamente)', async () => {
     await createLinea('Alfa harina');
     await createLinea('Beta harina', null, new Date());
 
@@ -115,7 +115,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(result.map((linea) => linea.denominacion)).toEqual(['Alfa harina']);
   });
 
-  it('orders results ascending by denominacion', async () => {
+  it('CP-82 - Los resultados vienen ordenados ascendentemente por denominación', async () => {
     await createLinea('Gamma harina');
     await createLinea('Alfa harina');
     await createLinea('Beta harina');

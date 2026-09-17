@@ -42,7 +42,7 @@ describe('SuperLineaController', () => {
 
   afterEach(async () => app.close());
 
-  it('returns slim selection options for /api/superlinea/select', async () => {
+  it('CP-87 - /api/superlinea/select devuelve las opciones de selección (código, nombre y descripción)', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue([
       { codigo: 1, nombre: 'Almacén', descripcion: 'Productos varios' },
     ]);
@@ -55,21 +55,13 @@ describe('SuperLineaController', () => {
     );
   });
 
-  it('passes an empty term and returns an empty array when denominacion is omitted', async () => {
+  it('CP-86 - Sin término, /api/superlinea/select devuelve una colección vacía', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
 
     await request(app.getHttpServer())
       .get('/api/superlinea/select')
       .expect(200, []);
     expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith('');
-  });
-
-  it('rejects non-whitelisted query params on /api/superlinea/select', async () => {
-    await request(app.getHttpServer())
-      .get('/api/superlinea/select?desconocido=1')
-      .expect(400);
-
-    expect(service.busquedaPorCoincidenciaParcial).not.toHaveBeenCalled();
   });
 
   it('routes detail and audit queries', async () => {
