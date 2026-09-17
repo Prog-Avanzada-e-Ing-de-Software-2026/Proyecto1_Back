@@ -14,6 +14,7 @@ import type { TestDatabaseConfig } from './connection';
 import { Linea } from 'src/modules/gestion-productos/linea/domain/entities/linea.entity';
 import { Marca } from 'src/modules/gestion-productos/marca/domain/entities/marca.entity';
 import { CambioPrecio } from 'src/modules/gestion-productos/producto/domain/entities/cambio-precio.entity';
+import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 import { Producto } from 'src/modules/gestion-productos/producto/domain/entities/producto.entity';
 import { ProductoOperacion } from 'src/modules/gestion-productos/producto-operacion/entities/producto-operacion.entity';
 import { SuperLinea } from 'src/modules/gestion-productos/superlinea/domain/entities/superlinea.entity';
@@ -35,6 +36,7 @@ import { ProveedorOperacion } from 'src/modules/organizacion/proveedor-operacion
 
 import { Init1787269586538 } from 'src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from 'src/migrations/1789091969000-AddSuperLineaToLinea';
+import { AddPresentacionToProducto1789200000000 } from 'src/migrations/1789200000000-AddPresentacionToProducto';
 import { AddCambioPrecioToProducto1789351169000 } from 'src/migrations/1789351169000-AddCambioPrecioToProducto';
 
 export {
@@ -54,6 +56,7 @@ export type { TestDatabaseConfig } from './connection';
 export const TEST_ENTITIES = [
   Linea,
   Marca,
+  Presentacion,
   Producto,
   CambioPrecio,
   ProductoOperacion,
@@ -78,6 +81,7 @@ export const TEST_ENTITIES = [
 export const TEST_MIGRATIONS = [
   Init1787269586538,
   AddSuperLineaToLinea1789091969000,
+  AddPresentacionToProducto1789200000000,
   AddCambioPrecioToProducto1789351169000,
 ];
 
@@ -86,6 +90,7 @@ export const TEST_TABLES = [
   'producto',
   'cambio_precio',
   'producto_operacion',
+  'presentacion',
   'linea',
   'super_linea',
   'marca',

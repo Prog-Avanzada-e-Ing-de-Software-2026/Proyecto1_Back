@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import { setSharedContainer, writeConnectionFile } from './connection';
 import { Init1787269586538 } from '../../src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from '../../src/migrations/1789091969000-AddSuperLineaToLinea';
+import { AddPresentacionToProducto1789200000000 } from '../../src/migrations/1789200000000-AddPresentacionToProducto';
 import { AddCambioPrecioToProducto1789351169000 } from '../../src/migrations/1789351169000-AddCambioPrecioToProducto';
 
 /**
@@ -45,6 +46,7 @@ export default async function globalSetup(): Promise<void> {
     migrations: [
       Init1787269586538,
       AddSuperLineaToLinea1789091969000,
+      AddPresentacionToProducto1789200000000,
       AddCambioPrecioToProducto1789351169000,
     ],
     synchronize: false,

@@ -11,6 +11,7 @@ import { ProductoPersistenceAdapter } from './producto.persistence-adapters';
 describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
   let dataSource: DataSource;
   let adapter: ProductoPersistenceAdapter;
+  let presentacionId: number;
 
   beforeAll(async () => {
     dataSource = await createInitializedTestDataSource();
@@ -24,6 +25,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
 
   beforeEach(async () => {
     await truncateTables(dataSource);
+    presentacionId = await createPresentacion('Presentacion CR-004');
     adapter = new ProductoPersistenceAdapter(
       dataSource.getRepository(Producto),
       dataSource.getRepository(CambioPrecio),
@@ -31,6 +33,14 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       createUnitOfWorkStub(dataSource),
     );
   });
+
+  async function createPresentacion(denominacion: string): Promise<number> {
+    const result = await dataSource.query(
+      'INSERT INTO `presentacion` (`denominacion`) VALUES (?)',
+      [denominacion],
+    );
+    return result.insertId as number;
+  }
 
   async function createSuperLinea(denominacion: string, deletedAt: Date | null = null): Promise<number> {
     const result = await dataSource.query(
@@ -50,8 +60,8 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
 
   async function createProducto(denominacion: string, lineaId: number, deletedAt: Date | null = null): Promise<number> {
     const result = await dataSource.query(
-      'INSERT INTO `producto` (`denominacion`, `linea_id`, `deletedAt`) VALUES (?, ?, ?)',
-      [denominacion, lineaId, deletedAt],
+      'INSERT INTO `producto` (`denominacion`, `linea_id`, `presentacion_id`, `deletedAt`) VALUES (?, ?, ?, ?)',
+      [denominacion, lineaId, presentacionId, deletedAt],
     );
     return result.insertId as number;
   }
