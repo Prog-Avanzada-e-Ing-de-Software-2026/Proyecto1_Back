@@ -28,6 +28,7 @@ import { ClienteOperacionModule } from './modules/organizacion/cliente-operacion
 import { ProductoOperacionModule } from './modules/gestion-productos/producto-operacion/producto-operacion.module';
 import { BusquedasModule } from './modules/gestion-documentos/busquedas/busquedas.module';
 import { SuperLineaModule } from './modules/gestion-productos/superlinea/superlinea.module';
+import { PresentacionModule } from './modules/gestion-productos/presentacion/presentacion.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { SuperLineaModule } from './modules/gestion-productos/superlinea/superli
     MarcaModule,
     LineaModule,
     SuperLineaModule,
+    PresentacionModule,
     ProductoModule,
     CondicionIvaModule,
     LocalidadModule,
