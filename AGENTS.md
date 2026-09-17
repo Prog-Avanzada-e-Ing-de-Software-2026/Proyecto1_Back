@@ -59,6 +59,8 @@ Apply these rules:
 OpenSpec artifacts live under `openspec/`; `openspec/config.yaml` defines the project defaults.
 
 - SDD is opt-in. Use it only when the user explicitly requests it or accepts an SDD proposal.
+- Prefer the installed native `openspec` CLI for initialization/update, status, instructions/templates, validation, listing/showing, and archival rather than manually inferring artifact state. Installation alone does not authorize mutation; check initialization first and obtain explicit user authorization before changing OpenSpec state, including running `openspec init`.
+- Use `openspec/config.yaml` and the active change artifacts as the OpenSpec sources of truth, subject to the repository-wide source-of-truth order above.
 - For an existing change, read its `state.yaml`, proposal, specs, design, and tasks before editing source code.
 - Honor operational states such as `paused` even when the engine reports that `apply` is technically ready.
 - A scoped, explicit change decision may override a project default. Record the exception in the change artifacts rather than hiding it.
@@ -67,7 +69,8 @@ OpenSpec artifacts live under `openspec/`; `openspec/config.yaml` defines the pr
 - Designs preserve module boundaries and explain significant tradeoffs; use sequence diagrams only for genuinely complex flows.
 - Tasks are numbered, phased, mapped to requirements, and small enough to complete and verify independently.
 - Implementation follows approved tasks without silently expanding scope.
-- Verification must prove conformance to the proposal, specs, design, and acceptance criteria before archival.
+- Verification must prove conformance to the proposal, specs, design, and acceptance criteria before archival. Validate applicable changes and specs with the native CLI, preferring strict validation where appropriate, and never claim success without observed command completion.
+- Write OpenSpec artifacts in English unless the user explicitly requests otherwise or project conventions require another language.
 - Direct work outside SDD must not create synthetic OpenSpec artifacts or pretend that SDD phases ran.
 
 ## Testing and verification
