@@ -14,6 +14,8 @@
     "start:prod": "node dist/src/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
+    "test:linea-superlinea": "node node_modules/jest/bin/jest.js --runTestsByPath src/modules/gestion-productos/linea/application/controllers/linea.controller.spec.ts src/modules/gestion-productos/linea/application/services/linea.service.spec.ts src/modules/gestion-productos/linea/dto/linea.dto.spec.ts src/modules/gestion-productos/superlinea/application/controllers/superlinea.controller.spec.ts src/modules/gestion-productos/superlinea/application/services/superlinea.service.spec.ts src/modules/gestion-productos/superlinea/dto/superlinea.dto.spec.ts --coverage=false --runInBand",
+    "test:linea-superlinea:integration": "node node_modules/jest/bin/jest.js --config ./jest.config.integration.js --runTestsByPath src/modules/gestion-productos/linea/infraestructure/repositories/linea.persistence-adapter.int-spec.ts src/modules/gestion-productos/superlinea/infraestructure/repositories/superlinea.persistence-adapter.int-spec.ts --runInBand",
     "test:integration": "jest --config ./jest.config.integration.js",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

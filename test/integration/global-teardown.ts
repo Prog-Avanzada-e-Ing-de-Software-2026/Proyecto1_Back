@@ -1,9 +1,12 @@
 import { getSharedContainer, removeConnectionFile } from './connection';
 
 export default async function globalTeardown(): Promise<void> {
-  const container = getSharedContainer();
-  if (container) {
-    await container.stop();
+  try {
+    const container = getSharedContainer();
+    if (container) {
+      await container.stop();
+    }
+  } finally {
+    removeConnectionFile();
   }
-  removeConnectionFile();
 }

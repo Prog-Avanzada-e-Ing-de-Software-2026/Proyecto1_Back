@@ -10,6 +10,7 @@ module.exports = {
   collectCoverage: false,
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
+    '^@nestjs/mapped-types$': '<rootDir>/test/harness/nestjs-mapped-types.cjs',
   },
   testTimeout: 240000,
   maxWorkers: 1,

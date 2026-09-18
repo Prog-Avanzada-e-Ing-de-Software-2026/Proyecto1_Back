@@ -13,6 +13,6 @@ module.exports = {
     coverageDirectory: './coverage',
     moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
+    '^@nestjs/mapped-types$': '<rootDir>/test/harness/nestjs-mapped-types.cjs',
   },
   };
-  
