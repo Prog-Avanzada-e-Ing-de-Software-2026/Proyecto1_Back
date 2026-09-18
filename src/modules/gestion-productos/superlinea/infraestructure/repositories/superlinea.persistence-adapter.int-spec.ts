@@ -42,7 +42,111 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     return result.insertId as number;
   }
 
-  it('CP-87 - Seleccionar superlíneas por coincidencia parcial sin distinguir mayúsculas', async () => {
+  it('CP-57 - creates a valid super line with or without an optional observation', async () => {
+    const withoutObservation = await adapter.create({
+      denominacion: 'Bebidas',
+      usuarioCreatedId: 7,
+    });
+    expect(withoutObservation).toEqual(
+      expect.objectContaining({ id: expect.any(Number), denominacion: 'Bebidas' }),
+    );
+
+    const withObservation = await adapter.create({
+      denominacion: 'Hogar',
+      observacion: 'Observación opcional',
+      usuarioCreatedId: 7,
+    });
+    expect(withObservation).toEqual(
+      expect.objectContaining({
+        id: expect.any(Number),
+        denominacion: 'Hogar',
+        observacion: 'Observación opcional',
+      }),
+    );
+  });
+
+  it.each(['maquinas', 'MÁQUINAS'])(
+    'CP-59 - treats case and accent variant %s as a reserved denomination',
+    async (candidate) => {
+      await createSuperLinea('Máquinas', null, new Date());
+
+      const existing = await adapter.findByDenominacionWithDeleted(candidate);
+
+      expect(existing).toEqual(expect.objectContaining({ denominacion: 'Máquinas' }));
+    },
+  );
+
+  it('CP-60/CP-61 - lists only active records and reports the real total', async () => {
+    await createSuperLinea('Bebidas', 'Con observación');
+    await createSuperLinea('Hogar');
+    await createSuperLinea('Eliminada', null, new Date());
+
+    const populated = await adapter.findBy({
+      denominacion: '',
+      skip: 0,
+      take: 10,
+      incluirEliminados: false,
+    });
+    expect(populated.total).toBe(2);
+    expect(populated.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ denominacion: 'Bebidas', observacion: 'Con observación' }),
+        expect.objectContaining({ denominacion: 'Hogar' }),
+      ]),
+    );
+
+    await truncateTables(dataSource);
+    await expect(
+      adapter.findBy({ denominacion: '', skip: 0, take: 10, incluirEliminados: false }),
+    ).resolves.toEqual({ data: [], total: 0 });
+  });
+
+  it('CP-62 - persists an update while preserving the identifier', async () => {
+    const id = await createSuperLinea('Bebidas');
+
+    const updated = await adapter.update(id, {
+      denominacion: 'Bebidas Sin Alcohol',
+      observacion: 'Updated',
+      usuarioUpdatedId: 8,
+    });
+
+    expect(updated).toEqual(
+      expect.objectContaining({
+        id,
+        denominacion: 'Bebidas Sin Alcohol',
+        observacion: 'Updated',
+      }),
+    );
+  });
+
+  it('CP-63 - self-denomination update should not detect the current row as a conflict (pending production fix)', async () => {
+    await createSuperLinea('Bebidas');
+
+    // The persistence query used by the uniqueness policy does not exclude the
+    // current entity, so a service-level self-update is wrongly treated as a
+    // conflict. This assertion documents the gap and must stay RED until
+    // production passes the current ID to the policy.
+    const existing = await adapter.findByDenominacionWithDeleted('bebidas');
+
+    expect(existing).toBeNull();
+  });
+
+  it('CP-64/CP-66 - soft-deletes a super line and excludes it from detail', async () => {
+    const id = await createSuperLinea('Bebidas');
+    const current = await adapter.findOne(id);
+
+    await adapter.remove(current!, { id: 9 } as never);
+
+    await expect(adapter.findOne(id)).resolves.toBeNull();
+    const persisted = await dataSource.getRepository(SuperLinea).findOne({
+      where: { id },
+      withDeleted: true,
+    });
+    expect(persisted?.deletedAt).toBeInstanceOf(Date);
+    expect(persisted?.usuarioDeletedId).toBe(9);
+  });
+
+  it('non-CP regression - Seleccionar superlíneas por coincidencia parcial sin distinguir mayúsculas', async () => {
     const firstId = await createSuperLinea('Alfa linea', 'obs A');
     await createSuperLinea('LINEA mayus', 'obs B');
 
@@ -63,7 +167,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     );
   });
 
-  it('CP-87 - Buscar "linea" no devuelve "línea"', async () => {
+  it('non-CP regression - Buscar "linea" no devuelve "línea"', async () => {
     await createSuperLinea('línea acento');
     await createSuperLinea('Alfa linea');
 
@@ -74,7 +178,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     ]);
   });
 
-  it('CP-87 - Un término con tilde solo coincide con denominaciones con tilde', async () => {
+  it('non-CP regression - Un término con tilde solo coincide con denominaciones con tilde', async () => {
     await createSuperLinea('línea premium');
     await createSuperLinea('Alfa linea');
 
@@ -85,7 +189,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     ]);
   });
 
-  it('CP-68 - Un término sin coincidencias devuelve una colección vacía', async () => {
+  it('non-CP regression - Un término sin coincidencias devuelve una colección vacía', async () => {
     await createSuperLinea('Arroz');
 
     const result = await adapter.busquedaPorCoincidenciaParcial('trigo');
@@ -93,12 +197,12 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     expect(result).toEqual([]);
   });
 
-  it('CP-72 - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
+  it('non-CP regression - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
     await expect(adapter.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
     await expect(adapter.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);
   });
 
-  it('CP-87 - Solo se ofrecen superlíneas activas (excluye las eliminadas lógicamente)', async () => {
+  it('non-CP regression - Solo se ofrecen superlíneas activas (excluye las eliminadas lógicamente)', async () => {
     await createSuperLinea('Alfa linea');
     await createSuperLinea('Beta linea', null, new Date());
 

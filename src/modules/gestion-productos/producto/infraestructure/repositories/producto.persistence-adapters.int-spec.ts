@@ -48,10 +48,21 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
     return result.insertId as number;
   }
 
-  async function createProducto(denominacion: string, lineaId: number, deletedAt: Date | null = null): Promise<number> {
+  async function createPresentacion(denominacion: string): Promise<number> {
     const result = await dataSource.query(
-      'INSERT INTO `producto` (`denominacion`, `linea_id`, `deletedAt`) VALUES (?, ?, ?)',
-      [denominacion, lineaId, deletedAt],
+      'INSERT INTO `presentacion` (`denominacion`) VALUES (?)',
+      [denominacion],
+    );
+    return result.insertId as number;
+  }
+
+  async function createProducto(denominacion: string, lineaId: number, deletedAt: Date | null = null): Promise<number> {
+    // The AddPresentacionToProducto migration makes presentacion_id NOT NULL,
+    // so every product fixture needs a real presentation row.
+    const presentacionId = await createPresentacion(denominacion);
+    const result = await dataSource.query(
+      'INSERT INTO `producto` (`denominacion`, `linea_id`, `presentacion_id`, `deletedAt`) VALUES (?, ?, ?, ?)',
+      [denominacion, lineaId, presentacionId, deletedAt],
     );
     return result.insertId as number;
   }

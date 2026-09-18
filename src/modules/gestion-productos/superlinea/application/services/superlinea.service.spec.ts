@@ -58,7 +58,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('creates a unique active super line with its generated id', async () => {
+  it('CP-57 - creates a valid super line with an optional observation', async () => {
     createPolicy.checkDenominacionExists.mockResolvedValue(false);
     repository.create.mockResolvedValue(entity());
 
@@ -95,7 +95,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('rejects creation with a denomination reserved by a deleted record', async () => {
+  it('CP-59 - rejects creation with a denomination reserved by an active or deleted record', async () => {
     createPolicy.checkDenominacionExists.mockResolvedValue(true);
 
     await expect(
@@ -104,7 +104,7 @@ describe('SuperLineaService', () => {
     expect(repository.create).not.toHaveBeenCalled();
   });
 
-  it('allows an update that retains the entity own denomination', async () => {
+  it('CP-63 - allows an update that retains the entity own denomination', async () => {
     repository.findOne.mockResolvedValue(entity());
     createPolicy.checkDenominacionExists.mockResolvedValue(false);
     repository.update.mockResolvedValue(entity({ observacion: 'Updated' }));
@@ -119,6 +119,10 @@ describe('SuperLineaService', () => {
       mensaje:
         'SuperLínea editada con éxito con denominacion: Herramientas',
     });
+    expect(createPolicy.checkDenominacionExists).toHaveBeenCalledWith(
+      'Herramientas',
+      1,
+    );
   });
 
   it('passes the responsible user id when creating', async () => {
@@ -163,7 +167,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('searches active records by default and returns the active total', async () => {
+  it('CP-60 - lists active records with denomination and optional observation', async () => {
     repository.findBy.mockResolvedValue({ data: [entity()], total: 1 });
 
     await expect(service.findBy({ denominacion: 'herra', skip: 0, take: 10 })).resolves.toEqual({
@@ -225,7 +229,7 @@ describe('SuperLineaService', () => {
     });
   });
 
-  it('returns a stable empty collection result', async () => {
+  it('CP-61 - returns an empty collection and zero total when no active records exist', async () => {
     repository.findBy.mockResolvedValue({ data: [], total: 0 });
     repository.findAllFor.mockResolvedValue([]);
 
@@ -239,7 +243,7 @@ describe('SuperLineaService', () => {
     });
   });
 
-  it('rejects deletion while an active line references the super line', async () => {
+  it('CP-65 - rejects deletion while an active line references the super line', async () => {
     repository.findOne.mockResolvedValue(entity());
     deletionPolicy.tieneLineasActivas.mockResolvedValue(true);
 
@@ -250,7 +254,7 @@ describe('SuperLineaService', () => {
     expect(repository.remove).not.toHaveBeenCalled();
   });
 
-  it('deletes immediately when only deleted lines reference the super line', async () => {
+  it('CP-64 - deletes when no active lines reference the super line', async () => {
     const user = { id: 9 };
     repository.findOne.mockResolvedValue(entity());
     deletionPolicy.tieneLineasActivas.mockResolvedValue(false);
@@ -263,7 +267,7 @@ describe('SuperLineaService', () => {
     });
   });
 
-  it('reports missing records consistently for detail and audit queries', async () => {
+  it('CP-66 - reports a logically deleted record as missing from detail', async () => {
     repository.findOne.mockResolvedValue(null);
     repository.findByIdConAuditoria.mockResolvedValue(null);
 
@@ -275,7 +279,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('CP-87 - Mapea las entidades a la forma de selección (código, nombre y descripción)', async () => {
+  it('non-CP regression - Mapea las entidades a la forma de selección (código, nombre y descripción)', async () => {
     const expected: SelectOption[] = [
       { codigo: 1, nombre: 'Almacén', descripcion: 'Productos varios' },
     ];
@@ -301,10 +305,10 @@ describe('SuperLineaService', () => {
   });
 });
 
-describe('SuperLineaMapper.toSelectOption', () => {
+describe('SuperLineaMapper.toSelectOption (non-CP regression)', () => {
   const { SuperLineaMapper } = require('../../mappers/superlinea.mapper');
 
-  it('CP-87 - Mapea una SuperLínea a la forma de selección (código, nombre y descripción)', () => {
+  it('Mapea una SuperLínea a la forma de selección (código, nombre y descripción)', () => {
     const sl = Object.assign(new SuperLinea(), {
       id: 7,
       denominacion: 'Almacén',
@@ -318,7 +322,7 @@ describe('SuperLineaMapper.toSelectOption', () => {
     });
   });
 
-  it('CP-87 - Una observación nula se transforma en una descripción vacía', () => {
+  it('Una observación nula se transforma en una descripción vacía', () => {
     const sl = Object.assign(new SuperLinea(), {
       id: 8,
       denominacion: 'Almacén',

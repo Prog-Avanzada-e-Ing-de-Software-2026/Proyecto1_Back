@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import { DataSource, QueryFailedError } from 'typeorm';
 import {
   createInitializedTestDataSource,
   createUnitOfWorkStub,
@@ -6,6 +6,11 @@ import {
 } from '../../../../../../test/integration/test-datasource';
 import { Linea } from '../../domain/entities/linea.entity';
 import { LineaPersistenceAdapter } from './linea.persistence-adapter';
+import { SuperLinea } from '../../../superlinea/domain/entities/superlinea.entity';
+import { DatabaseConnectionException } from 'src/modules/common/exceptions/database-connection.exception';
+import { Producto } from '../../../producto/domain/entities/producto.entity';
+import { CambioPrecio } from '../../../producto/domain/entities/cambio-precio.entity';
+import { ProductoPersistenceAdapter } from '../../../producto/infraestructure/repositories/producto.persistence-adapters';
 
 describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
   let dataSource: DataSource;
@@ -40,6 +45,226 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     return result.insertId as number;
   }
 
+  async function createPresentacion(denominacion: string): Promise<number> {
+    const result = await dataSource.query(
+      'INSERT INTO `presentacion` (`denominacion`) VALUES (?)',
+      [denominacion],
+    );
+    return result.insertId as number;
+  }
+
+  async function createProducto(
+    denominacion: string,
+    lineaId: number,
+    presentacionId: number,
+    deletedAt: Date | null = null,
+  ): Promise<number> {
+    const result = await dataSource.query(
+      'INSERT INTO `producto` (`denominacion`, `linea_id`, `presentacion_id`, `deletedAt`) VALUES (?, ?, ?, ?)',
+      [denominacion, lineaId, presentacionId, deletedAt],
+    );
+    return result.insertId as number;
+  }
+
+  it('CP-47/CP-54 - persists one active SuperLinea association and loads its detail', async () => {
+    const superLinea = await dataSource.getRepository(SuperLinea).findOneByOrFail({
+      id: superLineaId,
+    });
+
+    const created = await adapter.create(
+      {
+        denominacion: 'Sin Alcohol',
+        utilizaStockMinimo: false,
+        usuarioCreatedId: 7,
+        superLineaId,
+        deletedAt: null,
+      },
+      superLinea,
+    );
+    const detail = await adapter.findOne(created.id);
+
+    expect(detail).toEqual(
+      expect.objectContaining({
+        id: created.id,
+        denominacion: 'Sin Alcohol',
+        superLineaId,
+        superLinea: expect.objectContaining({
+          id: superLineaId,
+          denominacion: 'Super linea de prueba',
+        }),
+      }),
+    );
+  });
+
+  it('CP-50/CP-51 - reassigns only when a new SuperLinea is supplied', async () => {
+    const original = await dataSource.getRepository(SuperLinea).findOneByOrFail({
+      id: superLineaId,
+    });
+    const created = await adapter.create(
+      {
+        denominacion: 'Sin Alcohol',
+        utilizaStockMinimo: false,
+        usuarioCreatedId: 7,
+        superLineaId,
+        deletedAt: null,
+      },
+      original,
+    );
+    const otherId = await createSuperLinea('Hogar');
+    const other = await dataSource.getRepository(SuperLinea).findOneByOrFail({ id: otherId });
+
+    await adapter.update(created.id, { observacion: 'Updated', usuarioUpdatedId: 8 });
+    expect((await adapter.findOne(created.id))?.superLineaId).toBe(superLineaId);
+
+    await adapter.update(
+      created.id,
+      { superLineaId: otherId, usuarioUpdatedId: 8 },
+      other,
+    );
+    expect((await adapter.findOne(created.id))?.superLineaId).toBe(otherId);
+  });
+
+  it('CP-55 - soft-deletes a line without removing its row', async () => {
+    const id = await createLinea('Sin Alcohol');
+    const current = await adapter.findOne(id);
+
+    await adapter.remove(current!, { id: 9 } as never);
+
+    await expect(adapter.findOne(id)).rejects.toBeDefined();
+    const persisted = await dataSource.getRepository(Linea).findOne({
+      where: { id },
+      withDeleted: true,
+    });
+    expect(persisted?.deletedAt).toBeInstanceOf(Date);
+    expect(persisted?.usuarioDeletedId).toBe(9);
+  });
+
+  it('CP-56 - detects active products associated with a linea', async () => {
+    const lineaId = await createLinea('Con productos');
+    const presentacionId = await createPresentacion('Caja');
+    await createProducto('Producto activo', lineaId, presentacionId);
+
+    const productoAdapter = new ProductoPersistenceAdapter(
+      dataSource.getRepository(Producto),
+      dataSource.getRepository(CambioPrecio),
+      dataSource,
+      createUnitOfWorkStub(dataSource),
+    );
+
+    expect(await productoAdapter.existsProductosActivosByLinea(lineaId)).toBe(true);
+
+    await dataSource.query(
+      'UPDATE `producto` SET `deletedAt` = NOW() WHERE `linea_id` = ?',
+      [lineaId],
+    );
+    expect(await productoAdapter.existsProductosActivosByLinea(lineaId)).toBe(false);
+  });
+
+  it('CP-64/CP-65 - detects only active lines associated with a SuperLinea', async () => {
+    const id = await createLinea('Activa');
+
+    await expect(adapter.existsActiveBySuperLinea(superLineaId)).resolves.toBe(true);
+
+    await dataSource.query('UPDATE `linea` SET `deletedAt` = NOW() WHERE `id` = ?', [id]);
+    await expect(adapter.existsActiveBySuperLinea(superLineaId)).resolves.toBe(false);
+  });
+
+  it('CP-48 - the database rejects a linea associated with a missing SuperLinea', async () => {
+    const missingSuperLinea = Object.assign(new SuperLinea(), { id: 99_999 });
+
+    await expect(
+      adapter.create(
+        {
+          denominacion: 'Sin SuperLínea',
+          utilizaStockMinimo: false,
+          usuarioCreatedId: 7,
+          superLineaId: 99_999,
+          deletedAt: null,
+        },
+        missingSuperLinea,
+      ),
+    ).rejects.toThrow(DatabaseConnectionException);
+  });
+
+  it('CP-49 - accepts a 255-character denomination and rejects a 256-character one', async () => {
+    const superLinea = await dataSource.getRepository(SuperLinea).findOneByOrFail({
+      id: superLineaId,
+    });
+
+    const valid = await adapter.create(
+      {
+        denominacion: 'a'.repeat(255),
+        utilizaStockMinimo: false,
+        usuarioCreatedId: 7,
+        superLineaId,
+        deletedAt: null,
+      },
+      superLinea,
+    );
+    expect(valid.denominacion).toBe('a'.repeat(255));
+
+    await expect(
+      adapter.create(
+        {
+          denominacion: 'a'.repeat(256),
+          utilizaStockMinimo: false,
+          usuarioCreatedId: 7,
+          superLineaId,
+          deletedAt: null,
+        },
+        superLinea,
+      ),
+    ).rejects.toThrow(DatabaseConnectionException);
+  });
+
+  it('CP-49 - findByDenominacionWith returns a soft-deleted line as reserved', async () => {
+    const id = await createLinea('Reservada');
+    await dataSource.query('UPDATE `linea` SET `deletedAt` = NOW() WHERE `id` = ?', [id]);
+
+    const existing = await adapter.findByDenominacionWith('reservada');
+
+    expect(existing).toEqual(expect.objectContaining({ id, denominacion: 'Reservada' }));
+  });
+
+  it('CP-52 - the database rejects reassignment to a missing SuperLinea', async () => {
+    const superLinea = await dataSource.getRepository(SuperLinea).findOneByOrFail({
+      id: superLineaId,
+    });
+    const created = await adapter.create(
+      {
+        denominacion: 'Sin Alcohol',
+        utilizaStockMinimo: false,
+        usuarioCreatedId: 7,
+        superLineaId,
+        deletedAt: null,
+      },
+      superLinea,
+    );
+    const missingSuperLinea = Object.assign(new SuperLinea(), { id: 99_999 });
+
+    await expect(
+      adapter.update(
+        created.id,
+        { superLineaId: 99_999, usuarioUpdatedId: 8 },
+        missingSuperLinea,
+      ),
+    ).rejects.toThrow(QueryFailedError);
+  });
+
+  it('CP-53 - findByDenominacionWith detects another active line with the same denomination', async () => {
+    await createLinea('Reservada');
+
+    // The schema uses (denominacion, deletedAt) with a nullable deletedAt, so
+    // MySQL does not enforce uniqueness among active rows at the database
+    // level. The application-level rejection relies on this query finding the
+    // existing active row before the update is attempted.
+    const existing = await adapter.findByDenominacionWith('reservada');
+
+    expect(existing).toEqual(
+      expect.objectContaining({ denominacion: 'Reservada', deletedAt: null }),
+    );
+  });
+
   async function createLinea(
     denominacion: string,
     observacion: string | null = null,
@@ -52,7 +277,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     return result.insertId as number;
   }
 
-  it('CP-84 - La selección de líneas no distingue mayúsculas de minúsculas', async () => {
+  it('non-CP regression - La selección de líneas no distingue mayúsculas de minúsculas', async () => {
     const firstId = await createLinea('Alfa harina', 'obs A');
     await createLinea('HARINA mayus', 'obs B');
 
@@ -73,7 +298,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     );
   });
 
-  it('CP-83 - Buscar "harina" no devuelve "harína"', async () => {
+  it('non-CP regression - Buscar "harina" no devuelve "harína"', async () => {
     await createLinea('harína acento');
     await createLinea('Alfa harina');
 
@@ -82,7 +307,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(result.map((linea) => linea.denominacion)).toEqual(['Alfa harina']);
   });
 
-  it('CP-83 - Un término con tilde solo coincide con denominaciones con tilde', async () => {
+  it('non-CP regression - Un término con tilde solo coincide con denominaciones con tilde', async () => {
     await createLinea('harína premium');
     await createLinea('Alfa harina');
 
@@ -93,7 +318,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     ]);
   });
 
-  it('CP-68 - Un término sin coincidencias devuelve una colección vacía', async () => {
+  it('non-CP regression - Un término sin coincidencias devuelve una colección vacía', async () => {
     await createLinea('Arroz');
 
     const result = await adapter.busquedaPorCoincidenciaParcial('trigo');
@@ -101,12 +326,12 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(result).toEqual([]);
   });
 
-  it('CP-72 - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
+  it('non-CP regression - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
     await expect(adapter.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
     await expect(adapter.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);
   });
 
-  it('CP-85 - Solo se ofrecen líneas activas (excluye las eliminadas lógicamente)', async () => {
+  it('non-CP regression - Solo se ofrecen líneas activas (excluye las eliminadas lógicamente)', async () => {
     await createLinea('Alfa harina');
     await createLinea('Beta harina', null, new Date());
 
@@ -115,7 +340,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(result.map((linea) => linea.denominacion)).toEqual(['Alfa harina']);
   });
 
-  it('CP-82 - Los resultados vienen ordenados ascendentemente por denominación', async () => {
+  it('non-CP regression - Los resultados vienen ordenados ascendentemente por denominación', async () => {
     await createLinea('Gamma harina');
     await createLinea('Alfa harina');
     await createLinea('Beta harina');

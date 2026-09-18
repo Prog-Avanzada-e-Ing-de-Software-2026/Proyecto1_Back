@@ -36,7 +36,7 @@ describe('LineaController SuperLinea contract', () => {
 
   afterEach(async () => app.close());
 
-  it('requires a non-null integer SuperLinea when creating a line', async () => {
+  it('CP-48 - rejects a missing or null SuperLinea before creation', async () => {
     const base = {
       denominacion: 'Herramientas',
       utilizaStockMinimo: false,
@@ -52,7 +52,7 @@ describe('LineaController SuperLinea contract', () => {
     expect(service.create).not.toHaveBeenCalled();
   });
 
-  it('accepts an active-parent id when creating', async () => {
+  it('CP-47 - returns HTTP 201 for a valid line creation request', async () => {
     service.create.mockResolvedValue({ id: 1 });
 
     await request(app.getHttpServer())
@@ -70,7 +70,7 @@ describe('LineaController SuperLinea contract', () => {
     );
   });
 
-  it('allows omission but rejects null when updating the association', async () => {
+  it('CP-51/CP-52 - allows omission but rejects null when updating the association', async () => {
     service.update.mockResolvedValue({ mensaje: 'updated' });
 
     await request(app.getHttpServer())
@@ -84,7 +84,17 @@ describe('LineaController SuperLinea contract', () => {
     expect(service.update).toHaveBeenCalledTimes(1);
   });
 
-  it('CP-82 - /api/linea/select devuelve las opciones de selección (código, nombre y descripción)', async () => {
+  it('CP-55 - returns HTTP 200 when deleting a line', async () => {
+    service.remove.mockResolvedValue({ mensaje: 'deleted' });
+
+    await request(app.getHttpServer())
+      .delete('/api/linea/1?usuarioId=9')
+      .expect(200, { mensaje: 'deleted' });
+
+    expect(service.remove).toHaveBeenCalledWith(1, 9);
+  });
+
+  it('non-CP regression - /api/linea/select devuelve las opciones de selección (código, nombre y descripción)', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue([
       { codigo: 1, nombre: 'Harinas', descripcion: '' },
     ]);
@@ -97,7 +107,7 @@ describe('LineaController SuperLinea contract', () => {
     );
   });
 
-  it('CP-86 - Sin término, /api/linea/select devuelve una colección vacía', async () => {
+  it('non-CP regression - Sin término, /api/linea/select devuelve una colección vacía', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
 
     await request(app.getHttpServer())
@@ -106,7 +116,7 @@ describe('LineaController SuperLinea contract', () => {
     expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith('');
   });
 
-  it('CP-79 - Rechazar parámetros no admitidos en /api/linea/select', async () => {
+  it('non-CP regression - Rechazar parámetros no admitidos en /api/linea/select', async () => {
     await request(app.getHttpServer())
       .get('/api/linea/select?desconocido=1')
       .expect(400);
