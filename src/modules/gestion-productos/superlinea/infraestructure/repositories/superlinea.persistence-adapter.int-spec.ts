@@ -1,24 +1,27 @@
 import { DataSource } from 'typeorm';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
 import {
   createInitializedTestDataSource,
   createUnitOfWorkStub,
   truncateTables,
 } from '../../../../../../test/integration/test-datasource';
+import { startMySqlTestContainer } from '../../../../../../test/integration/mysql-test-container';
 import { SuperLinea } from '../../domain/entities/superlinea.entity';
 import { SuperLineaPersistenceAdapter } from './superlinea.persistence-adapter';
 
 describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () => {
+  let container: StartedMySqlContainer;
   let dataSource: DataSource;
   let adapter: SuperLineaPersistenceAdapter;
 
   beforeAll(async () => {
-    dataSource = await createInitializedTestDataSource();
+    container = await startMySqlTestContainer();
+    dataSource = await createInitializedTestDataSource(container);
   });
 
   afterAll(async () => {
-    if (dataSource?.isInitialized) {
-      await dataSource.destroy();
-    }
+    if (dataSource?.isInitialized) await dataSource.destroy();
+    if (container) await container.stop();
   });
 
   beforeEach(async () => {

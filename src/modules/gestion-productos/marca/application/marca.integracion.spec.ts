@@ -17,10 +17,8 @@
  * Requiere Docker corriendo. Sin Docker estos tests fallan (no pasan en silencio).
  */
 import { DataSource } from 'typeorm';
-import {
-  MySqlContainer,
-  StartedMySqlContainer,
-} from '@testcontainers/mysql';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
+import { startMySqlTestContainer } from '../../../../../test/integration/mysql-test-container';
 import { Producto } from '../../producto/domain/entities/producto.entity';
 import { CambioPrecio } from '../../producto/domain/entities/cambio-precio.entity';
 import { ProductoPersistenceAdapter } from '../../producto/infraestructure/repositories/producto.persistence-adapters';
@@ -91,7 +89,7 @@ describe('Marca - Gestión de marca (integración servicio/repositorio + MySQL r
   let service: MarcaService;
 
   beforeAll(async () => {
-    mysql = await new MySqlContainer('mysql:8.0').start();
+    mysql = await startMySqlTestContainer();
 
     const admin = new DataSource({
       type: 'mysql',

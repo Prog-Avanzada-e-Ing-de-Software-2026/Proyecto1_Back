@@ -1,25 +1,28 @@
 import { DataSource } from 'typeorm';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
 import {
   createInitializedTestDataSource,
   createUnitOfWorkStub,
   truncateTables,
 } from '../../../../../../test/integration/test-datasource';
+import { startMySqlTestContainer } from '../../../../../../test/integration/mysql-test-container';
 import { CambioPrecio } from '../../domain/entities/cambio-precio.entity';
 import { Producto } from '../../domain/entities/producto.entity';
 import { ProductoPersistenceAdapter } from './producto.persistence-adapters';
 
 describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
+  let container: StartedMySqlContainer;
   let dataSource: DataSource;
   let adapter: ProductoPersistenceAdapter;
 
   beforeAll(async () => {
-    dataSource = await createInitializedTestDataSource();
+    container = await startMySqlTestContainer();
+    dataSource = await createInitializedTestDataSource(container);
   });
 
   afterAll(async () => {
-    if (dataSource?.isInitialized) {
-      await dataSource.destroy();
-    }
+    if (dataSource?.isInitialized) await dataSource.destroy();
+    if (container) await container.stop();
   });
 
   beforeEach(async () => {

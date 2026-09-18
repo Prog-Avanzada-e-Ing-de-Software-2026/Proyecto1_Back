@@ -21,10 +21,8 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import * as request from 'supertest';
-import {
-  MySqlContainer,
-  StartedMySqlContainer,
-} from '@testcontainers/mysql';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
+import { startMySqlTestContainer } from '../../../../../test/integration/mysql-test-container';
 import { App } from 'supertest/types';
 import { ProductoController } from './controllers/producto.controller';
 import { ProductoService } from './services/producto.service';
@@ -101,7 +99,7 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
   const usuarioServiceStub = { findOne: jest.fn() };
 
   beforeAll(async () => {
-    mysql = await new MySqlContainer('mysql:8.0').start();
+    mysql = await startMySqlTestContainer();
 
     const admin = new DataSource({
       type: 'mysql',

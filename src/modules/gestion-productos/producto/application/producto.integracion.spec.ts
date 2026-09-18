@@ -15,10 +15,8 @@
  * Requiere Docker corriendo. Sin Docker estos tests fallan (no pasan en silencio).
  */
 import { DataSource } from 'typeorm';
-import {
-  MySqlContainer,
-  StartedMySqlContainer,
-} from '@testcontainers/mysql';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
+import { startMySqlTestContainer } from '../../../../../test/integration/mysql-test-container';
 import { Producto } from '../domain/entities/producto.entity';
 import { CambioPrecio } from '../domain/entities/cambio-precio.entity';
 import { MotivoCambioPrecio } from '../enums/motivo-cambio-precio.enum';
@@ -81,7 +79,7 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
   let service: ProductoService;
 
   beforeAll(async () => {
-    mysql = await new MySqlContainer('mysql:8.0').start();
+    mysql = await startMySqlTestContainer();
 
     const admin = new DataSource({
       type: 'mysql',

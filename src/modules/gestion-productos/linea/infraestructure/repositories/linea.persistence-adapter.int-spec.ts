@@ -1,9 +1,11 @@
 import { DataSource, QueryFailedError } from 'typeorm';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
 import {
   createInitializedTestDataSource,
   createUnitOfWorkStub,
   truncateTables,
 } from '../../../../../../test/integration/test-datasource';
+import { startMySqlTestContainer } from '../../../../../../test/integration/mysql-test-container';
 import { Linea } from '../../domain/entities/linea.entity';
 import { LineaPersistenceAdapter } from './linea.persistence-adapter';
 import { SuperLinea } from '../../../superlinea/domain/entities/superlinea.entity';
@@ -13,18 +15,19 @@ import { CambioPrecio } from '../../../producto/domain/entities/cambio-precio.en
 import { ProductoPersistenceAdapter } from '../../../producto/infraestructure/repositories/producto.persistence-adapters';
 
 describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
+  let container: StartedMySqlContainer;
   let dataSource: DataSource;
   let adapter: LineaPersistenceAdapter;
   let superLineaId: number;
 
   beforeAll(async () => {
-    dataSource = await createInitializedTestDataSource();
+    container = await startMySqlTestContainer();
+    dataSource = await createInitializedTestDataSource(container);
   });
 
   afterAll(async () => {
-    if (dataSource?.isInitialized) {
-      await dataSource.destroy();
-    }
+    if (dataSource?.isInitialized) await dataSource.destroy();
+    if (container) await container.stop();
   });
 
   beforeEach(async () => {
