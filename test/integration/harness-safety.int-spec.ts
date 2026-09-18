@@ -1,26 +1,28 @@
 import { DataSource } from 'typeorm';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
 import {
   createInitializedTestDataSource,
   truncateTables,
 } from './test-datasource';
-import { getSharedContainer, readConnectionFile } from './connection';
+import { mySqlTestConnection, startMySqlTestContainer } from './mysql-test-container';
 import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 
 describe('Integration harness safety', () => {
+  let container: StartedMySqlContainer;
   let dataSource: DataSource;
 
   beforeAll(async () => {
-    dataSource = await createInitializedTestDataSource();
+    container = await startMySqlTestContainer();
+    dataSource = await createInitializedTestDataSource(container);
   });
 
   afterAll(async () => {
-    if (dataSource?.isInitialized) {
-      await dataSource.destroy();
-    }
+    if (dataSource?.isInitialized) await dataSource.destroy();
+    if (container) await container.stop();
   });
 
-  it('global setup removed stale state and wrote a usable connection file', () => {
-    const config = readConnectionFile();
+  it('per-file helper exposes a usable container connection', () => {
+    const config = mySqlTestConnection(container);
 
     expect(config).toEqual(
       expect.objectContaining({
@@ -29,7 +31,6 @@ describe('Integration harness safety', () => {
         database: expect.any(String),
       }),
     );
-    expect(getSharedContainer()).toBeDefined();
   });
 
   it('real migrations created the presentacion table and registered the Presentacion entity', async () => {

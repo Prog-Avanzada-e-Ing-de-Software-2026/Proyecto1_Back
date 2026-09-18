@@ -1,0 +1,9 @@
+[
+  "src/modules/gestion-productos/linea/infraestructure/repositories/linea.persistence-adapter.int-spec.ts",
+  "src/modules/gestion-productos/marca/application/marca.http.spec.ts",
+  "src/modules/gestion-productos/marca/application/marca.integracion.spec.ts",
+  "src/modules/gestion-productos/producto/application/producto.http.spec.ts",
+  "src/modules/gestion-productos/producto/application/producto.integracion.spec.ts",
+  "src/modules/gestion-productos/producto/infraestructure/repositories/producto.persistence-adapters.int-spec.ts",
+  "src/modules/gestion-productos/superlinea/infraestructure/repositories/superlinea.persistence-adapter.int-spec.ts"
+]
