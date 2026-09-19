@@ -9,13 +9,13 @@ const validateDto = (payload: Record<string, unknown>) =>
   validate(plainToInstance(SelectLineaDto, payload), validationOptions);
 
 describe('SelectLineaDto', () => {
-  it('non-CP regression - Acepta una denominación opcional de tipo string', async () => {
+  it('No-CP - Acepta una denominación opcional de tipo string', async () => {
     const errors = await validateDto({ denominacion: 'harina' });
 
     expect(errors).toHaveLength(0);
   });
 
-  it('non-CP regression - Acepta un payload vacío (sin término de búsqueda)', async () => {
+  it('No-CP - Acepta un payload vacío (sin término de búsqueda)', async () => {
     const errors = await validateDto({});
 
     expect(errors).toHaveLength(0);

@@ -14,7 +14,7 @@ import { Producto } from '../../../producto/domain/entities/producto.entity';
 import { CambioPrecio } from '../../../producto/domain/entities/cambio-precio.entity';
 import { ProductoPersistenceAdapter } from '../../../producto/infraestructure/repositories/producto.persistence-adapters';
 
-describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
+describe('LineaPersistenceAdapter - persistencia y búsqueda por coincidencia parcial', () => {
   let container: StartedMySqlContainer;
   let dataSource: DataSource;
   let adapter: LineaPersistenceAdapter;
@@ -69,7 +69,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     return result.insertId as number;
   }
 
-  it('CP-47/CP-54 - persists one active SuperLinea association and loads its detail', async () => {
+  it('CP-47/CP-54 - Persiste una única asociación con una SuperLínea activa y carga su detalle', async () => {
     const superLinea = await dataSource.getRepository(SuperLinea).findOneByOrFail({
       id: superLineaId,
     });
@@ -99,7 +99,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     );
   });
 
-  it('CP-50/CP-51 - reassigns only when a new SuperLinea is supplied', async () => {
+  it('CP-50/CP-51 - Reasigna únicamente cuando se provee una nueva SuperLínea', async () => {
     const original = await dataSource.getRepository(SuperLinea).findOneByOrFail({
       id: superLineaId,
     });
@@ -127,7 +127,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect((await adapter.findOne(created.id))?.superLineaId).toBe(otherId);
   });
 
-  it('CP-55 - soft-deletes a line without removing its row', async () => {
+  it('CP-55 - Elimina lógicamente una Línea sin borrar su registro', async () => {
     const id = await createLinea('Sin Alcohol');
     const current = await adapter.findOne(id);
 
@@ -142,7 +142,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(persisted?.usuarioDeletedId).toBe(9);
   });
 
-  it('CP-56 - detects active products associated with a linea', async () => {
+  it('CP-56 - Detecta Productos activos asociados a una Línea', async () => {
     const lineaId = await createLinea('Con productos');
     const presentacionId = await createPresentacion('Caja');
     await createProducto('Producto activo', lineaId, presentacionId);
@@ -163,7 +163,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(await productoAdapter.existsProductosActivosByLinea(lineaId)).toBe(false);
   });
 
-  it('CP-64/CP-65 - detects only active lines associated with a SuperLinea', async () => {
+  it('CP-64/CP-65 - Detecta únicamente Líneas activas asociadas a una SuperLínea', async () => {
     const id = await createLinea('Activa');
 
     await expect(adapter.existsActiveBySuperLinea(superLineaId)).resolves.toBe(true);
@@ -172,7 +172,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     await expect(adapter.existsActiveBySuperLinea(superLineaId)).resolves.toBe(false);
   });
 
-  it('CP-48 - the database rejects a linea associated with a missing SuperLinea', async () => {
+  it('CP-48 - La base de datos rechaza una Línea asociada a una SuperLínea inexistente', async () => {
     const missingSuperLinea = Object.assign(new SuperLinea(), { id: 99_999 });
 
     await expect(
@@ -189,7 +189,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     ).rejects.toThrow(DatabaseConnectionException);
   });
 
-  it('CP-49 - accepts a 255-character denomination and rejects a 256-character one', async () => {
+  it('CP-49 - Acepta una denominación de 255 caracteres y rechaza una de 256', async () => {
     const superLinea = await dataSource.getRepository(SuperLinea).findOneByOrFail({
       id: superLineaId,
     });
@@ -220,7 +220,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     ).rejects.toThrow(DatabaseConnectionException);
   });
 
-  it('CP-49 - findByDenominacionWith returns a soft-deleted line as reserved', async () => {
+  it('CP-49 - findByDenominacionWith devuelve una Línea eliminada lógicamente como reservada', async () => {
     const id = await createLinea('Reservada');
     await dataSource.query('UPDATE `linea` SET `deletedAt` = NOW() WHERE `id` = ?', [id]);
 
@@ -229,7 +229,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(existing).toEqual(expect.objectContaining({ id, denominacion: 'Reservada' }));
   });
 
-  it('CP-52 - the database rejects reassignment to a missing SuperLinea', async () => {
+  it('CP-52 - La base de datos rechaza la reasignación a una SuperLínea inexistente', async () => {
     const superLinea = await dataSource.getRepository(SuperLinea).findOneByOrFail({
       id: superLineaId,
     });
@@ -254,7 +254,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     ).rejects.toThrow(QueryFailedError);
   });
 
-  it('CP-53 - findByDenominacionWith detects another active line with the same denomination', async () => {
+  it('CP-53 - findByDenominacionWith detecta otra Línea activa con la misma denominación', async () => {
     await createLinea('Reservada');
 
     // The schema uses (denominacion, deletedAt) with a nullable deletedAt, so
@@ -280,7 +280,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     return result.insertId as number;
   }
 
-  it('non-CP regression - La selección de líneas no distingue mayúsculas de minúsculas', async () => {
+  it('No-CP - La selección de líneas no distingue mayúsculas de minúsculas', async () => {
     const firstId = await createLinea('Alfa harina', 'obs A');
     await createLinea('HARINA mayus', 'obs B');
 
@@ -301,7 +301,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     );
   });
 
-  it('non-CP regression - Buscar "harina" no devuelve "harína"', async () => {
+  it('No-CP - Buscar "harina" no devuelve "harína"', async () => {
     await createLinea('harína acento');
     await createLinea('Alfa harina');
 
@@ -310,7 +310,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(result.map((linea) => linea.denominacion)).toEqual(['Alfa harina']);
   });
 
-  it('non-CP regression - Un término con tilde solo coincide con denominaciones con tilde', async () => {
+  it('No-CP - Un término con tilde solo coincide con denominaciones con tilde', async () => {
     await createLinea('harína premium');
     await createLinea('Alfa harina');
 
@@ -321,7 +321,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     ]);
   });
 
-  it('non-CP regression - Un término sin coincidencias devuelve una colección vacía', async () => {
+  it('No-CP - Un término sin coincidencias devuelve una colección vacía', async () => {
     await createLinea('Arroz');
 
     const result = await adapter.busquedaPorCoincidenciaParcial('trigo');
@@ -329,12 +329,12 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(result).toEqual([]);
   });
 
-  it('non-CP regression - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
+  it('No-CP - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
     await expect(adapter.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
     await expect(adapter.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);
   });
 
-  it('non-CP regression - Solo se ofrecen líneas activas (excluye las eliminadas lógicamente)', async () => {
+  it('No-CP - Solo se ofrecen líneas activas (excluye las eliminadas lógicamente)', async () => {
     await createLinea('Alfa harina');
     await createLinea('Beta harina', null, new Date());
 
@@ -343,7 +343,7 @@ describe('LineaPersistenceAdapter - CR-004 partial coincidence search', () => {
     expect(result.map((linea) => linea.denominacion)).toEqual(['Alfa harina']);
   });
 
-  it('non-CP regression - Los resultados vienen ordenados ascendentemente por denominación', async () => {
+  it('No-CP - Los resultados vienen ordenados ascendentemente por denominación', async () => {
     await createLinea('Gamma harina');
     await createLinea('Alfa harina');
     await createLinea('Beta harina');

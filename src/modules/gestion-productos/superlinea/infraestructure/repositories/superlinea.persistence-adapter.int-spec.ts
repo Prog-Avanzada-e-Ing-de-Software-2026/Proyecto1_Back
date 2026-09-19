@@ -9,7 +9,7 @@ import { startMySqlTestContainer } from '../../../../../../test/integration/mysq
 import { SuperLinea } from '../../domain/entities/superlinea.entity';
 import { SuperLineaPersistenceAdapter } from './superlinea.persistence-adapter';
 
-describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () => {
+describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidencia parcial', () => {
   let container: StartedMySqlContainer;
   let dataSource: DataSource;
   let adapter: SuperLineaPersistenceAdapter;
@@ -45,7 +45,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     return result.insertId as number;
   }
 
-  it('CP-57 - creates a valid super line with or without an optional observation', async () => {
+  it('CP-57 - Registra una SuperLínea válida con o sin observación opcional', async () => {
     const withoutObservation = await adapter.create({
       denominacion: 'Bebidas',
       usuarioCreatedId: 7,
@@ -69,7 +69,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
   });
 
   it.each(['maquinas', 'MÁQUINAS'])(
-    'CP-59 - treats case and accent variant %s as a reserved denomination',
+    'CP-59 - Trata la variante de mayúsculas y tildes %s como una denominación reservada',
     async (candidate) => {
       await createSuperLinea('Máquinas', null, new Date());
 
@@ -79,7 +79,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     },
   );
 
-  it('CP-60/CP-61 - lists only active records and reports the real total', async () => {
+  it('CP-60/CP-61 - Lista únicamente los registros activos e informa el total real', async () => {
     await createSuperLinea('Bebidas', 'Con observación');
     await createSuperLinea('Hogar');
     await createSuperLinea('Eliminada', null, new Date());
@@ -104,7 +104,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     ).resolves.toEqual({ data: [], total: 0 });
   });
 
-  it('CP-62 - persists an update while preserving the identifier', async () => {
+  it('CP-62 - Persiste una modificación conservando el identificador', async () => {
     const id = await createSuperLinea('Bebidas');
 
     const updated = await adapter.update(id, {
@@ -122,7 +122,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     );
   });
 
-  it('CP-63 - self-denomination update should not detect the current row as a conflict (pending production fix)', async () => {
+  it('CP-63 - La modificación de la propia denominación no debe detectar el registro actual como conflicto (pendiente de corrección en producción)', async () => {
     await createSuperLinea('Bebidas');
 
     // The persistence query used by the uniqueness policy does not exclude the
@@ -134,7 +134,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     expect(existing).toBeNull();
   });
 
-  it('CP-64/CP-66 - soft-deletes a super line and excludes it from detail', async () => {
+  it('CP-64/CP-66 - Elimina lógicamente una SuperLínea y la excluye del detalle', async () => {
     const id = await createSuperLinea('Bebidas');
     const current = await adapter.findOne(id);
 
@@ -149,7 +149,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     expect(persisted?.usuarioDeletedId).toBe(9);
   });
 
-  it('non-CP regression - Seleccionar superlíneas por coincidencia parcial sin distinguir mayúsculas', async () => {
+  it('No-CP - Seleccionar superlíneas por coincidencia parcial sin distinguir mayúsculas', async () => {
     const firstId = await createSuperLinea('Alfa linea', 'obs A');
     await createSuperLinea('LINEA mayus', 'obs B');
 
@@ -170,7 +170,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     );
   });
 
-  it('non-CP regression - Buscar "linea" no devuelve "línea"', async () => {
+  it('No-CP - Buscar "linea" no devuelve "línea"', async () => {
     await createSuperLinea('línea acento');
     await createSuperLinea('Alfa linea');
 
@@ -181,7 +181,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     ]);
   });
 
-  it('non-CP regression - Un término con tilde solo coincide con denominaciones con tilde', async () => {
+  it('No-CP - Un término con tilde solo coincide con denominaciones con tilde', async () => {
     await createSuperLinea('línea premium');
     await createSuperLinea('Alfa linea');
 
@@ -192,7 +192,7 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     ]);
   });
 
-  it('non-CP regression - Un término sin coincidencias devuelve una colección vacía', async () => {
+  it('No-CP - Un término sin coincidencias devuelve una colección vacía', async () => {
     await createSuperLinea('Arroz');
 
     const result = await adapter.busquedaPorCoincidenciaParcial('trigo');
@@ -200,12 +200,12 @@ describe('SuperLineaPersistenceAdapter - CR-004 partial coincidence search', () 
     expect(result).toEqual([]);
   });
 
-  it('non-CP regression - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
+  it('No-CP - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
     await expect(adapter.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
     await expect(adapter.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);
   });
 
-  it('non-CP regression - Solo se ofrecen superlíneas activas (excluye las eliminadas lógicamente)', async () => {
+  it('No-CP - Solo se ofrecen superlíneas activas (excluye las eliminadas lógicamente)', async () => {
     await createSuperLinea('Alfa linea');
     await createSuperLinea('Beta linea', null, new Date());
 

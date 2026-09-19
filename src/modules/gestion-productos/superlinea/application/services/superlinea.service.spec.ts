@@ -58,7 +58,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('CP-57 - creates a valid super line with an optional observation', async () => {
+  it('CP-57 - Registra una SuperLínea válida con observación opcional', async () => {
     createPolicy.checkDenominacionExists.mockResolvedValue(false);
     repository.create.mockResolvedValue(entity());
 
@@ -74,7 +74,7 @@ describe('SuperLineaService', () => {
     });
   });
 
-  it('accepts an omitted observation and preserves one when supplied', async () => {
+  it('No-CP - Acepta una observación omitida y conserva la observación cuando existe', async () => {
     createPolicy.checkDenominacionExists.mockResolvedValue(false);
     repository.create.mockResolvedValue(entity({ observacion: undefined }));
     repository.findOne.mockResolvedValue(entity());
@@ -95,7 +95,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('CP-59 - rejects creation with a denomination reserved by an active or deleted record', async () => {
+  it('CP-59 - Rechaza el registro con una denominación reservada por un registro activo o eliminado', async () => {
     createPolicy.checkDenominacionExists.mockResolvedValue(true);
 
     await expect(
@@ -104,7 +104,7 @@ describe('SuperLineaService', () => {
     expect(repository.create).not.toHaveBeenCalled();
   });
 
-  it('CP-63 - allows an update that retains the entity own denomination', async () => {
+  it('CP-63 - Permite una modificación que conserva la propia denominación de la entidad', async () => {
     repository.findOne.mockResolvedValue(entity());
     createPolicy.checkDenominacionExists.mockResolvedValue(false);
     repository.update.mockResolvedValue(entity({ observacion: 'Updated' }));
@@ -125,7 +125,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('passes the responsible user id when creating', async () => {
+  it('No-CP - Propaga el usuario responsable al registrar', async () => {
     createPolicy.checkDenominacionExists.mockResolvedValue(false);
     repository.create.mockResolvedValue(entity());
 
@@ -136,7 +136,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('passes the responsible user id when updating', async () => {
+  it('No-CP - Propaga el usuario responsable al modificar', async () => {
     repository.findOne.mockResolvedValue(entity());
     repository.update.mockResolvedValue(
       entity({ usuarioUpdatedId: 8, updatedAt: new Date('2026-09-11') }),
@@ -150,7 +150,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('passes the responsible user when logically deleting', async () => {
+  it('No-CP - Propaga el usuario responsable al eliminar lógicamente', async () => {
     const user = { id: 9 };
     repository.findOne.mockResolvedValue(entity());
     deletionPolicy.tieneLineasActivas.mockResolvedValue(false);
@@ -167,7 +167,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('CP-60 - lists active records with denomination and optional observation', async () => {
+  it('CP-60 - Lista los registros activos con denominación y observación opcional', async () => {
     repository.findBy.mockResolvedValue({ data: [entity()], total: 1 });
 
     await expect(service.findBy({ denominacion: 'herra', skip: 0, take: 10 })).resolves.toEqual({
@@ -189,7 +189,7 @@ describe('SuperLineaService', () => {
     });
   });
 
-  it('searches active and deleted records when requested', async () => {
+  it('No-CP - Busca registros activos y eliminados cuando se solicita', async () => {
     const deleted = entity({
       id: 2,
       denominacion: 'Herramientas eléctricas',
@@ -214,7 +214,7 @@ describe('SuperLineaService', () => {
     });
   });
 
-  it('returns only active selector records and their actual count', async () => {
+  it('No-CP - Devuelve únicamente los registros activos del selector y su total real', async () => {
     repository.findAllFor.mockResolvedValue([
       entity(),
       entity({ id: 2, denominacion: 'Máquinas' }),
@@ -229,7 +229,7 @@ describe('SuperLineaService', () => {
     });
   });
 
-  it('CP-61 - returns an empty collection and zero total when no active records exist', async () => {
+  it('CP-61 - Devuelve una colección vacía y total cero cuando no existen registros activos', async () => {
     repository.findBy.mockResolvedValue({ data: [], total: 0 });
     repository.findAllFor.mockResolvedValue([]);
 
@@ -243,7 +243,7 @@ describe('SuperLineaService', () => {
     });
   });
 
-  it('CP-65 - rejects deletion while an active line references the super line', async () => {
+  it('CP-65 - Rechaza la eliminación cuando una Línea activa referencia la SuperLínea', async () => {
     repository.findOne.mockResolvedValue(entity());
     deletionPolicy.tieneLineasActivas.mockResolvedValue(true);
 
@@ -254,7 +254,7 @@ describe('SuperLineaService', () => {
     expect(repository.remove).not.toHaveBeenCalled();
   });
 
-  it('CP-64 - deletes when no active lines reference the super line', async () => {
+  it('CP-64 - Elimina cuando ninguna Línea activa referencia la SuperLínea', async () => {
     const user = { id: 9 };
     repository.findOne.mockResolvedValue(entity());
     deletionPolicy.tieneLineasActivas.mockResolvedValue(false);
@@ -267,7 +267,7 @@ describe('SuperLineaService', () => {
     });
   });
 
-  it('CP-66 - reports a logically deleted record as missing from detail', async () => {
+  it('CP-66 - Informa que un registro eliminado lógicamente no existe en el detalle', async () => {
     repository.findOne.mockResolvedValue(null);
     repository.findByIdConAuditoria.mockResolvedValue(null);
 
@@ -279,7 +279,7 @@ describe('SuperLineaService', () => {
     );
   });
 
-  it('non-CP regression - Mapea las entidades a la forma de selección (código, nombre y descripción)', async () => {
+  it('No-CP - Mapea las entidades a la forma de selección (código, nombre y descripción)', async () => {
     const expected: SelectOption[] = [
       { codigo: 1, nombre: 'Almacén', descripcion: 'Productos varios' },
     ];
@@ -305,7 +305,7 @@ describe('SuperLineaService', () => {
   });
 });
 
-describe('SuperLineaMapper.toSelectOption (non-CP regression)', () => {
+describe('SuperLineaMapper.toSelectOption (No-CP)', () => {
   const { SuperLineaMapper } = require('../../mappers/superlinea.mapper');
 
   it('Mapea una SuperLínea a la forma de selección (código, nombre y descripción)', () => {

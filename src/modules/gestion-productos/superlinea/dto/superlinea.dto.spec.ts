@@ -4,7 +4,7 @@ import { IsUniqueDenominacionConstraint } from '../domain/validator/unique-denom
 import { CreateSuperLineaDto } from './create-superlinea.dto';
 import { UpdateSuperLineaDto } from './update-superlinea.dto';
 
-describe('SuperLinea DTO validation', () => {
+describe('Validación de DTOs de SuperLínea', () => {
   beforeEach(() => {
     jest
       .spyOn(IsUniqueDenominacionConstraint.prototype, 'validate')
@@ -16,7 +16,7 @@ describe('SuperLinea DTO validation', () => {
   it.each([
     [undefined, true],
     ['Con observación', true],
-  ])('CP-57 - accepts an optional observation: %s', async (observacion, valid) => {
+  ])('CP-57 - Acepta una observación opcional: %s', async (observacion, valid) => {
     const dto = plainToInstance(CreateSuperLineaDto, {
       denominacion: 'Bebidas',
       usuarioCreatedId: 7,
@@ -32,7 +32,7 @@ describe('SuperLinea DTO validation', () => {
     ['', false],
     ['a'.repeat(255), true],
     ['a'.repeat(256), false],
-  ])('CP-58 - validates creation denomination length', async (denominacion, valid) => {
+  ])('CP-58 - Valida la longitud de la denominación al registrar', async (denominacion, valid) => {
     const dto = plainToInstance(CreateSuperLineaDto, {
       denominacion,
       usuarioCreatedId: 7,
@@ -47,7 +47,7 @@ describe('SuperLinea DTO validation', () => {
     ['', false],
     ['a'.repeat(255), true],
     ['a'.repeat(256), false],
-  ])('CP-63 - validates update denomination length', async (denominacion, valid) => {
+  ])('CP-63 - Valida la longitud de la denominación al modificar', async (denominacion, valid) => {
     const dto = plainToInstance(UpdateSuperLineaDto, {
       denominacion,
       usuarioUpdatedId: 8,

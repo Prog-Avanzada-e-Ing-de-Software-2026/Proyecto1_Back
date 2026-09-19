@@ -3,7 +3,7 @@ import { validate } from 'class-validator';
 import { CreateLineaDto } from './create-linea.dto';
 import { UpdateLineaDto } from './update-linea.dto';
 
-describe('Linea DTO validation', () => {
+describe('Validación de DTOs de Línea', () => {
   const validCreate = {
     denominacion: 'a'.repeat(255),
     utilizaStockMinimo: false,
@@ -12,11 +12,11 @@ describe('Linea DTO validation', () => {
   };
 
   it.each([
-    ['omitted', { ...validCreate, superLineaId: undefined }, 'superLineaId'],
-    ['null', { ...validCreate, superLineaId: null }, 'superLineaId'],
-    ['an empty denomination', { ...validCreate, denominacion: '' }, 'denominacion'],
-    ['a 256-character denomination', { ...validCreate, denominacion: 'a'.repeat(256) }, 'denominacion'],
-  ])('CP-48/CP-49 - rejects creation with %s', async (_, input, property) => {
+    ['superLineaId omitido', { ...validCreate, superLineaId: undefined }, 'superLineaId'],
+    ['superLineaId nulo', { ...validCreate, superLineaId: null }, 'superLineaId'],
+    ['una denominación vacía', { ...validCreate, denominacion: '' }, 'denominacion'],
+    ['una denominación de 256 caracteres', { ...validCreate, denominacion: 'a'.repeat(256) }, 'denominacion'],
+  ])('CP-48/CP-49 - Rechaza el registro con %s', async (_, input, property) => {
     // Arrange
     const dto = plainToInstance(CreateLineaDto, input);
 
@@ -29,7 +29,7 @@ describe('Linea DTO validation', () => {
     );
   });
 
-  it('CP-49 - accepts a 255-character denomination', async () => {
+  it('CP-49 - Acepta una denominación de 255 caracteres', async () => {
     const dto = plainToInstance(CreateLineaDto, validCreate);
 
     await expect(validate(dto)).resolves.toEqual([]);
@@ -38,7 +38,7 @@ describe('Linea DTO validation', () => {
   it.each([
     ['', 'denominacion'],
     ['a'.repeat(256), 'denominacion'],
-  ])('CP-53 - rejects an invalid update denomination', async (denominacion, property) => {
+  ])('CP-53 - Rechaza una denominación inválida al modificar una Línea', async (denominacion, property) => {
     const dto = plainToInstance(UpdateLineaDto, {
       denominacion,
       usuarioUpdatedId: 8,
@@ -51,7 +51,7 @@ describe('Linea DTO validation', () => {
     );
   });
 
-  it('CP-52 - rejects a null SuperLinea reassignment', async () => {
+  it('CP-52 - Rechaza la reasignación de la SuperLínea a un valor nulo', async () => {
     const dto = plainToInstance(UpdateLineaDto, {
       superLineaId: null,
       usuarioUpdatedId: 8,
