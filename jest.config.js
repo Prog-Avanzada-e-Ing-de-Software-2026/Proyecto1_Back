@@ -21,7 +21,9 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
-  collectCoverage: !isIntegration,
+  // Coverage is opt-in: `yarn test` and `yarn test:integration` only run the
+  // manifest-defined files. `yarn test:cov` enables it with `--coverage`.
+  collectCoverage: false,
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: './coverage',
   moduleNameMapper: {
