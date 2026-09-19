@@ -10,7 +10,7 @@
  * - CP-08: Actualizar un producto sin enviar precio / con precio igual al actual.
  *
  * Los unitarios CP-03, CP-04 y CP-07 viven en producto.entity.spec.ts.
- * Los HTTP end-to-end CP-01, CP-05 y CP-09 viven en producto.http.spec.ts.
+ * Los HTTP end-to-end CP-01, CP-05 y CP-09 viven en producto.http.int-spec.ts.
  *
  * Requiere Docker corriendo. Sin Docker estos tests fallan (no pasan en silencio).
  */
@@ -31,6 +31,8 @@ import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usu
 import { Init1787269586538 } from 'src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from 'src/migrations/1789091969000-AddSuperLineaToLinea';
 import { AddCambioPrecioToProducto1789351169000 } from 'src/migrations/1789351169000-AddCambioPrecioToProducto';
+import { AddPresentacionToProducto1789200000000 } from 'src/migrations/1789200000000-AddPresentacionToProducto';
+import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 import { Proveedor } from 'src/modules/organizacion/proveedor/domain/entities/proveedor.entity';
 import { ProveedorOperacion } from 'src/modules/organizacion/proveedor-operacion/entities/proveedor-operacion.entity';
 import { Domicilio } from 'src/modules/gutil/domicilio/entities/domicilio.entity';
@@ -48,6 +50,7 @@ jest.setTimeout(120_000);
 const ENTIDADES = [
   Producto,
   CambioPrecio,
+  Presentacion,
   Linea,
   SuperLinea,
   Marca,
@@ -69,6 +72,7 @@ const MIGRATIONS = [
   Init1787269586538,
   AddSuperLineaToLinea1789091969000,
   AddCambioPrecioToProducto1789351169000,
+  AddPresentacionToProducto1789200000000,
 ];
 
 describe('Producto - Historial de precios (integración servicio/repositorio + MySQL real)', () => {
@@ -128,6 +132,7 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
       {} as any,
       {} as any,
       {} as any,
+      {} as any,
     );
   });
 
@@ -137,10 +142,10 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
   });
 
   it('CP-02 - Mantener la continuidad del historial entre cambios sucesivos', async () => {
-    const { producto, linea, marca, usuario } = await crearProducto(dataSource, 'cp02');
+    const { producto, linea, marca, presentacion, usuario } = await crearProducto(dataSource, 'cp02');
 
-    await repository.update(producto.id, { precio: 120 } as any, linea, marca, usuario);
-    await repository.update(producto.id, { precio: 150 } as any, linea, marca, usuario);
+    await repository.update(producto.id, { precio: 120 } as any, linea, marca, presentacion, usuario);
+    await repository.update(producto.id, { precio: 150 } as any, linea, marca, presentacion, usuario);
 
     const historial = await service.getHistorialPrecios(producto.id, { skip: 0, take: 10 });
 
@@ -162,9 +167,9 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
   });
 
   it('CP-08a - Actualizar un producto con precio igual al actual', async () => {
-    const { producto, linea, marca, usuario } = await crearProducto(dataSource, 'cp08a');
+    const { producto, linea, marca, presentacion, usuario } = await crearProducto(dataSource, 'cp08a');
 
-    await repository.update(producto.id, { precio: 100 } as any, linea, marca, usuario);
+    await repository.update(producto.id, { precio: 100 } as any, linea, marca, presentacion, usuario);
 
     const actualizado = await repository.findOne(producto.id);
     expect(actualizado?.precio).toBe(100);
@@ -174,9 +179,9 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
   });
 
   it('CP-08b - Actualizar un producto sin enviar el campo precio', async () => {
-    const { producto, linea, marca, usuario } = await crearProducto(dataSource, 'cp08b');
+    const { producto, linea, marca, presentacion, usuario } = await crearProducto(dataSource, 'cp08b');
 
-    await repository.update(producto.id, {} as any, linea, marca, usuario);
+    await repository.update(producto.id, {} as any, linea, marca, presentacion, usuario);
 
     const actualizado = await repository.findOne(producto.id);
     expect(actualizado?.precio).toBe(100);
@@ -191,6 +196,7 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
     const marcaRepo = ds.getRepository(Marca);
     const usuarioRepo = ds.getRepository(Usuario);
     const productoRepo = ds.getRepository(Producto);
+    const presentacionRepo = ds.getRepository(Presentacion);
 
     const superLinea = await superLineaRepo.save(
       superLineaRepo.create({ denominacion: `SL-${sufijo}` }),
@@ -212,6 +218,11 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
         denominacion: `U-${sufijo}`,
       }),
     );
+    // The AddPresentacionToProducto migration makes presentacion_id NOT NULL,
+    // so every product fixture needs a real presentation row.
+    const presentacion = await presentacionRepo.save(
+      presentacionRepo.create({ denominacion: `P-${sufijo}` }),
+    );
     const producto = await productoRepo.save(
       productoRepo.create({
         denominacion: `coca-cola 1l ${sufijo}`,
@@ -220,10 +231,12 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
         lineaId: linea.id,
         marca,
         marcaId: marca.id,
+        presentacion,
+        presentacionId: presentacion.id,
         usuarioCreated: usuario,
       }),
     );
 
-    return { superLinea, linea, marca, usuario, producto };
+    return { superLinea, linea, marca, usuario, presentacion, producto };
   }
 });
