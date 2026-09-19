@@ -25,6 +25,9 @@ describe('ProductoService search by denominación and superlínea', () => {
       cantidadPorPack: 0,
       sistema: 0,
       codigoReferencia: 'R-001',
+      marca: { id: 1, denominacion: 'Marca test' } as any,
+      linea: { id: 1, denominacion: 'Línea test' } as any,
+      presentacion: { id: 1, denominacion: 'Unidad' } as any,
       ...overrides,
     });
 
