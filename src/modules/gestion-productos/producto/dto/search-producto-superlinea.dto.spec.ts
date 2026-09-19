@@ -9,7 +9,7 @@ const validateDto = (payload: Record<string, unknown>) =>
   validate(plainToInstance(SearchProductoSuperlineaDto, payload), validationOptions);
 
 describe('SearchProductoSuperlineaDto', () => {
-  it('CP-93 - Acepta un superLineaId y aplica los valores por defecto de paginación', async () => {
+  it('Acepta un superLineaId y aplica los valores por defecto de paginación', async () => {
     const dto = plainToInstance(SearchProductoSuperlineaDto, {
       superLineaId: 5,
     });
@@ -21,7 +21,7 @@ describe('SearchProductoSuperlineaDto', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('CP-93 - Rechaza un superLineaId faltante', async () => {
+  it('Rechaza un superLineaId faltante', async () => {
     const errors = await validateDto({ skip: 0, take: 10 });
 
     expect(errors).toHaveLength(1);
@@ -29,7 +29,7 @@ describe('SearchProductoSuperlineaDto', () => {
     expect(errors[0].constraints).toHaveProperty('isInt');
   });
 
-  it('CP-93 - Rechaza un superLineaId no numérico', async () => {
+  it('Rechaza un superLineaId no numérico', async () => {
     const errors = await validateDto({ superLineaId: 'abc' });
 
     expect(errors).toHaveLength(1);
@@ -37,7 +37,7 @@ describe('SearchProductoSuperlineaDto', () => {
     expect(errors[0].constraints).toHaveProperty('isInt');
   });
 
-  it('CP-78 - Rechaza un skip negativo (rechazar una paginación inválida)', async () => {
+  it('Rechaza un skip negativo (rechazar una paginación inválida)', async () => {
     const errors = await validateDto({ superLineaId: 5, skip: -1 });
 
     expect(errors).toHaveLength(1);
@@ -47,7 +47,7 @@ describe('SearchProductoSuperlineaDto', () => {
     );
   });
 
-  it('CP-78 - Rechaza take = 0 (rechazar una paginación inválida)', async () => {
+  it('Rechaza take = 0 (rechazar una paginación inválida)', async () => {
     const errors = await validateDto({ superLineaId: 5, take: 0 });
 
     expect(errors).toHaveLength(1);

@@ -16,7 +16,7 @@ describe('Validación de DTOs de SuperLínea', () => {
   it.each([
     [undefined, true],
     ['Con observación', true],
-  ])('CP-57 - Acepta una observación opcional: %s', async (observacion, valid) => {
+  ])('Acepta una observación opcional: %s', async (observacion, valid) => {
     const dto = plainToInstance(CreateSuperLineaDto, {
       denominacion: 'Bebidas',
       usuarioCreatedId: 7,
@@ -32,7 +32,7 @@ describe('Validación de DTOs de SuperLínea', () => {
     ['', false],
     ['a'.repeat(255), true],
     ['a'.repeat(256), false],
-  ])('CP-58 - Valida la longitud de la denominación al registrar', async (denominacion, valid) => {
+  ])('Valida la longitud de la denominación al registrar', async (denominacion, valid) => {
     const dto = plainToInstance(CreateSuperLineaDto, {
       denominacion,
       usuarioCreatedId: 7,
@@ -47,7 +47,7 @@ describe('Validación de DTOs de SuperLínea', () => {
     ['', false],
     ['a'.repeat(255), true],
     ['a'.repeat(256), false],
-  ])('CP-63 - Valida la longitud de la denominación al modificar', async (denominacion, valid) => {
+  ])('Valida la longitud de la denominación al modificar', async (denominacion, valid) => {
     const dto = plainToInstance(UpdateSuperLineaDto, {
       denominacion,
       usuarioUpdatedId: 8,

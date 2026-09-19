@@ -12,7 +12,7 @@ import { PoliticaEliminacionMarca } from './politica-eliminacion-marca.service';
 import { IProductoRepository } from '../../../producto/domain/interfaces/producto.repository-interface';
 
 describe('Marca - Política de eliminación (unitarios)', () => {
-  it('CP-16 - Rechazar la eliminación cuando la marca tiene productos activos', async () => {
+  it('Rechazar la eliminación cuando la marca tiene productos activos', async () => {
     const existsProductosActivosByMarca = jest.fn().mockResolvedValue(true);
     const productoRepository = {
       existsProductosActivosByMarca,
@@ -26,7 +26,7 @@ describe('Marca - Política de eliminación (unitarios)', () => {
     expect(existsProductosActivosByMarca).toHaveBeenCalledWith(1);
   });
 
-  it('CP-16b - Permitir la eliminación cuando no hay productos activos', async () => {
+  it('Permitir la eliminación cuando no hay productos activos', async () => {
     const existsProductosActivosByMarca = jest.fn().mockResolvedValue(false);
     const productoRepository = {
       existsProductosActivosByMarca,

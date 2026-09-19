@@ -141,7 +141,7 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
     if (mysql) await mysql.stop();
   });
 
-  it('CP-02 - Mantener la continuidad del historial entre cambios sucesivos', async () => {
+  it('Mantener la continuidad del historial entre cambios sucesivos', async () => {
     const { producto, linea, marca, presentacion, usuario } = await crearProducto(dataSource, 'cp02');
 
     await repository.update(producto.id, { precio: 120 } as any, linea, marca, presentacion, usuario);
@@ -158,7 +158,7 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
     expect(historial[1].motivo).toBe(MotivoCambioPrecio.ActualizacionDePrecioDirecta);
   });
 
-  it('CP-06 - Consultar el historial de un producto sin cambios de precio', async () => {
+  it('Consultar el historial de un producto sin cambios de precio', async () => {
     const { producto } = await crearProducto(dataSource, 'cp06');
 
     const historial = await service.getHistorialPrecios(producto.id, { skip: 0, take: 10 });
@@ -166,7 +166,7 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
     expect(historial).toEqual([]);
   });
 
-  it('CP-08a - Actualizar un producto con precio igual al actual', async () => {
+  it('Actualizar un producto con precio igual al actual', async () => {
     const { producto, linea, marca, presentacion, usuario } = await crearProducto(dataSource, 'cp08a');
 
     await repository.update(producto.id, { precio: 100 } as any, linea, marca, presentacion, usuario);
@@ -178,7 +178,7 @@ describe('Producto - Historial de precios (integración servicio/repositorio + M
     expect(historial).toEqual([]);
   });
 
-  it('CP-08b - Actualizar un producto sin enviar el campo precio', async () => {
+  it('Actualizar un producto sin enviar el campo precio', async () => {
     const { producto, linea, marca, presentacion, usuario } = await crearProducto(dataSource, 'cp08b');
 
     await repository.update(producto.id, {} as any, linea, marca, presentacion, usuario);

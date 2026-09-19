@@ -157,7 +157,7 @@ describe('Marca - Gestión de marca (integración servicio/repositorio + MySQL r
     if (mysql) await mysql.stop();
   });
 
-  it('CP-11 - Rechazar la creación de una marca con denominación duplicada', async () => {
+  it('Rechazar la creación de una marca con denominación duplicada', async () => {
     const dto = {
       denominacion: 'Pepsi',
       usuarioCreatedId: 1,
@@ -172,7 +172,7 @@ describe('Marca - Gestión de marca (integración servicio/repositorio + MySQL r
     expect(resultado.data[0].denominacion).toBe('Pepsi');
   });
 
-  it('CP-16 - Rechazar la eliminación de una marca con productos activos', async () => {
+  it('Rechazar la eliminación de una marca con productos activos', async () => {
     const { marca, usuario } = await sembrarMarcaConProductoActivo(
       dataSource,
       'cp16',

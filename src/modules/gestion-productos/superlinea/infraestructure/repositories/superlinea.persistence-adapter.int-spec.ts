@@ -45,7 +45,7 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
     return result.insertId as number;
   }
 
-  it('CP-57 - Registra una SuperLínea válida con o sin observación opcional', async () => {
+  it('Registra una SuperLínea válida con o sin observación opcional', async () => {
     const withoutObservation = await adapter.create({
       denominacion: 'Bebidas',
       usuarioCreatedId: 7,
@@ -69,7 +69,7 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
   });
 
   it.each(['maquinas', 'MÁQUINAS'])(
-    'CP-59 - Trata la variante de mayúsculas y tildes %s como una denominación reservada',
+    'Trata la variante de mayúsculas y tildes %s como una denominación reservada',
     async (candidate) => {
       await createSuperLinea('Máquinas', null, new Date());
 
@@ -79,7 +79,7 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
     },
   );
 
-  it('CP-60/CP-61 - Lista únicamente los registros activos e informa el total real', async () => {
+  it('Lista únicamente los registros activos e informa el total real', async () => {
     await createSuperLinea('Bebidas', 'Con observación');
     await createSuperLinea('Hogar');
     await createSuperLinea('Eliminada', null, new Date());
@@ -104,7 +104,7 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
     ).resolves.toEqual({ data: [], total: 0 });
   });
 
-  it('CP-62 - Persiste una modificación conservando el identificador', async () => {
+  it('Persiste una modificación conservando el identificador', async () => {
     const id = await createSuperLinea('Bebidas');
 
     const updated = await adapter.update(id, {
@@ -122,7 +122,7 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
     );
   });
 
-  it('CP-63 - La modificación de la propia denominación no debe detectar el registro actual como conflicto (pendiente de corrección en producción)', async () => {
+  it('La modificación de la propia denominación no debe detectar el registro actual como conflicto (pendiente de corrección en producción)', async () => {
     await createSuperLinea('Bebidas');
 
     // The persistence query used by the uniqueness policy does not exclude the
@@ -134,7 +134,7 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
     expect(existing).toBeNull();
   });
 
-  it('CP-64/CP-66 - Elimina lógicamente una SuperLínea y la excluye del detalle', async () => {
+  it('Elimina lógicamente una SuperLínea y la excluye del detalle', async () => {
     const id = await createSuperLinea('Bebidas');
     const current = await adapter.findOne(id);
 
@@ -149,7 +149,7 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
     expect(persisted?.usuarioDeletedId).toBe(9);
   });
 
-  it('No-CP - Seleccionar superlíneas por coincidencia parcial sin distinguir mayúsculas', async () => {
+  it('Seleccionar superlíneas por coincidencia parcial sin distinguir mayúsculas', async () => {
     const firstId = await createSuperLinea('Alfa linea', 'obs A');
     await createSuperLinea('LINEA mayus', 'obs B');
 
@@ -170,7 +170,7 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
     );
   });
 
-  it('No-CP - Buscar "linea" no devuelve "línea"', async () => {
+  it('Buscar "linea" no devuelve "línea"', async () => {
     await createSuperLinea('línea acento');
     await createSuperLinea('Alfa linea');
 
@@ -181,7 +181,7 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
     ]);
   });
 
-  it('No-CP - Un término con tilde solo coincide con denominaciones con tilde', async () => {
+  it('Un término con tilde solo coincide con denominaciones con tilde', async () => {
     await createSuperLinea('línea premium');
     await createSuperLinea('Alfa linea');
 
@@ -192,7 +192,7 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
     ]);
   });
 
-  it('No-CP - Un término sin coincidencias devuelve una colección vacía', async () => {
+  it('Un término sin coincidencias devuelve una colección vacía', async () => {
     await createSuperLinea('Arroz');
 
     const result = await adapter.busquedaPorCoincidenciaParcial('trigo');
@@ -200,12 +200,12 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
     expect(result).toEqual([]);
   });
 
-  it('No-CP - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
+  it('Un término vacío o de solo espacios devuelve una colección vacía', async () => {
     await expect(adapter.busquedaPorCoincidenciaParcial('')).resolves.toEqual([]);
     await expect(adapter.busquedaPorCoincidenciaParcial('   ')).resolves.toEqual([]);
   });
 
-  it('No-CP - Solo se ofrecen superlíneas activas (excluye las eliminadas lógicamente)', async () => {
+  it('Solo se ofrecen superlíneas activas (excluye las eliminadas lógicamente)', async () => {
     await createSuperLinea('Alfa linea');
     await createSuperLinea('Beta linea', null, new Date());
 

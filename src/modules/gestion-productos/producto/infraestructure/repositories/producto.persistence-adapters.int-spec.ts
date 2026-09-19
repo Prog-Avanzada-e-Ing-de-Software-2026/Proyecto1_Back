@@ -71,7 +71,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
   }
 
   describe('busquedaPorCoincidenciaParcial', () => {
-    it('CP-70 - La búsqueda no distingue mayúsculas de minúsculas', async () => {
+    it('La búsqueda no distingue mayúsculas de minúsculas', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
       await createProducto('Harina integral', lineaId);
@@ -84,7 +84,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       ]);
     });
 
-    it('CP-71 - Buscar "harina" no devuelve "harína"', async () => {
+    it('Buscar "harina" no devuelve "harína"', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
       await createProducto('harína premium', lineaId);
@@ -98,7 +98,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       ]);
     });
 
-    it('CP-71 - Un término con tilde solo coincide con denominaciones con tilde', async () => {
+    it('Un término con tilde solo coincide con denominaciones con tilde', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
       await createProducto('harína premium', lineaId);
@@ -112,7 +112,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       ]);
     });
 
-    it('CP-68 - Un término sin coincidencias devuelve una colección vacía', async () => {
+    it('Un término sin coincidencias devuelve una colección vacía', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
       await createProducto('Arroz', lineaId);
@@ -122,7 +122,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       expect(result).toEqual({ data: [], total: 0 });
     });
 
-    it('CP-72 - Un término vacío o de solo espacios devuelve una colección vacía', async () => {
+    it('Un término vacío o de solo espacios devuelve una colección vacía', async () => {
       await expect(
         adapter.busquedaPorCoincidenciaParcial(''),
       ).resolves.toEqual({ data: [], total: 0 });
@@ -131,7 +131,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       ).resolves.toEqual({ data: [], total: 0 });
     });
 
-    it('CP-73 - Solo se devuelven productos activos (excluye los eliminados lógicamente)', async () => {
+    it('Solo se devuelven productos activos (excluye los eliminados lógicamente)', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
       await createProducto('Harina activa', lineaId);
@@ -145,7 +145,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       ]);
     });
 
-    it('CP-69 - La coincidencia no tiene que estar al principio de la denominación', async () => {
+    it('La coincidencia no tiene que estar al principio de la denominación', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
       await createProducto('HARINA 000', lineaId);
@@ -158,7 +158,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       ]);
     });
 
-    it('CP-74 - El carácter % se busca de forma literal y no como comodín', async () => {
+    it('El carácter % se busca de forma literal y no como comodín', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
       await createProducto('OFERTA 50% DESCUENTO', lineaId);
@@ -174,7 +174,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       expect(denominaciones).toContain('OFERTA 50% DESCUENTO');
     });
 
-    it('CP-75 - El carácter _ se busca de forma literal y no como comodín', async () => {
+    it('El carácter _ se busca de forma literal y no como comodín', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
       await createProducto('PRODUCTO_A', lineaId);
@@ -190,7 +190,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       expect(denominaciones).toContain('PRODUCTO_A');
     });
 
-    it('CP-77 - Los resultados vienen ordenados ascendentemente por denominación', async () => {
+    it('Los resultados vienen ordenados ascendentemente por denominación', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
       await createProducto('GASEOSA COLA', lineaId);
@@ -208,7 +208,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       ]);
     });
 
-    it('CP-76 - Paginar de a 10 informando el total real de coincidencias', async () => {
+    it('Paginar de a 10 informando el total real de coincidencias', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
       for (let index = 1; index <= 12; index += 1) {
@@ -226,7 +226,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
   });
 
   describe('findProductosBySuperLinea', () => {
-    it('CP-90 - Devuelve los productos de al menos dos líneas que pertenecen a la superlínea', async () => {
+    it('Devuelve los productos de al menos dos líneas que pertenecen a la superlínea', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaAId = await createLinea('Linea A', superLineaId);
       const lineaBId = await createLinea('Linea B', superLineaId);
@@ -240,7 +240,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       expect(lineas.size).toBe(2);
     });
 
-    it('CP-91 - Los productos de la superlínea excluyen producto, línea y superlínea eliminados', async () => {
+    it('Los productos de la superlínea excluyen producto, línea y superlínea eliminados', async () => {
       const activeSuperLineaId = await createSuperLinea('Activa');
       const activeLineaId = await createLinea('Linea activa', activeSuperLineaId);
       const deletedLineaId = await createLinea('Linea borrada', activeSuperLineaId, new Date());
@@ -262,7 +262,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       expect(deletedResult).toEqual({ data: [], total: 0 });
     });
 
-    it('CP-90 - Pagina de a 10 informando el total real de coincidencias', async () => {
+    it('Pagina de a 10 informando el total real de coincidencias', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
       for (let index = 1; index <= 15; index += 1) {
@@ -278,7 +278,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       expect(secondPage.total).toBe(15);
     });
 
-    it('CP-92 - Un identificador de superlínea inexistente no devuelve productos', async () => {
+    it('Un identificador de superlínea inexistente no devuelve productos', async () => {
       await expect(
         adapter.findProductosBySuperLinea(999999),
       ).resolves.toEqual({ data: [], total: 0 });
@@ -296,7 +296,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       return adapter.findBy('', '', false, '', 0, lineaId, 0, false, skip, take);
     }
 
-    it('CP-88 - Traer los productos de la línea seleccionada, paginados de a 10', async () => {
+    it('Traer los productos de la línea seleccionada, paginados de a 10', async () => {
       const superLineaId = await createSuperLinea('Bebidas');
       const lineaId = await createLinea('AGUAS', superLineaId);
       for (let index = 1; index <= 11; index += 1) {
@@ -311,7 +311,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       expect(secondPage.data).toHaveLength(1);
     });
 
-    it('CP-89 - Los productos de la línea seleccionada excluyen los eliminados', async () => {
+    it('Los productos de la línea seleccionada excluyen los eliminados', async () => {
       const superLineaId = await createSuperLinea('Bebidas');
       const lineaId = await createLinea('AGUAS', superLineaId);
       await createProducto('Agua activa', lineaId);

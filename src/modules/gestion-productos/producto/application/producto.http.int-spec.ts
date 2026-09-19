@@ -168,7 +168,7 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
     if (mysql) await mysql.stop();
   });
 
-  it('CP-01 - Cambiar el precio, persistir el cambio y consultar el historial', async () => {
+  it('Cambiar el precio, persistir el cambio y consultar el historial', async () => {
     const { linea, marca, usuario, producto } = await crearProducto(
       dataSource,
       'cp01',
@@ -213,7 +213,7 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
     [20, 1, 10],
     [20, 2, 10],
   ])(
-    'CP-05 - Consultar el historial paginado (cantidad=%s, pagina=%s, resultado=%s)',
+    'Consultar el historial paginado (cantidad=%s, pagina=%s, resultado=%s)',
     async (cantidad, pagina, resultado) => {
       const { producto, cambios } = await sembrarProductoConHistorial(
         dataSource,
@@ -242,7 +242,7 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
     },
   );
 
-  it('CP-09 - Consultar el historial de un producto inexistente', async () => {
+  it('Consultar el historial de un producto inexistente', async () => {
     const res = await request(app.getHttpServer())
       .get('/producto/999999/historial-precios')
       .query({ skip: 0, take: 10 })

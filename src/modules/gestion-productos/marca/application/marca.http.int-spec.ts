@@ -171,7 +171,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     if (mysql) await mysql.stop();
   });
 
-  it('CP-10 - Crear una marca por HTTP y consultarla', async () => {
+  it('Crear una marca por HTTP y consultarla', async () => {
     const usuario = await sembrarUsuario(dataSource, 'cp10');
 
     const res = await request(app.getHttpServer())
@@ -192,7 +192,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     expect(pepsi).toBeDefined();
   });
 
-  it('CP-12 - Rechazar una denominación de más de 255 caracteres', async () => {
+  it('Rechazar una denominación de más de 255 caracteres', async () => {
     await request(app.getHttpServer())
       .post('/marca')
       .send({ denominacion: 'P'.repeat(256), usuarioCreatedId: 1 })
@@ -206,7 +206,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     expect(busqueda.body.data).toEqual([]);
   });
 
-  it('CP-13 - Buscar todas las marcas', async () => {
+  it('Buscar todas las marcas', async () => {
     await sembrarMarcas(dataSource, ['Coca-Cola', 'Coca-Cola Zero', 'Pepsi']);
 
     const res = await request(app.getHttpServer())
@@ -220,7 +220,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     );
   });
 
-  it('CP-14 - Consultar una marca por ID', async () => {
+  it('Consultar una marca por ID', async () => {
     const { marca } = await sembrarMarca(dataSource, 'cp14');
 
     const res = await request(app.getHttpServer())
@@ -231,7 +231,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     expect(res.body.denominacion).toBe('M-cp14');
   });
 
-  it('CP-15 - Actualizar la denominación de una marca', async () => {
+  it('Actualizar la denominación de una marca', async () => {
     const { marca, usuario } = await sembrarMarcaConUsuario(
       dataSource,
       'cp15',
@@ -249,7 +249,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     expect(res.body.denominacion.toUpperCase()).toBe('COCA COLA COMPANY');
   });
 
-  it('CP-17 - Eliminar una marca con todos sus productos inactivos', async () => {
+  it('Eliminar una marca con todos sus productos inactivos', async () => {
     const { marca, usuario } = await sembrarMarcaConProducto(
       dataSource,
       'cp17',
