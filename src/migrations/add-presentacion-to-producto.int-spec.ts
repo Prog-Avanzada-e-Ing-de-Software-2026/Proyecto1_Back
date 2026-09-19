@@ -1,15 +1,18 @@
-import { config } from 'dotenv';
 import { DataSource } from 'typeorm';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
+import { startMySqlTestContainer } from '../../test/integration/mysql-test-container';
 import { AddPresentacionToProducto1789200000000 } from './1789200000000-AddPresentacionToProducto';
 
-config({ path: '.env' });
+jest.setTimeout(120_000);
 
 describe('AddPresentacionToProducto1789200000000 migration', () => {
   const databaseName = `cr002_migration_${process.pid}`;
+  let mysql: StartedMySqlContainer;
   let admin: DataSource;
   let fixture: DataSource;
 
   beforeAll(async () => {
+    mysql = await startMySqlTestContainer();
     admin = createDataSource();
     await admin.initialize();
     await admin.query(`DROP DATABASE IF EXISTS \`${databaseName}\``);
@@ -38,6 +41,7 @@ describe('AddPresentacionToProducto1789200000000 migration', () => {
       await admin.query(`DROP DATABASE IF EXISTS \`${databaseName}\``);
       await admin.destroy();
     }
+    if (mysql) await mysql.stop();
   });
 
   it('backfills populated products before enforcing the required restrictive relation', async () => {
@@ -165,10 +169,10 @@ describe('AddPresentacionToProducto1789200000000 migration', () => {
   function createDataSource(database?: string): DataSource {
     return new DataSource({
       type: 'mysql',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT ?? 3306),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
+      host: mysql.getHost(),
+      port: mysql.getPort(),
+      username: 'root',
+      password: mysql.getRootPassword(),
       database,
       logging: false,
     });
