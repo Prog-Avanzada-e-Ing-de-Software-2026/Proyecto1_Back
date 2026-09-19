@@ -5,14 +5,18 @@ import type {
   ObjectLiteral,
   Repository,
 } from 'typeorm';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
 import type { IUnitOfWork } from 'src/modules/common/unit-of-work/iunit-of-work.';
-import { readConnectionFile } from './connection';
-import type { TestDatabaseConfig } from './connection';
+import {
+  mySqlTestConnection,
+  type MySqlTestConnectionOptions,
+} from './mysql-test-container';
 
 // Entities are imported by class (never by glob): TypeORM globs resolve .ts files
 // through the native require, which is not transpiled under Jest.
 import { Linea } from 'src/modules/gestion-productos/linea/domain/entities/linea.entity';
 import { Marca } from 'src/modules/gestion-productos/marca/domain/entities/marca.entity';
+import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 import { CambioPrecio } from 'src/modules/gestion-productos/producto/domain/entities/cambio-precio.entity';
 import { Producto } from 'src/modules/gestion-productos/producto/domain/entities/producto.entity';
 import { ProductoOperacion } from 'src/modules/gestion-productos/producto-operacion/entities/producto-operacion.entity';
@@ -36,15 +40,7 @@ import { ProveedorOperacion } from 'src/modules/organizacion/proveedor-operacion
 import { Init1787269586538 } from 'src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from 'src/migrations/1789091969000-AddSuperLineaToLinea';
 import { AddCambioPrecioToProducto1789351169000 } from 'src/migrations/1789351169000-AddCambioPrecioToProducto';
-
-export {
-  getSharedContainer,
-  readConnectionFile,
-  removeConnectionFile,
-  setSharedContainer,
-  writeConnectionFile,
-} from './connection';
-export type { TestDatabaseConfig } from './connection';
+import { AddPresentacionToProducto1789200000000 } from 'src/migrations/1789200000000-AddPresentacionToProducto';
 
 /**
  * All decorated application entities. Registering the full set (instead of only
@@ -54,6 +50,7 @@ export type { TestDatabaseConfig } from './connection';
 export const TEST_ENTITIES = [
   Linea,
   Marca,
+  Presentacion,
   Producto,
   CambioPrecio,
   ProductoOperacion,
@@ -79,6 +76,7 @@ export const TEST_MIGRATIONS = [
   Init1787269586538,
   AddSuperLineaToLinea1789091969000,
   AddCambioPrecioToProducto1789351169000,
+  AddPresentacionToProducto1789200000000,
 ];
 
 /** Tables owned by the CR-004 persistence specs, cleaned between tests. */
@@ -86,6 +84,7 @@ export const TEST_TABLES = [
   'producto',
   'cambio_precio',
   'producto_operacion',
+  'presentacion',
   'linea',
   'super_linea',
   'marca',
@@ -95,13 +94,14 @@ export const TEST_TABLES = [
 ];
 
 /**
- * Builds (but does not initialize) a DataSource against the shared MySQL
+ * Builds (but does not initialize) a DataSource against the given MySQL
  * container. `database` may be overridden by specs that manage their own schema.
  */
 export function createTestDataSource(
-  overrides: Partial<TestDatabaseConfig> = {},
+  container: StartedMySqlContainer,
+  overrides: Partial<MySqlTestConnectionOptions> = {},
 ): DataSource {
-  const config = { ...readConnectionFile(), ...overrides };
+  const config = mySqlTestConnection(container, overrides);
   return new DataSource({
     type: 'mysql',
     host: config.host,
@@ -116,11 +116,19 @@ export function createTestDataSource(
   });
 }
 
+/**
+ * Builds and initializes a DataSource against the given container, then applies
+ * the real migrations. Each spec owns its own container, so the schema must be
+ * created per container (previously the deleted global setup did this once for
+ * the whole run).
+ */
 export async function createInitializedTestDataSource(
-  overrides: Partial<TestDatabaseConfig> = {},
+  container: StartedMySqlContainer,
+  overrides: Partial<MySqlTestConnectionOptions> = {},
 ): Promise<DataSource> {
-  const dataSource = createTestDataSource(overrides);
+  const dataSource = createTestDataSource(container, overrides);
   await dataSource.initialize();
+  await dataSource.runMigrations();
   return dataSource;
 }
 
@@ -147,13 +155,24 @@ export function createUnitOfWorkStub(dataSource: DataSource): IUnitOfWork {
  */
 export async function truncateTables(dataSource: DataSource): Promise<void> {
   const queryRunner = dataSource.createQueryRunner();
+  let restoreError: unknown;
+
   try {
     await queryRunner.query('SET FOREIGN_KEY_CHECKS = 0');
     for (const table of TEST_TABLES) {
       await queryRunner.query(`TRUNCATE TABLE \`${table}\``);
     }
-    await queryRunner.query('SET FOREIGN_KEY_CHECKS = 1');
   } finally {
-    await queryRunner.release();
+    try {
+      await queryRunner.query('SET FOREIGN_KEY_CHECKS = 1');
+    } catch (error) {
+      restoreError = error;
+    } finally {
+      await queryRunner.release();
+    }
+
+    if (restoreError) {
+      throw restoreError;
+    }
   }
 }

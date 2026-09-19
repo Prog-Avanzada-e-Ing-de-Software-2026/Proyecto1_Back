@@ -1,25 +1,28 @@
 import { DataSource } from 'typeorm';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
 import {
   createInitializedTestDataSource,
   createUnitOfWorkStub,
   truncateTables,
 } from '../../../../../../test/integration/test-datasource';
+import { startMySqlTestContainer } from '../../../../../../test/integration/mysql-test-container';
 import { CambioPrecio } from '../../domain/entities/cambio-precio.entity';
 import { Producto } from '../../domain/entities/producto.entity';
 import { ProductoPersistenceAdapter } from './producto.persistence-adapters';
 
 describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
+  let container: StartedMySqlContainer;
   let dataSource: DataSource;
   let adapter: ProductoPersistenceAdapter;
 
   beforeAll(async () => {
-    dataSource = await createInitializedTestDataSource();
+    container = await startMySqlTestContainer();
+    dataSource = await createInitializedTestDataSource(container);
   });
 
   afterAll(async () => {
-    if (dataSource?.isInitialized) {
-      await dataSource.destroy();
-    }
+    if (dataSource?.isInitialized) await dataSource.destroy();
+    if (container) await container.stop();
   });
 
   beforeEach(async () => {
@@ -48,10 +51,21 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
     return result.insertId as number;
   }
 
-  async function createProducto(denominacion: string, lineaId: number, deletedAt: Date | null = null): Promise<number> {
+  async function createPresentacion(denominacion: string): Promise<number> {
     const result = await dataSource.query(
-      'INSERT INTO `producto` (`denominacion`, `linea_id`, `deletedAt`) VALUES (?, ?, ?)',
-      [denominacion, lineaId, deletedAt],
+      'INSERT INTO `presentacion` (`denominacion`) VALUES (?)',
+      [denominacion],
+    );
+    return result.insertId as number;
+  }
+
+  async function createProducto(denominacion: string, lineaId: number, deletedAt: Date | null = null): Promise<number> {
+    // The AddPresentacionToProducto migration makes presentacion_id NOT NULL,
+    // so every product fixture needs a real presentation row.
+    const presentacionId = await createPresentacion(denominacion);
+    const result = await dataSource.query(
+      'INSERT INTO `producto` (`denominacion`, `linea_id`, `presentacion_id`, `deletedAt`) VALUES (?, ?, ?, ?)',
+      [denominacion, lineaId, presentacionId, deletedAt],
     );
     return result.insertId as number;
   }

@@ -1,9 +1,10 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, NotFoundException, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AuthGuard } from 'src/modules/gestion-usuario/auth/auth.guard';
 import { SuperLineaController } from './superlinea.controller';
 import { SuperLineaService } from '../services/superlinea.service';
+import { IsUniqueDenominacionConstraint } from '../../domain/validator/unique-denominacion.validator';
 
 describe('SuperLineaController', () => {
   let app: INestApplication;
@@ -21,6 +22,9 @@ describe('SuperLineaController', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    jest
+      .spyOn(IsUniqueDenominacionConstraint.prototype, 'validate')
+      .mockResolvedValue(true);
     const moduleRef = await Test.createTestingModule({
       controllers: [SuperLineaController],
       providers: [{ provide: SuperLineaService, useValue: service }],
@@ -40,9 +44,58 @@ describe('SuperLineaController', () => {
     await app.init();
   });
 
-  afterEach(async () => app.close());
+  afterEach(async () => {
+    jest.restoreAllMocks();
+    await app.close();
+  });
 
-  it('CP-87 - /api/superlinea/select devuelve las opciones de selección (código, nombre y descripción)', async () => {
+  it('CP-57 - Devuelve HTTP 201 al registrar una SuperLínea válida', async () => {
+    service.create.mockResolvedValue({ mensaje: 'created' });
+
+    await request(app.getHttpServer())
+      .post('/api/superlinea')
+      .send({ denominacion: 'Bebidas', usuarioCreatedId: 7 })
+      .expect(201, { mensaje: 'created' });
+  });
+
+  it('CP-61 - Devuelve HTTP 200 con una colección paginada vacía', async () => {
+    service.findBy.mockResolvedValue({ data: [], total: 0 });
+
+    await request(app.getHttpServer())
+      .get('/api/superlinea/search-by?skip=0&take=10')
+      .expect(200, { data: [], total: 0 });
+  });
+
+  it('CP-62 - Devuelve HTTP 200 al modificar una SuperLínea válida', async () => {
+    service.update.mockResolvedValue({ mensaje: 'updated' });
+
+    await request(app.getHttpServer())
+      .put('/api/superlinea/1')
+      .send({
+        denominacion: 'Bebidas Sin Alcohol',
+        observacion: 'Updated',
+        usuarioUpdatedId: 8,
+      })
+      .expect(200, { mensaje: 'updated' });
+  });
+
+  it('CP-64 - Devuelve HTTP 200 al eliminar una SuperLínea', async () => {
+    service.remove.mockResolvedValue({ mensaje: 'deleted' });
+
+    await request(app.getHttpServer())
+      .delete('/api/superlinea/1?usuarioId=9')
+      .expect(200, { mensaje: 'deleted' });
+  });
+
+  it('CP-66 - Devuelve HTTP 404 al consultar el detalle de una SuperLínea eliminada', async () => {
+    service.findDtoById.mockRejectedValue(new NotFoundException());
+
+    await request(app.getHttpServer())
+      .get('/api/superlinea/99')
+      .expect(404);
+  });
+
+  it('No-CP - /api/superlinea/select devuelve las opciones de selección (código, nombre y descripción)', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue([
       { codigo: 1, nombre: 'Almacén', descripcion: 'Productos varios' },
     ]);
@@ -55,7 +108,7 @@ describe('SuperLineaController', () => {
     );
   });
 
-  it('CP-86 - Sin término, /api/superlinea/select devuelve una colección vacía', async () => {
+  it('No-CP - Sin término, /api/superlinea/select devuelve una colección vacía', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
 
     await request(app.getHttpServer())
@@ -64,7 +117,7 @@ describe('SuperLineaController', () => {
     expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith('');
   });
 
-  it('routes detail and audit queries', async () => {
+  it('No-CP - Enruta las consultas de detalle y auditoría', async () => {
     service.findDtoById.mockResolvedValue({ id: 1, denominacion: 'Herramientas' });
     service.findByIdConAuditoria.mockResolvedValue({ id: 1 });
 
@@ -75,7 +128,7 @@ describe('SuperLineaController', () => {
     expect(service.findByIdConAuditoria).toHaveBeenCalledWith(1);
   });
 
-  it('routes search-by with pagination DTO', async () => {
+  it('No-CP - Enruta la búsqueda por coincidencia parcial con DTO de paginación', async () => {
     service.findBy.mockResolvedValue({ data: [], total: 0 });
 
     await request(app.getHttpServer())
@@ -92,7 +145,7 @@ describe('SuperLineaController', () => {
     );
   });
 
-  it('forbids rewriting creation audit data during an update', async () => {
+  it('No-CP - Impide reescribir los datos de auditoría de creación durante una modificación', async () => {
     await request(app.getHttpServer())
       .put('/api/superlinea/1')
       .send({ usuarioCreatedId: 99, usuarioUpdatedId: 8 })

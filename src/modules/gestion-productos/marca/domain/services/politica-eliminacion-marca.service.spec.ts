@@ -4,9 +4,9 @@
  * La feature "Gestión de marca" se reparte así:
  *  - Unitario (este archivo, en domain): CP-16 con IProductoRepository fake.
  *  - Integración (en application, MySQL real): CP-11 y CP-16 en
- *    marca.integracion.spec.ts.
+ *    marca.integracion.int-spec.ts.
  *  - HTTP end-to-end (en application): CP-10, CP-12, CP-13, CP-14, CP-15 y
- *    CP-17 en marca.http.spec.ts.
+ *    CP-17 en marca.http.int-spec.ts.
  */
 import { PoliticaEliminacionMarca } from './politica-eliminacion-marca.service';
 import { IProductoRepository } from '../../../producto/domain/interfaces/producto.repository-interface';

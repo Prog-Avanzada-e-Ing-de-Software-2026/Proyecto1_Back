@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { SelectOption } from 'src/modules/common/interface/select-option';
 import { ILineaRepository } from '../../domain/interfaces/linea.repository.interface';
 import { Linea } from '../../domain/entities/linea.entity';
@@ -6,10 +6,12 @@ import { SuperLinea } from '../../../superlinea/domain/entities/superlinea.entit
 import { LineaMapper } from '../../mappers/linea.mapper';
 import { LineaService } from './linea.service';
 
-describe('LineaService SuperLinea association', () => {
+describe('LineaService - asociación con SuperLínea', () => {
   let repository: jest.Mocked<ILineaRepository>;
   let superLineaRepository: { findOne: jest.Mock };
   let service: LineaService;
+  let deletionPolicy: { tieneProductosActivosParaLinea: jest.Mock };
+  let usuarioService: { findOne: jest.Mock };
 
   const parent = (id = 10): SuperLinea =>
     Object.assign(new SuperLinea(), { id, denominacion: `Parent ${id}` });
@@ -43,15 +45,17 @@ describe('LineaService SuperLinea association', () => {
       remove: jest.fn(),
     };
     superLineaRepository = { findOne: jest.fn() };
+    deletionPolicy = { tieneProductosActivosParaLinea: jest.fn() };
+    usuarioService = { findOne: jest.fn() };
     service = new (LineaService as any)(
       repository,
-      { tieneProductosActivosParaLinea: jest.fn() },
-      { findOne: jest.fn() },
+      deletionPolicy,
+      usuarioService,
       superLineaRepository,
     );
   });
 
-  it('creates with an active SuperLinea and returns the reduced association', async () => {
+  it('CP-47 - Registra con una única SuperLínea activa y devuelve la asociación reducida', async () => {
     const activeParent = parent();
     superLineaRepository.findOne.mockResolvedValue(activeParent);
     repository.findByDenominacionWith.mockResolvedValue(null);
@@ -75,7 +79,7 @@ describe('LineaService SuperLinea association', () => {
   });
 
   it.each([98, 99])(
-    'rejects creation when SuperLinea %i is missing or deleted',
+    'CP-48 - Rechaza el registro cuando la SuperLínea %i no existe o está eliminada',
     async (superLineaId) => {
       repository.findByDenominacionWith.mockResolvedValue(null);
       superLineaRepository.findOne.mockResolvedValue(null);
@@ -93,7 +97,7 @@ describe('LineaService SuperLinea association', () => {
     },
   );
 
-  it('preserves the association when update omits superLineaId', async () => {
+  it('CP-51 - Conserva la asociación cuando la modificación omite superLineaId', async () => {
     repository.findOne.mockResolvedValue(line());
     repository.update.mockResolvedValue(line());
 
@@ -107,7 +111,7 @@ describe('LineaService SuperLinea association', () => {
     );
   });
 
-  it('reassigns only to an active SuperLinea', async () => {
+  it('CP-50 - Reasigna únicamente a una SuperLínea activa', async () => {
     const newParent = parent(20);
     repository.findOne.mockResolvedValue(line());
     superLineaRepository.findOne.mockResolvedValue(newParent);
@@ -122,7 +126,7 @@ describe('LineaService SuperLinea association', () => {
     );
   });
 
-  it('rejects reassignment to a missing or deleted SuperLinea', async () => {
+  it('CP-52 - Rechaza la reasignación a una SuperLínea inexistente o eliminada', async () => {
     repository.findOne.mockResolvedValue(line());
     superLineaRepository.findOne.mockResolvedValue(null);
 
@@ -132,7 +136,7 @@ describe('LineaService SuperLinea association', () => {
     expect(repository.update).not.toHaveBeenCalled();
   });
 
-  it('returns the reduced association from detail, search and selector reads', async () => {
+  it('CP-54 - Devuelve la asociación reducida con la SuperLínea en el detalle', async () => {
     repository.findOne.mockResolvedValue(line());
     repository.findByDenominacionFiltered.mockResolvedValue({ data: [line()], total: 1 });
     repository.findAllFor.mockResolvedValue([line()]);
@@ -149,7 +153,68 @@ describe('LineaService SuperLinea association', () => {
     );
   });
 
-  it('CP-82 - Mapea las entidades a la forma de selección (código, nombre y descripción)', async () => {
+  it('CP-53 - Rechaza una denominación reservada por otra Línea activa o eliminada', async () => {
+    repository.findOne.mockResolvedValue(line());
+    repository.findByDenominacionWith.mockResolvedValue(
+      Object.assign(line(parent(20)), { id: 2 }),
+    );
+
+    await expect(
+      service.update(1, { denominacion: 'Máquinas', usuarioUpdatedId: 8 }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('CP-49 - Rechaza el registro con una denominación reservada por una Línea activa o eliminada', async () => {
+    repository.findByDenominacionWith.mockResolvedValue(line());
+
+    await expect(
+      service.create({
+        denominacion: 'maquinas',
+        utilizaStockMinimo: false,
+        usuarioCreatedId: 7,
+        deletedAt: null,
+        superLineaId: 10,
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(superLineaRepository.findOne).not.toHaveBeenCalled();
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
+  it('CP-53 - Permite conservar la denominación actual', async () => {
+    const current = line();
+    repository.findOne.mockResolvedValue(current);
+    repository.findByDenominacionWith.mockResolvedValue(current);
+    repository.update.mockResolvedValue(current);
+
+    await expect(
+      service.update(1, { denominacion: 'Herramientas', usuarioUpdatedId: 8 }),
+    ).resolves.toBeDefined();
+  });
+
+  it('CP-55 - Elimina lógicamente una Línea sin Productos activos', async () => {
+    const current = line();
+    const user = { id: 9 };
+    repository.findOne.mockResolvedValue(current);
+    usuarioService.findOne.mockResolvedValue(user);
+    deletionPolicy.tieneProductosActivosParaLinea.mockResolvedValue(false);
+    repository.remove.mockResolvedValue(current);
+
+    await service.remove(1, 9);
+
+    expect(repository.remove).toHaveBeenCalledWith(current, user);
+  });
+
+  it('CP-56 - Rechaza la eliminación cuando un Producto activo referencia la Línea', async () => {
+    repository.findOne.mockResolvedValue(line());
+    usuarioService.findOne.mockResolvedValue({ id: 9 });
+    deletionPolicy.tieneProductosActivosParaLinea.mockResolvedValue(true);
+
+    await expect(service.remove(1, 9)).rejects.toBeInstanceOf(ConflictException);
+    expect(repository.remove).not.toHaveBeenCalled();
+  });
+
+  it('No-CP - Mapea las entidades a la forma de selección (código, nombre y descripción)', async () => {
     const expected: SelectOption[] = [
       { codigo: 1, nombre: 'Harinas', descripcion: 'Harinas y derivados' },
     ];
@@ -175,8 +240,8 @@ describe('LineaService SuperLinea association', () => {
   });
 });
 
-describe('LineaMapper.toSelectOption', () => {
-  it('CP-82 - Mapea una Línea a la forma de selección (código, nombre y descripción)', () => {
+describe('LineaMapper.toSelectOption (No-CP)', () => {
+  it('Mapea una Línea a la forma de selección (código, nombre y descripción)', () => {
     const entity = Object.assign(new Linea(), {
       id: 7,
       denominacion: 'Harinas',
@@ -190,7 +255,7 @@ describe('LineaMapper.toSelectOption', () => {
     });
   });
 
-  it('CP-82 - Una observación nula se transforma en una descripción vacía', () => {
+  it('Una observación nula se transforma en una descripción vacía', () => {
     const entity = Object.assign(new Linea(), {
       id: 8,
       denominacion: 'Harinas',

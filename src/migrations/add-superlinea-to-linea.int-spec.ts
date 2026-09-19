@@ -1,13 +1,19 @@
 import { DataSource } from 'typeorm';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
 import { AddSuperLineaToLinea1789091969000 } from './1789091969000-AddSuperLineaToLinea';
-import { readConnectionFile } from '../../test/integration/test-datasource';
+import {
+  mySqlTestConnection,
+  startMySqlTestContainer,
+} from '../../test/integration/mysql-test-container';
 
 describe('AddSuperLineaToLinea1789091969000 migration', () => {
   const databaseName = `cr003_migration_${process.pid}`;
+  let container: StartedMySqlContainer;
   let admin: DataSource;
   let fixture: DataSource;
 
   beforeAll(async () => {
+    container = await startMySqlTestContainer();
     admin = createDataSource();
     await admin.initialize();
     await admin.query(`DROP DATABASE IF EXISTS \`${databaseName}\``);
@@ -36,6 +42,7 @@ describe('AddSuperLineaToLinea1789091969000 migration', () => {
       await admin.query(`DROP DATABASE IF EXISTS \`${databaseName}\``);
       await admin.destroy();
     }
+    if (container) await container.stop();
   });
 
   it('backfills populated lines before enforcing the required restrictive relation', async () => {
@@ -158,16 +165,17 @@ describe('AddSuperLineaToLinea1789091969000 migration', () => {
   }
 
   function createDataSource(database?: string): DataSource {
-    const connection = readConnectionFile();
+    const connection = mySqlTestConnection(container, database ? { database } : {});
     // This spec creates and drops its own throwaway database, which the
-    // container's application user cannot do; root is provided by the harness.
+    // container's application user cannot do; mySqlTestConnection defaults to
+    // the root user.
     return new DataSource({
       type: 'mysql',
       host: connection.host,
       port: connection.port,
-      username: connection.rootUsername,
-      password: connection.rootPassword,
-      database,
+      username: connection.username,
+      password: connection.password,
+      database: connection.database,
       logging: false,
     });
   }

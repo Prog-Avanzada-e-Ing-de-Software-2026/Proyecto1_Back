@@ -12,7 +12,7 @@
  *
  * Los unitarios CP-03, CP-04 y CP-07 viven en producto.entity.spec.ts.
  * Los de integración servicio/repositorio CP-02, CP-06 y CP-08 viven en
- * producto.integracion.spec.ts.
+ * producto.integracion.int-spec.ts.
  *
  * Requiere Docker corriendo. Sin Docker estos tests fallan (no pasan en silencio).
  */
@@ -21,10 +21,8 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import * as request from 'supertest';
-import {
-  MySqlContainer,
-  StartedMySqlContainer,
-} from '@testcontainers/mysql';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
+import { startMySqlTestContainer } from '../../../../../test/integration/mysql-test-container';
 import { App } from 'supertest/types';
 import { ProductoController } from './controllers/producto.controller';
 import { ProductoService } from './services/producto.service';
@@ -50,6 +48,8 @@ import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usu
 import { Init1787269586538 } from 'src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from 'src/migrations/1789091969000-AddSuperLineaToLinea';
 import { AddCambioPrecioToProducto1789351169000 } from 'src/migrations/1789351169000-AddCambioPrecioToProducto';
+import { AddPresentacionToProducto1789200000000 } from 'src/migrations/1789200000000-AddPresentacionToProducto';
+import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 import { Proveedor } from 'src/modules/organizacion/proveedor/domain/entities/proveedor.entity';
 import { ProveedorOperacion } from 'src/modules/organizacion/proveedor-operacion/entities/proveedor-operacion.entity';
 import { Domicilio } from 'src/modules/gutil/domicilio/entities/domicilio.entity';
@@ -68,6 +68,7 @@ jest.setTimeout(120_000);
 const ENTIDADES = [
   Producto,
   CambioPrecio,
+  Presentacion,
   Linea,
   SuperLinea,
   Marca,
@@ -89,6 +90,7 @@ const MIGRATIONS = [
   Init1787269586538,
   AddSuperLineaToLinea1789091969000,
   AddCambioPrecioToProducto1789351169000,
+  AddPresentacionToProducto1789200000000,
 ];
 
 describe('Producto - Historial de precios (HTTP end-to-end)', () => {
@@ -99,9 +101,10 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
   const lineaServiceStub = { findEntityById: jest.fn() };
   const marcaServiceStub = { findEntityById: jest.fn() };
   const usuarioServiceStub = { findOne: jest.fn() };
+  const presentacionRepositoryStub = { findOne: jest.fn() };
 
   beforeAll(async () => {
-    mysql = await new MySqlContainer('mysql:8.0').start();
+    mysql = await startMySqlTestContainer();
 
     const admin = new DataSource({
       type: 'mysql',
@@ -135,6 +138,7 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
         ProductoService,
         ProductoPersistenceAdapter,
         { provide: 'IProductoRepository', useClass: ProductoRepository },
+        { provide: 'IPresentacionRepository', useValue: presentacionRepositoryStub },
         ProductoIntrinsicValidationService,
         ProductoValidationService,
         ProductoRelatedEntitiesValidator,
@@ -253,6 +257,7 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
     const marcaRepo = ds.getRepository(Marca);
     const usuarioRepo = ds.getRepository(Usuario);
     const productoRepo = ds.getRepository(Producto);
+    const presentacionRepo = ds.getRepository(Presentacion);
 
     const superLinea = await superLineaRepo.save(
       superLineaRepo.create({ denominacion: `SL-${sufijo}` }),
@@ -274,6 +279,11 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
         denominacion: `U-${sufijo}`,
       }),
     );
+    // The AddPresentacionToProducto migration makes presentacion_id NOT NULL,
+    // so every product fixture needs a real presentation row.
+    const presentacion = await presentacionRepo.save(
+      presentacionRepo.create({ denominacion: `P-${sufijo}` }),
+    );
     const producto = await productoRepo.save(
       productoRepo.create({
         denominacion: `coca-cola 1l ${sufijo}`,
@@ -282,11 +292,13 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
         lineaId: linea.id,
         marca,
         marcaId: marca.id,
+        presentacion,
+        presentacionId: presentacion.id,
         usuarioCreated: usuario,
       }),
     );
 
-    return { superLinea, linea, marca, usuario, producto };
+    return { superLinea, linea, marca, usuario, presentacion, producto };
   }
 
   async function sembrarProductoConHistorial(
