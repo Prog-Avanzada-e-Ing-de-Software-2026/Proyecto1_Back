@@ -36,8 +36,8 @@ None. Existing product and selector/search requirements remain unchanged.
 | Area | Impact |
 |---|---|
 | Línea/SuperLínea `*.spec.ts` and `*.int-spec.ts` | Correct and complete scoped evidence. |
-| `jest.config.js`, `jest.config.integration.js`, `package.json` | Audit; narrowly adjust only if evidence requires it. |
-| `test/integration/` | Audit/fix shared Testcontainers lifecycle only where needed. |
+| `jest.config.js`, `test/config/*.json`, `package.json` | Audit; selection is manifest-driven and narrowly scoped. |
+| `test/integration/` | Audit/fix the per-file Testcontainers lifecycle only where needed. |
 
 ## Risks
 
