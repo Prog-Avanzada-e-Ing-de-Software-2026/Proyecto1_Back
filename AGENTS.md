@@ -27,9 +27,11 @@ When sources disagree, do not silently choose one or broaden the task. Surface t
 - Runtime and package manager: Node.js 24 and Yarn 4. Use `yarn`; do not substitute npm commands.
 - Backend: NestJS 11, TypeScript 5.7, TypeORM 0.3, and MySQL 8.
 - Build: `yarn build`.
-- Unit tests: `yarn test`.
+- Unit tests: `yarn test` (reads `test/config/without-testcontainers.json`).
+- Integration tests: `yarn test:integration` (reads `test/config/with-testcontainers.json`; requires Docker).
 - End-to-end tests: `yarn test:e2e`.
 - Coverage: `yarn test:cov`.
+- Both manifests currently list only specs under `src/modules/gestion-productos/`.
 - `yarn lint` and `yarn format` modify files. Do not run them as read-only verification, and inspect their resulting diff when used.
 
 ## Architecture and DDD
@@ -59,6 +61,8 @@ Apply these rules:
 OpenSpec artifacts live under `openspec/`; `openspec/config.yaml` defines the project defaults.
 
 - SDD is opt-in. Use it only when the user explicitly requests it or accepts an SDD proposal.
+- Prefer the installed native `openspec` CLI for initialization/update, status, instructions/templates, validation, listing/showing, and archival rather than manually inferring artifact state. Installation alone does not authorize mutation; check initialization first and obtain explicit user authorization before changing OpenSpec state, including running `openspec init`.
+- Use `openspec/config.yaml` and the active change artifacts as the OpenSpec sources of truth, subject to the repository-wide source-of-truth order above.
 - For an existing change, read its `state.yaml`, proposal, specs, design, and tasks before editing source code.
 - Honor operational states such as `paused` even when the engine reports that `apply` is technically ready.
 - A scoped, explicit change decision may override a project default. Record the exception in the change artifacts rather than hiding it.
@@ -67,7 +71,8 @@ OpenSpec artifacts live under `openspec/`; `openspec/config.yaml` defines the pr
 - Designs preserve module boundaries and explain significant tradeoffs; use sequence diagrams only for genuinely complex flows.
 - Tasks are numbered, phased, mapped to requirements, and small enough to complete and verify independently.
 - Implementation follows approved tasks without silently expanding scope.
-- Verification must prove conformance to the proposal, specs, design, and acceptance criteria before archival.
+- Verification must prove conformance to the proposal, specs, design, and acceptance criteria before archival. Validate applicable changes and specs with the native CLI, preferring strict validation where appropriate, and never claim success without observed command completion.
+- Write OpenSpec artifacts in English unless the user explicitly requests otherwise or project conventions require another language.
 - Direct work outside SDD must not create synthetic OpenSpec artifacts or pretend that SDD phases ran.
 
 ## Testing and verification
@@ -75,8 +80,10 @@ OpenSpec artifacts live under `openspec/`; `openspec/config.yaml` defines the pr
 - Derive test cases from acceptance criteria and observable contracts.
 - The OpenSpec default is strict TDD: RED -> GREEN -> REFACTOR. Follow it unless the active change explicitly documents a scoped exception.
 - Use Jest and `@nestjs/testing` for unit tests and Supertest for HTTP behavior.
-- MySQL integration specs (e.g. migrations) use Testcontainers: `testcontainers` and `@testcontainers/mysql` are pinned to v10 because v12 requires Node >= 22 and local development runs Node 20. Each spec starts one ephemeral MySQL 8 container and connects as `root` (`getRootPassword()`), so per-suite databases are reachable. Requires Docker running; tests are skipped-or-fail locally without it, never silently pass.
-- Running specs: `yarn test` collects coverage and can mask failures. Prefer `node node_modules/jest/bin/jest.js --runTestsByPath <spec> --coverage=false` per file, or `corepack yarn` for package operations. `yarn.cmd`/`yarn.ps1` can mangle paths that contain non-ASCII characters (e.g. the `año` in this repository path), so bypass them for Jest runs.
+- Test selection is driven by two explicit manifests: `test/config/without-testcontainers.json` (run with `yarn test`) and `test/config/with-testcontainers.json` (run with `yarn test:integration`). Add or remove a test file by editing the matching JSON; a test listed in neither manifest does not run. The single `jest.config.js` derives its `testMatch` from the manifest selected by the `TEST_SUITE` environment variable, which the npm scripts set. The manifests are currently scoped to `src/modules/gestion-productos/`.
+- Specs in `test/config/with-testcontainers.json` use per-file Testcontainers MySQL 8 containers via `test/integration/mysql-test-container.ts`; each spec starts and stops its own container. Requires Docker running; tests are skipped-or-fail locally without it, never silently pass.
+- `test/app.e2e-spec.ts` runs only through `yarn test:e2e` (`test/jest-e2e.json`) and is intentionally absent from both manifests.
+- Running specs: `yarn test` and `yarn test:integration` run only the files listed in the matching `test/config/*.json` manifest and do not collect coverage; use `yarn test:cov` for coverage. To run a single spec, use `node node_modules/jest/bin/jest.js --runTestsByPath <spec>` (the file must be listed in the matching manifest), or `corepack yarn` for package operations. `yarn.cmd`/`yarn.ps1` can mangle paths that contain non-ASCII characters (e.g. the `año` in this repository path), so bypass them for Jest runs.
 - Keep each commit buildable and passing the relevant tests when tests exist.
 - Run the narrowest relevant tests first, then `yarn build`; expand verification according to the change's blast radius.
 - Never claim a check passed unless its command actually completed successfully.

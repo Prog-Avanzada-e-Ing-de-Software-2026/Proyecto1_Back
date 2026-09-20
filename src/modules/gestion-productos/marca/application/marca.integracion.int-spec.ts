@@ -12,15 +12,13 @@
  *
  * El unitario CP-16 vive en politica-eliminacion-marca.service.spec.ts.
  * Los HTTP end-to-end CP-10, CP-12, CP-13, CP-14, CP-15 y CP-17 viven en
- * marca.http.spec.ts.
+ * marca.http.int-spec.ts.
  *
  * Requiere Docker corriendo. Sin Docker estos tests fallan (no pasan en silencio).
  */
 import { DataSource } from 'typeorm';
-import {
-  MySqlContainer,
-  StartedMySqlContainer,
-} from '@testcontainers/mysql';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
+import { startMySqlTestContainer } from '../../../../../test/integration/mysql-test-container';
 import { Producto } from '../../producto/domain/entities/producto.entity';
 import { CambioPrecio } from '../../producto/domain/entities/cambio-precio.entity';
 import { ProductoPersistenceAdapter } from '../../producto/infraestructure/repositories/producto.persistence-adapters';
@@ -43,6 +41,8 @@ import { Rol } from 'src/modules/gestion-usuario/rol/domain/entities/rol.entity'
 import { Init1787269586538 } from 'src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from 'src/migrations/1789091969000-AddSuperLineaToLinea';
 import { AddCambioPrecioToProducto1789351169000 } from 'src/migrations/1789351169000-AddCambioPrecioToProducto';
+import { AddPresentacionToProducto1789200000000 } from 'src/migrations/1789200000000-AddPresentacionToProducto';
+import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 import { Linea } from 'src/modules/gestion-productos/linea/domain/entities/linea.entity';
 import { SuperLinea } from 'src/modules/gestion-productos/superlinea/domain/entities/superlinea.entity';
 import { Proveedor } from 'src/modules/organizacion/proveedor/domain/entities/proveedor.entity';
@@ -61,6 +61,7 @@ jest.setTimeout(120_000);
 const ENTIDADES = [
   Producto,
   CambioPrecio,
+  Presentacion,
   Linea,
   SuperLinea,
   Marca,
@@ -82,6 +83,7 @@ const MIGRATIONS = [
   Init1787269586538,
   AddSuperLineaToLinea1789091969000,
   AddCambioPrecioToProducto1789351169000,
+  AddPresentacionToProducto1789200000000,
 ];
 
 describe('Marca - Gestión de marca (integración servicio/repositorio + MySQL real)', () => {
@@ -91,7 +93,7 @@ describe('Marca - Gestión de marca (integración servicio/repositorio + MySQL r
   let service: MarcaService;
 
   beforeAll(async () => {
-    mysql = await new MySqlContainer('mysql:8.0').start();
+    mysql = await startMySqlTestContainer();
 
     const admin = new DataSource({
       type: 'mysql',
@@ -155,7 +157,7 @@ describe('Marca - Gestión de marca (integración servicio/repositorio + MySQL r
     if (mysql) await mysql.stop();
   });
 
-  it('CP-11 - Rechazar la creación de una marca con denominación duplicada', async () => {
+  it('Rechazar la creación de una marca con denominación duplicada', async () => {
     const dto = {
       denominacion: 'Pepsi',
       usuarioCreatedId: 1,
@@ -170,7 +172,7 @@ describe('Marca - Gestión de marca (integración servicio/repositorio + MySQL r
     expect(resultado.data[0].denominacion).toBe('Pepsi');
   });
 
-  it('CP-16 - Rechazar la eliminación de una marca con productos activos', async () => {
+  it('Rechazar la eliminación de una marca con productos activos', async () => {
     const { marca, usuario } = await sembrarMarcaConProductoActivo(
       dataSource,
       'cp16',
@@ -191,6 +193,7 @@ describe('Marca - Gestión de marca (integración servicio/repositorio + MySQL r
     const marcaRepo = ds.getRepository(Marca);
     const usuarioRepo = ds.getRepository(Usuario);
     const productoRepo = ds.getRepository(Producto);
+    const presentacionRepo = ds.getRepository(Presentacion);
 
     const marca = await marcaRepo.save(
       marcaRepo.create({ denominacion: `M-${sufijo}` }),
@@ -202,12 +205,19 @@ describe('Marca - Gestión de marca (integración servicio/repositorio + MySQL r
         denominacion: `U-${sufijo}`,
       }),
     );
+    // The AddPresentacionToProducto migration makes presentacion_id NOT NULL,
+    // so every product fixture needs a real presentation row.
+    const presentacion = await presentacionRepo.save(
+      presentacionRepo.create({ denominacion: `P-${sufijo}` }),
+    );
     const producto = await productoRepo.save(
       productoRepo.create({
         denominacion: `coca-cola 1l ${sufijo}`,
         precio: 100,
         marca,
         marcaId: marca.id,
+        presentacion,
+        presentacionId: presentacion.id,
         usuarioCreated: usuario,
       }),
     );

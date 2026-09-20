@@ -56,3 +56,41 @@ Tests are deferred to a separate change and MUST NOT be created or modified. Imp
 
 - [ ] 4.1 Run `yarn build` and resolve compilation failures only within the CR-001 implementation files.
 - [ ] 4.2 Inspect `git diff --name-only` and `git diff --check`; confirm no test file or out-of-scope module changed and no margin formula, sign, or update semantics were introduced.
+
+## Deferred Findings (Documentation Only — Not CR-001 Scope)
+
+These findings are recorded so a later authorized change can pick them up. They are NOT
+CR-001 tasks, are not part of its authorized scope, and MUST NOT be checked off here.
+CR-001 remains paused; documenting them changes nothing about its scope, testing
+exclusion, or resume state.
+
+### CP-63 — A SuperLínea update that keeps its own denomination is wrongly rejected
+
+- **Symptom**: a `PUT /api/superlinea/:id` that does not change `denominacion` is
+  rejected with a denomination-uniqueness conflict. The CP-63 assertions in
+  `src/modules/gestion-productos/superlinea/application/services/superlinea.service.spec.ts`
+  (unit) and
+  `src/modules/gestion-productos/superlinea/infraestructure/repositories/superlinea.persistence-adapter.int-spec.ts`
+  (integration) are RED.
+- **Root cause**: the uniqueness lookup cannot exclude the row being updated. The
+  `excludeId` contract is missing at every layer:
+  1. `SuperLineaService.update` calls `checkDenominacionExists(denominacion)` without the current `id`.
+  2. `PoliticaCreacionSuperLinea.checkDenominacionExists(denominacion)` does not accept an `excludeId`.
+  3. `ISuperLineaRepository.findByDenominacionWithDeleted(denominacion)` has no exclusion parameter.
+  4. `SuperLineaPersistenceAdapter.findByDenominacionWithDeleted` emits
+     `WHERE UPPER(superLinea.denominacion) = :denominacion` with no `AND id != :excludeId`.
+  Additionally, `IsUniqueDenominacionConstraint.validate` computes `ignoreId` and
+  `where.id = Not(ignoreId)` but never uses them, and `UpdateSuperLineaDto` inherits
+  `@IsUniqueDenominacion()` through `PartialType` while the update body carries no `id`.
+- **Required work to close it**:
+  - Add an optional `excludeId` to the service, the policy, the repository interface, and
+    `SuperLineaRepository`, and apply `AND superLinea.id != :excludeId` in the adapter
+    when it is provided.
+  - `update()` passes the route `id`; `create()` passes nothing.
+  - Repair the malformed integration assertion: it queries `findByDenominacionWithDeleted('bebidas')`
+    without the created `id`, so it can never return `null`; it must pass the id.
+  - Resolve the update-path DTO validator: remove `@IsUniqueDenominacion` from the update
+    DTO or supply the current id; update uniqueness belongs to the service.
+- **Evidence**: archived change
+  `openspec/changes/archive/2026-09-19-audit-linea-superlinea-test-coverage/` left CP-63
+  documented as pending; production code was intentionally not modified there.

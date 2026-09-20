@@ -70,22 +70,27 @@ Con este enfoque, el esfuerzo se concentra en los **flujos de mayor riesgo** del
 
 ### 3.3. Cómo se ejecutan
 
+La selección es **por manifiesto**, no por sufijo: `jest.config.js` lee la variable `TEST_SUITE` (que fijan los scripts) y toma la lista exacta de archivos de `test/config/`. Un archivo que no esté en ningún manifiesto **no se ejecuta**.
+
 | Comando | Qué corre | Notas |
 | :---- | :---- | :---- |
-| `yarn test` | Unitarios (`*.spec.ts`), excluye `*.int-spec.ts` | `jest.config.js`, con `collectCoverage: true` |
-| `yarn test:integration` | Integración (`*.int-spec.ts`) | `jest.config.integration.js`; **requiere Docker** para levantar el contenedor MySQL 8 |
-| `yarn test:cov` | Unitarios con cobertura | `jest --coverage` |
+| `yarn test` | Los specs de `test/config/without-testcontainers.json` | `TEST_SUITE=without`; sin cobertura |
+| `yarn test:integration` | Los specs de `test/config/with-testcontainers.json` | `TEST_SUITE=with`; **requiere Docker** para levantar el contenedor MySQL 8 |
+| `yarn test:cov` | Igual que `yarn test`, con cobertura | `TEST_SUITE=without jest --coverage` |
+| `yarn test:watch` | Igual que `yarn test`, en modo watch | `TEST_SUITE=without jest --watch` |
+
+**Alcance de los manifiestos.** Cada JSON es la lista explícita de lo que corre ese runner, sin scopefijo. Hoy `without-testcontainers.json` lista unitarios y contratos HTTP de `src/modules/gestion-productos/`; `with-testcontainers.json` incluye además los specs de migraciones (`src/migrations/`) y el del harness (`test/integration/`). Para agregar un caso: elegí el manifiesto según §3.4 y sumá la ruta **relativa a la raíz** (por ejemplo `src/modules/gestion-productos/.../foo.int-spec.ts`) al JSON correspondiente. Los que usan MySQL/Testcontainers van en `with-testcontainers.json`; el resto, en `without-testcontainers.json`.
 
 Dos consideraciones operativas verificadas en este repositorio:
 
-- **`yarn test` colecta cobertura y puede enmascarar fallos.** Para correr un archivo puntual, usar el binario de Jest directamente: `node node_modules/jest/bin/jest.js --runTestsByPath <ruta-al-spec> --coverage=false`
+- **`yarn test` y `yarn test:integration` no colectan cobertura.** La cobertura es opt-in con `yarn test:cov`. Para correr un archivo puntual, usar el binario de Jest directamente: `node node_modules/jest/bin/jest.js --runTestsByPath <ruta-al-spec>` (el archivo debe estar listado en el manifiesto correspondiente)
 - **En Windows, `yarn.cmd` / `yarn.ps1` rompen paths con caracteres no ASCII** (la ruta de este repositorio contiene `año`). Para corridas de Jest, invocar el binario directo en lugar del wrapper.
 
 **Las de integración se saltan o fallan sin Docker; nunca pasan silenciosamente.** Un test de integración que no se pudo ejecutar no es un test aprobado.
 
 ### 3.4. Del caso de prueba al archivo: ejemplos verificados
 
-Estos recortes de los PR #46 y #48 son referencias de diseño, no bloques para copiar completos. La clasificación actual es inequívoca: **todo test que levante o use MySQL/Testcontainers debe llamarse `*.int-spec.ts` y ejecutarse con `yarn test:integration`**. `*.spec.ts` queda reservado para unitarios y contratos HTTP sin infraestructura real.
+Estos recortes de los PR #46 y #48 son referencias de diseño, no bloques para copiar completos. La clasificación actual es inequívoca: **todo test que levante o use MySQL/Testcontainers debe llamarse `*.int-spec.ts`, registrarse en `test/config/with-testcontainers.json` y ejecutarse con `yarn test:integration`**. `*.spec.ts` queda reservado para unitarios y contratos HTTP sin infraestructura real, y se registra en `test/config/without-testcontainers.json`.
 
 #### Regla pura sin I/O: escapar metacaracteres de `LIKE`
 
@@ -175,7 +180,7 @@ expect(service.busquedaPorCoincidenciaParcial).not.toHaveBeenCalled();
 
 #### Antecedente histórico del PR #46
 
-El PR #46 aporta reglas de dominio valiosas en `producto.entity.spec.ts` (`a2ac348`, por ejemplo CP-04), pero sus integraciones `producto.integracion.spec.ts` (`a2ac348`) y `marca.http.spec.ts` (`afcceab`) levantan MySQL/Testcontainers bajo nombres `*.spec.ts`. Esos nombres se conservan al citar su origen, **pero no son una plantilla vigente**: un equivalente nuevo debe usar `*.int-spec.ts` y `yarn test:integration`. Tampoco debe copiarse el uso histórico de `as any`; se prefieren contratos tipados y dobles mínimos.
+El PR #46 aporta reglas de dominio valiosas en `producto.entity.spec.ts` (`a2ac348`, por ejemplo CP-04), pero sus integraciones `producto.integracion.spec.ts` (`a2ac348`) y `marca.http.spec.ts` (`afcceab`) levantaban MySQL/Testcontainers bajo nombres `*.spec.ts`. Esos nombres se citan tal como aparecen en su PR de origen, **pero no son una plantilla vigente**: los archivos actuales ya se renombraron a `*.int-spec.ts` (`producto.integracion.int-spec.ts`, `marca.http.int-spec.ts`, `marca.integracion.int-spec.ts`, `producto.http.int-spec.ts`) y corren con `yarn test:integration`. Tampoco debe copiarse el uso histórico de `as any`; se prefieren contratos tipados y dobles mínimos.
 
 ### 3.5. Plantilla adaptable
 
@@ -208,7 +213,7 @@ describe('UseCase - comportamiento observable', () => { // Adaptar al caso de us
 1. Identificar el comportamiento observable y su `CP-XX`.
 2. Elegir el nivel más bajo que pueda detectar el riesgo: regla pura, orquestación, contrato HTTP o persistencia real.
 3. Mantener reales las dependencias que definen la semántica; reemplazar solo las externas al objeto de prueba.
-4. Elegir sufijo y runner: `*.spec.ts` con `yarn test` sin infraestructura; `*.int-spec.ts` con `yarn test:integration` si interviene MySQL/Testcontainers.
+4. Elegir sufijo, manifiesto y runner: `*.spec.ts` en `without-testcontainers.json` con `yarn test` sin infraestructura; `*.int-spec.ts` en `with-testcontainers.json` con `yarn test:integration` si interviene MySQL/Testcontainers. Un archivo fuera de ambos manifiestos no corre.
 5. Implementar Given/When/Then o Arrange/Act/Assert con assertions de resultado y de efecto —o ausencia de efecto— relevantes.
 6. Ejecutar el archivo con el runner correspondiente y reportar comando, resultado y cualquier limitación; nunca declarar éxito sin ejecución.
 
@@ -229,7 +234,7 @@ Las capas se listan en **orden de prioridad** (de mayor a menor impacto y valor)
 - **Pruebas de contrato HTTP representativas**, con la aplicación Nest mínima y sin infraestructura real, para evaluar routing, validación, transformación y respuestas públicas.
 - **No se testean todos los escenarios posibles** a este nivel, pues no se pretende repetir lo que ya se prueba en la capa de dominio.
 - En general, cada endpoint prueba **al menos un camino de éxito y uno de fracaso** para evaluar los tipos y formatos de las respuestas.
-- Si el caso también necesita MySQL/Testcontainers, deja de ser un `*.spec.ts`: se separa o se clasifica como integración `*.int-spec.ts` y se ejecuta con `yarn test:integration`.
+- Si el caso también necesita MySQL/Testcontainers, deja de ser un `*.spec.ts`: se separa o se clasifica como integración `*.int-spec.ts`, se registra en `with-testcontainers.json` y se ejecuta con `yarn test:integration`.
 
 ### 4.3. Capa de aplicación — Servicios
 

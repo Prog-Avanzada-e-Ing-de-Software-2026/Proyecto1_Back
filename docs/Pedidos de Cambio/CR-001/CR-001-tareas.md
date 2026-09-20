@@ -60,3 +60,40 @@ Las pruebas quedan diferidas para un cambio autorizado por separado. Estas tarea
 
 - [ ] 4.1 Ejecutar `yarn build` y resolver errores de compilación únicamente dentro de los archivos de implementación de CR-001.
 - [ ] 4.2 Revisar `git diff --name-only` y `git diff --check`; confirmar que no cambió ningún archivo de prueba ni módulo fuera de alcance, y que no se introdujeron fórmulas, reglas de signo o comportamientos de actualización para el margen.
+
+## Hallazgos diferidos (solo documentación — fuera del alcance de CR-001)
+
+Estos hallazgos se registran para que un cambio autorizado posterior pueda tomarlos. NO son
+tareas de CR-001, no forman parte de su alcance autorizado y NO DEBEN marcarse aquí. CR-001
+sigue en pausa; documentarlos no cambia su alcance, la exclusión de pruebas ni su estado de
+reanudación.
+
+### CP-63 — Una modificación de SuperLínea que conserva su propia denominación se rechaza por error
+
+- **Síntoma**: un `PUT /api/superlinea/:id` que no cambia la `denominacion` se rechaza con un
+  conflicto de unicidad de denominación. Las aserciones CP-63 en
+  `src/modules/gestion-productos/superlinea/application/services/superlinea.service.spec.ts`
+  (unitario) y
+  `src/modules/gestion-productos/superlinea/infraestructure/repositories/superlinea.persistence-adapter.int-spec.ts`
+  (integración) están en RED.
+- **Causa raíz**: la consulta de unicidad no puede excluir la fila que se está modificando.
+  Falta el contrato `excludeId` en todas las capas:
+  1. `SuperLineaService.update` llama a `checkDenominacionExists(denominacion)` sin el `id` actual.
+  2. `PoliticaCreacionSuperLinea.checkDenominacionExists(denominacion)` no acepta un `excludeId`.
+  3. `ISuperLineaRepository.findByDenominacionWithDeleted(denominacion)` no tiene parámetro de exclusión.
+  4. `SuperLineaPersistenceAdapter.findByDenominacionWithDeleted` emite
+     `WHERE UPPER(superLinea.denominacion) = :denominacion` sin `AND id != :excludeId`.
+  Además, `IsUniqueDenominacionConstraint.validate` calcula `ignoreId` y
+  `where.id = Not(ignoreId)` pero nunca los usa, y `UpdateSuperLineaDto` hereda
+  `@IsUniqueDenominacion()` vía `PartialType` mientras que el body de modificación no lleva `id`.
+- **Trabajo requerido para cerrarlo**:
+  - Agregar un `excludeId` opcional en el service, la política, la interfaz del repositorio y
+    `SuperLineaRepository`, y aplicar `AND superLinea.id != :excludeId` en el adapter cuando venga.
+  - `update()` pasa el `id` de la ruta; `create()` no pasa nada.
+  - Reparar la aserción mal formada de integración: consulta `findByDenominacionWithDeleted('bebidas')`
+    sin el `id` creado, por lo que nunca puede devolver `null`; debe pasar el id.
+  - Resolver el validador del DTO de modificación: quitar `@IsUniqueDenominacion` del DTO de
+    actualización o proveer el id actual; la unicidad en modificación pertenece al service.
+- **Evidencia**: el cambio archivado
+  `openspec/changes/archive/2026-09-19-audit-linea-superlinea-test-coverage/` dejó CP-63
+  documentado como pendiente; el código de producción no se modificó allí a propósito.

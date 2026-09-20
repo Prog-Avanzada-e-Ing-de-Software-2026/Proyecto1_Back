@@ -5,7 +5,7 @@ import { AuthGuard } from 'src/modules/gestion-usuario/auth/auth.guard';
 import { LineaController } from './linea.controller';
 import { LineaService } from '../services/linea.service';
 
-describe('LineaController SuperLinea contract', () => {
+describe('LineaController - contrato de asociación con SuperLínea', () => {
   let app: INestApplication;
   const service = {
     create: jest.fn(),
@@ -36,7 +36,7 @@ describe('LineaController SuperLinea contract', () => {
 
   afterEach(async () => app.close());
 
-  it('requires a non-null integer SuperLinea when creating a line', async () => {
+  it('Rechaza el registro cuando falta la SuperLínea o es nula', async () => {
     const base = {
       denominacion: 'Herramientas',
       utilizaStockMinimo: false,
@@ -52,7 +52,7 @@ describe('LineaController SuperLinea contract', () => {
     expect(service.create).not.toHaveBeenCalled();
   });
 
-  it('accepts an active-parent id when creating', async () => {
+  it('Devuelve HTTP 201 al registrar una Línea válida', async () => {
     service.create.mockResolvedValue({ id: 1 });
 
     await request(app.getHttpServer())
@@ -70,7 +70,7 @@ describe('LineaController SuperLinea contract', () => {
     );
   });
 
-  it('allows omission but rejects null when updating the association', async () => {
+  it('Permite omitir la asociación pero rechaza el valor nulo al modificarla', async () => {
     service.update.mockResolvedValue({ mensaje: 'updated' });
 
     await request(app.getHttpServer())
@@ -84,7 +84,17 @@ describe('LineaController SuperLinea contract', () => {
     expect(service.update).toHaveBeenCalledTimes(1);
   });
 
-  it('CP-82 - /api/linea/select devuelve las opciones de selección (código, nombre y descripción)', async () => {
+  it('Devuelve HTTP 200 al eliminar una Línea', async () => {
+    service.remove.mockResolvedValue({ mensaje: 'deleted' });
+
+    await request(app.getHttpServer())
+      .delete('/api/linea/1?usuarioId=9')
+      .expect(200, { mensaje: 'deleted' });
+
+    expect(service.remove).toHaveBeenCalledWith(1, 9);
+  });
+
+  it('/api/linea/select devuelve las opciones de selección (código, nombre y descripción)', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue([
       { codigo: 1, nombre: 'Harinas', descripcion: '' },
     ]);
@@ -97,7 +107,7 @@ describe('LineaController SuperLinea contract', () => {
     );
   });
 
-  it('CP-86 - Sin término, /api/linea/select devuelve una colección vacía', async () => {
+  it('Sin término, /api/linea/select devuelve una colección vacía', async () => {
     service.busquedaPorCoincidenciaParcial.mockResolvedValue([]);
 
     await request(app.getHttpServer())
@@ -106,7 +116,7 @@ describe('LineaController SuperLinea contract', () => {
     expect(service.busquedaPorCoincidenciaParcial).toHaveBeenCalledWith('');
   });
 
-  it('CP-79 - Rechazar parámetros no admitidos en /api/linea/select', async () => {
+  it('Rechaza parámetros no admitidos en /api/linea/select', async () => {
     await request(app.getHttpServer())
       .get('/api/linea/select?desconocido=1')
       .expect(400);

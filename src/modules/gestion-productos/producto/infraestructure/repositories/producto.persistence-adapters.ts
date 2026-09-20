@@ -185,12 +185,12 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         throw new NotFoundException(`EL prodcuto con ID ${id} no encontrada`);
       }
       const {
+        precio,
         presentacionId: _presentacionId,
-        ...dataSinPresentacionId
+        ...dataSinItems
       } = data;
-      const { precio, ...dataSinItems } = data;
 
-      Object.assign(entity, dataSinPresentacionId, {
+      Object.assign(entity, dataSinItems, {
         linea,
         marca,
       });
