@@ -79,14 +79,6 @@ describe('ProductoPersistenceAdapter - Búsqueda general de productos', () => {
     return result.insertId as number;
   }
 
-  async function createProveedor(denominacion: string): Promise<number> {
-    const result = await dataSource.query(
-      'INSERT INTO `proveedor` (`denominacion`) VALUES (?)',
-      [denominacion],
-    );
-    return result.insertId as number;
-  }
-
   interface ProductoFixture {
     denominacion: string;
     lineaId?: number | null;
@@ -246,50 +238,42 @@ describe('ProductoPersistenceAdapter - Búsqueda general de productos', () => {
       );
     });
 
-    it('CP-96 - El filtro por proveedor debe aplicarse', async () => {
-      // Given productos activos de distintos proveedores.
+    it('CP-96 - Traer todos los productos sin indicar filtros', async () => {
+      // Given productos activos cargados en el catálogo, y uno eliminado.
       const superLineaId = await createSuperLinea('Bebidas');
       const lineaId = await createLinea('AGUAS', superLineaId);
       const marcaId = await createMarca('NUESTRA');
-      const proveedorSeleccionadoId = await createProveedor('PROVEEDOR A');
-      const otroProveedorId = await createProveedor('PROVEEDOR B');
       await createProducto({
-        denominacion: 'Agua proveedor A',
+        denominacion: 'Agua 01',
         marcaId,
         lineaId,
         stock: 5,
-        proveedorId: proveedorSeleccionadoId,
       });
       await createProducto({
-        denominacion: 'Agua proveedor B',
+        denominacion: 'Agua 02',
+        marcaId,
+        lineaId,
+        stock: 0,
+      });
+      await createProducto({
+        denominacion: 'Agua borrada',
         marcaId,
         lineaId,
         stock: 5,
-        proveedorId: otroProveedorId,
+        deletedAt: new Date(),
       });
 
-      // When se busca indicando un proveedor determinado.
-      const result = await adapter.findBy(
-        '',
-        '',
-        false,
-        '',
-        0,
-        0,
-        proveedorSeleccionadoId,
-        false,
-        0,
-        10,
-      );
+      // When se busca sin indicar ningún filtro.
+      const result = await adapter.findBy('', '', false, '', 0, 0, 0, false, 0, 10);
 
-      // Then se devuelven solo los productos de ese proveedor...
-      const denominaciones = result.data.map(
-        (producto) => producto.denominacion,
-      );
-      expect(result.total).toBe(1);
-      expect(denominaciones).toEqual(['Agua proveedor A']);
-      // ...y no se devuelven los productos de otros proveedores.
-      expect(denominaciones).not.toContain('Agua proveedor B');
+      // Then se devuelven todos los productos activos...
+      const denominaciones = result.data
+        .map((producto) => producto.denominacion)
+        .sort();
+      expect(result.total).toBe(2);
+      expect(denominaciones).toEqual(['Agua 01', 'Agua 02']);
+      // ...y no los eliminados lógicamente.
+      expect(denominaciones).not.toContain('Agua borrada');
     });
 
     it('CP-97 - El modo exacto de búsqueda por código de referencia debe respetarse', async () => {

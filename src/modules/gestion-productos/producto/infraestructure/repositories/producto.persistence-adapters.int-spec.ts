@@ -236,26 +236,21 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       expect(lineas.size).toBe(2);
     });
 
-    it('CP-91 - Los productos de la superlínea excluyen producto, línea y superlínea eliminados', async () => {
+    it('CP-91 - Los productos de la superlínea excluyen los productos y las líneas eliminados', async () => {
       const activeSuperLineaId = await createSuperLinea('Activa');
       const activeLineaId = await createLinea('Linea activa', activeSuperLineaId);
       const deletedLineaId = await createLinea('Linea borrada', activeSuperLineaId, new Date());
-      const deletedSuperLineaId = await createSuperLinea('Borrada', new Date());
-      const lineaUnderDeletedSuperLineaId = await createLinea('Linea huerfana', deletedSuperLineaId);
 
       await createProducto('Producto visible', activeLineaId);
       await createProducto('Producto borrado', activeLineaId, new Date());
       await createProducto('Producto de linea borrada', deletedLineaId);
-      await createProducto('Producto de superlinea borrada', lineaUnderDeletedSuperLineaId);
 
-      const activeResult = await adapter.findProductosBySuperLinea(activeSuperLineaId);
-      const deletedResult = await adapter.findProductosBySuperLinea(deletedSuperLineaId);
+      const result = await adapter.findProductosBySuperLinea(activeSuperLineaId);
 
-      expect(activeResult.total).toBe(1);
-      expect(activeResult.data.map((producto) => producto.denominacion)).toEqual([
+      expect(result.total).toBe(1);
+      expect(result.data.map((producto) => producto.denominacion)).toEqual([
         'Producto visible',
       ]);
-      expect(deletedResult).toEqual({ data: [], total: 0 });
     });
 
     it('CP-90 - Pagina de a 10 informando el total real de coincidencias', async () => {
@@ -274,9 +269,14 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       expect(secondPage.total).toBe(15);
     });
 
-    it('CP-92 - Un identificador de superlínea inexistente no devuelve productos', async () => {
+    it('CP-92 - Una superlínea inexistente o eliminada no devuelve productos', async () => {
+      const deletedSuperLineaId = await createSuperLinea('Borrada', new Date());
+
       await expect(
         adapter.findProductosBySuperLinea(999999),
+      ).resolves.toEqual({ data: [], total: 0 });
+      await expect(
+        adapter.findProductosBySuperLinea(deletedSuperLineaId),
       ).resolves.toEqual({ data: [], total: 0 });
     });
   });
