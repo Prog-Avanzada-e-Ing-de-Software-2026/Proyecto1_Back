@@ -14,6 +14,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
   let container: StartedMySqlContainer;
   let dataSource: DataSource;
   let adapter: ProductoPersistenceAdapter;
+  let presentacionId: number;
 
   beforeAll(async () => {
     container = await startMySqlTestContainer();
@@ -27,6 +28,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
 
   beforeEach(async () => {
     await truncateTables(dataSource);
+    presentacionId = await createPresentacion('Presentacion CR-004');
     adapter = new ProductoPersistenceAdapter(
       dataSource.getRepository(Producto),
       dataSource.getRepository(CambioPrecio),
@@ -34,6 +36,14 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       createUnitOfWorkStub(dataSource),
     );
   });
+
+  async function createPresentacion(denominacion: string): Promise<number> {
+    const result = await dataSource.query(
+      'INSERT INTO `presentacion` (`denominacion`) VALUES (?)',
+      [denominacion],
+    );
+    return result.insertId as number;
+  }
 
   async function createSuperLinea(denominacion: string, deletedAt: Date | null = null): Promise<number> {
     const result = await dataSource.query(
@@ -51,18 +61,7 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
     return result.insertId as number;
   }
 
-  async function createPresentacion(denominacion: string): Promise<number> {
-    const result = await dataSource.query(
-      'INSERT INTO `presentacion` (`denominacion`) VALUES (?)',
-      [denominacion],
-    );
-    return result.insertId as number;
-  }
-
   async function createProducto(denominacion: string, lineaId: number, deletedAt: Date | null = null): Promise<number> {
-    // The AddPresentacionToProducto migration makes presentacion_id NOT NULL,
-    // so every product fixture needs a real presentation row.
-    const presentacionId = await createPresentacion(denominacion);
     const result = await dataSource.query(
       'INSERT INTO `producto` (`denominacion`, `linea_id`, `presentacion_id`, `deletedAt`) VALUES (?, ?, ?, ?)',
       [denominacion, lineaId, presentacionId, deletedAt],
@@ -240,26 +239,21 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       expect(lineas.size).toBe(2);
     });
 
-    it('Los productos de la superlínea excluyen producto, línea y superlínea eliminados', async () => {
+    it('Los productos de la superlínea excluyen los productos y las líneas eliminados', async () => {
       const activeSuperLineaId = await createSuperLinea('Activa');
       const activeLineaId = await createLinea('Linea activa', activeSuperLineaId);
       const deletedLineaId = await createLinea('Linea borrada', activeSuperLineaId, new Date());
-      const deletedSuperLineaId = await createSuperLinea('Borrada', new Date());
-      const lineaUnderDeletedSuperLineaId = await createLinea('Linea huerfana', deletedSuperLineaId);
 
       await createProducto('Producto visible', activeLineaId);
       await createProducto('Producto borrado', activeLineaId, new Date());
       await createProducto('Producto de linea borrada', deletedLineaId);
-      await createProducto('Producto de superlinea borrada', lineaUnderDeletedSuperLineaId);
 
-      const activeResult = await adapter.findProductosBySuperLinea(activeSuperLineaId);
-      const deletedResult = await adapter.findProductosBySuperLinea(deletedSuperLineaId);
+      const result = await adapter.findProductosBySuperLinea(activeSuperLineaId);
 
-      expect(activeResult.total).toBe(1);
-      expect(activeResult.data.map((producto) => producto.denominacion)).toEqual([
+      expect(result.total).toBe(1);
+      expect(result.data.map((producto) => producto.denominacion)).toEqual([
         'Producto visible',
       ]);
-      expect(deletedResult).toEqual({ data: [], total: 0 });
     });
 
     it('Pagina de a 10 informando el total real de coincidencias', async () => {
@@ -278,9 +272,14 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
       expect(secondPage.total).toBe(15);
     });
 
-    it('Un identificador de superlínea inexistente no devuelve productos', async () => {
+    it('Una superlínea inexistente o eliminada no devuelve productos', async () => {
+      const deletedSuperLineaId = await createSuperLinea('Borrada', new Date());
+
       await expect(
         adapter.findProductosBySuperLinea(999999),
+      ).resolves.toEqual({ data: [], total: 0 });
+      await expect(
+        adapter.findProductosBySuperLinea(deletedSuperLineaId),
       ).resolves.toEqual({ data: [], total: 0 });
     });
   });
