@@ -54,7 +54,14 @@ describe('ProductoPersistenceAdapter.update', () => {
     const producto = buildProducto();
     jest.spyOn(adapter, 'findOne').mockResolvedValue(producto);
 
-    await adapter.update(1, { precio: 150 } as UpdateProductoDto, linea, marca, usuario);
+    await adapter.update(
+      1,
+      { precio: 150 } as UpdateProductoDto,
+      linea,
+      marca,
+      undefined,
+      usuario,
+    );
 
     expect(producto.precio).toBe(150);
     expect(producto.cambiosPrecio).toHaveLength(1);
@@ -71,7 +78,14 @@ describe('ProductoPersistenceAdapter.update', () => {
     const producto = buildProducto();
     jest.spyOn(adapter, 'findOne').mockResolvedValue(producto);
 
-    await adapter.update(1, { precio: 120 } as UpdateProductoDto, linea, marca, usuario);
+    await adapter.update(
+      1,
+      { precio: 120 } as UpdateProductoDto,
+      linea,
+      marca,
+      undefined,
+      usuario,
+    );
 
     expect(producto.precio).toBe(120);
     expect(producto.costo).toBe(100);

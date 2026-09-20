@@ -1,8 +1,6 @@
 import { DataSource } from 'typeorm';
-import {
-  MySqlContainer,
-  StartedMySqlContainer,
-} from '@testcontainers/mysql';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
+import { startMySqlTestContainer } from '../../test/integration/mysql-test-container';
 import { AddCambioPrecioToProducto1789351169000 } from './1789351169000-AddCambioPrecioToProducto';
 
 jest.setTimeout(120_000);
@@ -14,7 +12,7 @@ describe('AddCambioPrecioToProducto1789351169000 migration', () => {
   let fixture: DataSource;
 
   beforeAll(async () => {
-    mysql = await new MySqlContainer('mysql:8.0').start();
+    mysql = await startMySqlTestContainer();
     admin = createDataSource();
     await admin.initialize();
     await admin.query(`CREATE DATABASE \`${databaseName}\``);

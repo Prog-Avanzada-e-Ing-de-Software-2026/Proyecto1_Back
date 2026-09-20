@@ -15,7 +15,7 @@
  *
  * El unitario CP-16 vive en politica-eliminacion-marca.service.spec.ts.
  * Los de integración servicio/repositorio CP-11 y CP-16 viven en
- * marca.integracion.spec.ts.
+ * marca.integracion.int-spec.ts.
  *
  * Collaboradores reales en toda la cadena (sin mocks): MarcaService,
  * UsuarioService, RolService, sus adapters/persistencias y la política de
@@ -28,10 +28,8 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import * as request from 'supertest';
-import {
-  MySqlContainer,
-  StartedMySqlContainer,
-} from '@testcontainers/mysql';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
+import { startMySqlTestContainer } from '../../../../../test/integration/mysql-test-container';
 import { App } from 'supertest/types';
 import { MarcaController } from './controllers/marca.controller';
 import { MarcaService } from './services/marca.service';
@@ -57,6 +55,8 @@ import { NormalizeDenominacionSearchPipe } from 'src/modules/common/pipes/normal
 import { Init1787269586538 } from 'src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from 'src/migrations/1789091969000-AddSuperLineaToLinea';
 import { AddCambioPrecioToProducto1789351169000 } from 'src/migrations/1789351169000-AddCambioPrecioToProducto';
+import { AddPresentacionToProducto1789200000000 } from 'src/migrations/1789200000000-AddPresentacionToProducto';
+import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 import { Linea } from 'src/modules/gestion-productos/linea/domain/entities/linea.entity';
 import { SuperLinea } from 'src/modules/gestion-productos/superlinea/domain/entities/superlinea.entity';
 import { Proveedor } from 'src/modules/organizacion/proveedor/domain/entities/proveedor.entity';
@@ -75,6 +75,7 @@ jest.setTimeout(120_000);
 const ENTIDADES = [
   Producto,
   CambioPrecio,
+  Presentacion,
   Linea,
   SuperLinea,
   Marca,
@@ -96,6 +97,7 @@ const MIGRATIONS = [
   Init1787269586538,
   AddSuperLineaToLinea1789091969000,
   AddCambioPrecioToProducto1789351169000,
+  AddPresentacionToProducto1789200000000,
 ];
 
 describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
@@ -105,7 +107,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
   let dataSource: DataSource;
 
   beforeAll(async () => {
-    mysql = await new MySqlContainer('mysql:8.0').start();
+    mysql = await startMySqlTestContainer();
 
     const admin = new DataSource({
       type: 'mysql',
@@ -169,7 +171,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     if (mysql) await mysql.stop();
   });
 
-  it('CP-10 - Crear una marca por HTTP y consultarla', async () => {
+  it('Crear una marca por HTTP y consultarla', async () => {
     const usuario = await sembrarUsuario(dataSource, 'cp10');
 
     const res = await request(app.getHttpServer())
@@ -190,7 +192,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     expect(pepsi).toBeDefined();
   });
 
-  it('CP-12 - Rechazar una denominación de más de 255 caracteres', async () => {
+  it('Rechazar una denominación de más de 255 caracteres', async () => {
     await request(app.getHttpServer())
       .post('/marca')
       .send({ denominacion: 'P'.repeat(256), usuarioCreatedId: 1 })
@@ -204,7 +206,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     expect(busqueda.body.data).toEqual([]);
   });
 
-  it('CP-13 - Buscar todas las marcas', async () => {
+  it('Buscar todas las marcas', async () => {
     await sembrarMarcas(dataSource, ['Coca-Cola', 'Coca-Cola Zero', 'Pepsi']);
 
     const res = await request(app.getHttpServer())
@@ -218,7 +220,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     );
   });
 
-  it('CP-14 - Consultar una marca por ID', async () => {
+  it('Consultar una marca por ID', async () => {
     const { marca } = await sembrarMarca(dataSource, 'cp14');
 
     const res = await request(app.getHttpServer())
@@ -229,7 +231,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     expect(res.body.denominacion).toBe('M-cp14');
   });
 
-  it('CP-15 - Actualizar la denominación de una marca', async () => {
+  it('Actualizar la denominación de una marca', async () => {
     const { marca, usuario } = await sembrarMarcaConUsuario(
       dataSource,
       'cp15',
@@ -247,7 +249,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     expect(res.body.denominacion.toUpperCase()).toBe('COCA COLA COMPANY');
   });
 
-  it('CP-17 - Eliminar una marca con todos sus productos inactivos', async () => {
+  it('Eliminar una marca con todos sus productos inactivos', async () => {
     const { marca, usuario } = await sembrarMarcaConProducto(
       dataSource,
       'cp17',
@@ -326,6 +328,7 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
     const marcaRepo = ds.getRepository(Marca);
     const usuarioRepo = ds.getRepository(Usuario);
     const productoRepo = ds.getRepository(Producto);
+    const presentacionRepo = ds.getRepository(Presentacion);
 
     const marca = await marcaRepo.save(
       marcaRepo.create({ denominacion: `M-${sufijo}` }),
@@ -337,12 +340,19 @@ describe('Marca - Gestión de marca (HTTP end-to-end)', () => {
         denominacion: `U-${sufijo}`,
       }),
     );
+    // The AddPresentacionToProducto migration makes presentacion_id NOT NULL,
+    // so every product fixture needs a real presentation row.
+    const presentacion = await presentacionRepo.save(
+      presentacionRepo.create({ denominacion: `P-${sufijo}` }),
+    );
     const producto = await productoRepo.save(
       productoRepo.create({
         denominacion: `coca-cola 1l ${sufijo}`,
         precio: 100,
         marca,
         marcaId: marca.id,
+        presentacion,
+        presentacionId: presentacion.id,
         usuarioCreated: usuario,
         ...(inactivo ? { deletedAt: new Date() } : {}),
       }),

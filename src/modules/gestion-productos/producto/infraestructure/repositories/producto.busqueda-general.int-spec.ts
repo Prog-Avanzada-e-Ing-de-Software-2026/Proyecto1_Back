@@ -1,9 +1,11 @@
 import { DataSource } from 'typeorm';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
 import {
   createInitializedTestDataSource,
   createUnitOfWorkStub,
   truncateTables,
 } from '../../../../../../test/integration/test-datasource';
+import { startMySqlTestContainer } from '../../../../../../test/integration/mysql-test-container';
 import { CambioPrecio } from '../../domain/entities/cambio-precio.entity';
 import { Producto } from '../../domain/entities/producto.entity';
 import { ProductoPersistenceAdapter } from './producto.persistence-adapters';
@@ -19,17 +21,22 @@ import { ProductoPersistenceAdapter } from './producto.persistence-adapters';
  * en rojo hasta que la aplicación lo cumpla. No se debilitan para que pasen.
  */
 describe('ProductoPersistenceAdapter - Búsqueda general de productos', () => {
+  let container: StartedMySqlContainer;
   let dataSource: DataSource;
   let adapter: ProductoPersistenceAdapter;
   let presentacionId: number;
 
   beforeAll(async () => {
-    dataSource = await createInitializedTestDataSource();
+    container = await startMySqlTestContainer();
+    dataSource = await createInitializedTestDataSource(container);
   });
 
   afterAll(async () => {
     if (dataSource?.isInitialized) {
       await dataSource.destroy();
+    }
+    if (container) {
+      await container.stop();
     }
   });
 
@@ -107,7 +114,7 @@ describe('ProductoPersistenceAdapter - Búsqueda general de productos', () => {
   }
 
   describe('findBy - búsqueda general', () => {
-    it('CP-94 - Combinar los filtros de la búsqueda general', async () => {
+    it('Combinar los filtros de la búsqueda general', async () => {
       // Given productos activos de distintas marcas y líneas, con y sin stock.
       const superLineaId = await createSuperLinea('Bebidas');
       const lineaAguasId = await createLinea('AGUAS', superLineaId);
@@ -193,7 +200,7 @@ describe('ProductoPersistenceAdapter - Búsqueda general de productos', () => {
       expect(primeraPagina.total).toBe(2);
     });
 
-    it('CP-95 - La búsqueda general solo devuelve productos activos', async () => {
+    it('La búsqueda general solo devuelve productos activos', async () => {
       // Given un producto activo y un producto eliminado lógicamente que
       // cumplen el filtro.
       const superLineaId = await createSuperLinea('Bebidas');
@@ -238,7 +245,7 @@ describe('ProductoPersistenceAdapter - Búsqueda general de productos', () => {
       );
     });
 
-    it('CP-96 - Traer todos los productos sin indicar filtros', async () => {
+    it('Traer todos los productos sin indicar filtros', async () => {
       // Given productos activos cargados en el catálogo, y uno eliminado.
       const superLineaId = await createSuperLinea('Bebidas');
       const lineaId = await createLinea('AGUAS', superLineaId);
@@ -276,7 +283,7 @@ describe('ProductoPersistenceAdapter - Búsqueda general de productos', () => {
       expect(denominaciones).not.toContain('Agua borrada');
     });
 
-    it('CP-97 - El modo exacto de búsqueda por código de referencia debe respetarse', async () => {
+    it('El modo exacto de búsqueda por código de referencia debe respetarse', async () => {
       // Given existe un producto con código de referencia "1234"...
       await createProducto({
         denominacion: 'Producto codigo corto',

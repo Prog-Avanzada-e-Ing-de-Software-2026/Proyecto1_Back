@@ -145,7 +145,7 @@ describe('Producto - actualización de precio', () => {
   });
 
   describe('Historial de precios - Casos de prueba (unitarios)', () => {
-    it('CP-03 - Detectar inconsistencia en la continuidad del historial de precios', () => {
+    it('Detectar inconsistencia en la continuidad del historial de precios', () => {
       const producto = new Producto();
       producto.precio = 100;
 
@@ -164,7 +164,7 @@ describe('Producto - actualización de precio', () => {
     });
 
     it.each([0, -10])(
-      'CP-04 - Intentar cambiar el precio a %s (no positivo)',
+      'Intentar cambiar el precio a %s (no positivo)',
       (precioInvalido) => {
         const producto = new Producto();
         producto.precio = 100;
@@ -177,7 +177,7 @@ describe('Producto - actualización de precio', () => {
       },
     );
 
-    it('CP-07 - Intentar cambiar el precio sin informar el motivo', () => {
+    it('Intentar cambiar el precio sin informar el motivo', () => {
       const producto = new Producto();
       producto.precio = 100;
 

@@ -25,10 +25,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import * as request from 'supertest';
-import {
-  MySqlContainer,
-  StartedMySqlContainer,
-} from '@testcontainers/mysql';
+import type { StartedMySqlContainer } from '@testcontainers/mysql';
+import { startMySqlTestContainer } from '../../../../../../test/integration/mysql-test-container';
 import { App } from 'supertest/types';
 
 import { ProductoController } from './producto.controller';
@@ -111,7 +109,7 @@ describe('Producto - Búsqueda general (HTTP con MySQL real)', () => {
   let baseDeDatosDetenida = false;
 
   beforeAll(async () => {
-    mysql = await new MySqlContainer('mysql:8.0').start();
+    mysql = await startMySqlTestContainer();
 
     const admin = new DataSource({
       type: 'mysql',
@@ -204,7 +202,7 @@ describe('Producto - Búsqueda general (HTTP con MySQL real)', () => {
     );
   }
 
-  it('CP-97 - El modo exacto de búsqueda por código de referencia debe respetarse en search-by', async () => {
+  it('El modo exacto de búsqueda por código de referencia debe respetarse en search-by', async () => {
     // Given existe un producto con código de referencia "1234"...
     await seedProducto({
       denominacion: 'Producto codigo corto',
@@ -237,7 +235,7 @@ describe('Producto - Búsqueda general (HTTP con MySQL real)', () => {
     expect(codigos).not.toContain('12345');
   });
 
-  it('CP-98 - Informar un error controlado cuando la base de datos no responde', async () => {
+  it('Informar un error controlado cuando la base de datos no responde', async () => {
     // Given la base de datos no está disponible.
     await mysql.stop();
     baseDeDatosDetenida = true;
