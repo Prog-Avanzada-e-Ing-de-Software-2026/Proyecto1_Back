@@ -27,6 +27,8 @@ import { EmpresaOperacionModule } from './modules/organizacion/empresa-operacion
 import { ClienteOperacionModule } from './modules/organizacion/cliente-operacion/cliente-operacion.module';
 import { ProductoOperacionModule } from './modules/gestion-productos/producto-operacion/producto-operacion.module';
 import { BusquedasModule } from './modules/gestion-documentos/busquedas/busquedas.module';
+import { SuperLineaModule } from './modules/gestion-productos/superlinea/superlinea.module';
+import { PresentacionModule } from './modules/gestion-productos/presentacion/presentacion.module';
 
 @Module({
   imports: [
@@ -36,7 +38,7 @@ import { BusquedasModule } from './modules/gestion-documentos/busquedas/busqueda
     TypeOrmModule.forRoot({
       type: (process.env.DB_TYPE as 'mysql') || 'mysql',
       host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || '3306', 10), // Si PORT es undefined, usa 3306
+      port: Number.parseInt(process.env.DB_PORT || '3306', 10), // Si PORT es undefined, usa 3306
       username: process.env.DB_USERNAME, //"admin", //
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
@@ -53,6 +55,8 @@ import { BusquedasModule } from './modules/gestion-documentos/busquedas/busqueda
 
     MarcaModule,
     LineaModule,
+    SuperLineaModule,
+    PresentacionModule,
     ProductoModule,
     CondicionIvaModule,
     LocalidadModule,

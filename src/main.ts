@@ -4,10 +4,13 @@ import { GlobalExceptionFilter } from './modules/common/filters/global-exception
 import { ValidationPipe } from '@nestjs/common';
 import * as bodyParser from 'body-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { useContainer } from 'class-validator';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
+
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -10,13 +10,14 @@ export class ProductoIntrinsicValidationService {
     denominacion: string;
     marcaId: number;
     lineaId: number;
+    presentacionId: number;
     alicuotaIva?: number;
     precioMayorista?: number;
     precioCliente?: number;
     precioOcasional?: number;
   }): void {
     this.validarDenominacion(datos.denominacion);
-    this.validarIds(datos.marcaId, datos.lineaId);
+    this.validarIds(datos.marcaId, datos.lineaId, datos.presentacionId);
     this.validarPrecios(
       datos.precioMayorista,
       datos.precioCliente,
@@ -42,6 +43,7 @@ export class ProductoIntrinsicValidationService {
   private validarIds(
     marcaId: number,
     lineaId: number,
+    presentacionId: number,
   ): void {
     if (!marcaId || marcaId <= 0) {
       throw new BadRequestException('Marca ID es requerido y debe ser válido');
@@ -49,7 +51,11 @@ export class ProductoIntrinsicValidationService {
     if (!lineaId || lineaId <= 0) {
       throw new BadRequestException('Línea ID es requerido y debe ser válido');
     }
-
+    if (!presentacionId || presentacionId <= 0) {
+      throw new BadRequestException(
+        'Presentación ID es requerido y debe ser válido',
+      );
+    }
   }
 
   /**

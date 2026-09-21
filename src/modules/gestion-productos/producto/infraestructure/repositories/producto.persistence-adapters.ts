@@ -6,6 +6,7 @@ import { EntityNotFoundException } from 'src/modules/common/exceptions/entity-no
 import { IUnitOfWork } from 'src/modules/common/unit-of-work/iunit-of-work.';
 import { Linea } from 'src/modules/gestion-productos/linea/domain/entities/linea.entity';
 import { Marca } from 'src/modules/gestion-productos/marca/domain/entities/marca.entity';
+import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
 import { Repository, IsNull, DataSource } from 'typeorm';
 import { Producto } from '../../domain/entities/producto.entity';
@@ -14,6 +15,9 @@ import { CreateProductoDto } from '../../dto/create-producto.dto';
 import { UpdatePrecioDto } from '../../dto/update-precio.dto';
 import { UpdateProductoDto } from '../../dto/update-producto.dto';
 import { ProductoMapper } from '../../mappers/producto.mapper';
+import { QueryBuilderHelper } from 'src/modules/common/query-builders/query-builder-helpers';
+import { CambioPrecio } from '../../domain/entities/cambio-precio.entity';
+import { MotivoCambioPrecio } from '../../enums/motivo-cambio-precio.enum';
 
 
 @Injectable()
@@ -25,6 +29,8 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
   constructor(
     @InjectRepository(Producto)
     private readonly repository: Repository<Producto>,
+    @InjectRepository(CambioPrecio)
+    private readonly cambioPrecioRepository: Repository<CambioPrecio>,
     private readonly dataSource: DataSource,
     @Inject('UnitOfWork') public readonly uow: IUnitOfWork,
   ) { }
@@ -35,6 +41,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
     data: CreateProductoDto,
     linea: Linea,
     marca: Marca,
+    presentacion: Presentacion,
     usuario: Usuario,
   ): Promise<Producto> {
     const repo = this.uow.getRepository(Producto);
@@ -46,12 +53,17 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
       // Verificar que todos los objetos relacionados existan
       this.logger.debug('Linea:', linea);
       this.logger.debug('Marca:', marca);
+      this.logger.debug('Presentacion:', presentacion);
       this.logger.debug('Usuario:', usuario);
 
+      const { presentacionId: _presentacionId, ...dataSinPresentacionId } = data;
+
       const nuevaEntity = repo.create({
-        ...data,
+        ...dataSinPresentacionId,
         linea,
         marca,
+        presentacion,
+        presentacionId: presentacion.id,
         usuarioCreated: usuario,
       });
 
@@ -80,6 +92,8 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         .createQueryBuilder('producto')
         .leftJoinAndSelect('producto.linea', 'linea')
         .leftJoinAndSelect('producto.marca', 'marca')
+        .innerJoinAndSelect('producto.presentacion', 'presentacion')
+        .leftJoinAndSelect('producto.cambiosPrecio', 'cambiosPrecio')
         .where('producto.id = :id', { id })
         .andWhere('producto.deletedAt IS NULL')
         .getOne();
@@ -160,7 +174,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
     data: UpdateProductoDto,
     linea: Linea,
     marca: Marca,
-
+    presentacion: Presentacion | undefined,
     usuario: Usuario,
   ): Promise<Producto> {
     const repo = this.uow.getRepository(Producto);
@@ -171,7 +185,8 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         throw new NotFoundException(`EL prodcuto con ID ${id} no encontrada`);
       }
       const {
-
+        precio,
+        presentacionId: _presentacionId,
         ...dataSinItems
       } = data;
 
@@ -180,7 +195,17 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         marca,
       });
 
-      entity.usuarioUpdated = usuario; 
+      if (precio !== undefined && precio !== entity.precio) {
+        entity.cambiarPrecio(precio, MotivoCambioPrecio.ActualizacionDePrecioDirecta);
+      }
+
+      entity.usuarioUpdated = usuario;
+      if (presentacion) {
+        entity.presentacion = presentacion;
+        entity.presentacionId = presentacion.id;
+      }
+
+      entity.usuarioUpdated = usuario;
       const entityActualizada = await repo.save(entity);
 
 
@@ -227,12 +252,18 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
     conStock: boolean,
     skip: number,
     take: number,
+    incluirCambiosPrecio = false,
   ): Promise<{ data: Producto[]; total: number }> {
     this.logger.warn(`llega`);
     const query = this.repository
       .createQueryBuilder('producto')
       .leftJoinAndSelect('producto.marca', 'marca')
       .leftJoinAndSelect('producto.linea', 'linea')
+      .innerJoinAndSelect('producto.presentacion', 'presentacion')
+
+    if (incluirCambiosPrecio) {
+      query.leftJoinAndSelect('producto.cambiosPrecio', 'cambiosPrecio');
+    }
 
     if (denominacion || codigoProveedor || codigoReferencia) {
       const condiciones: string[] = [];
@@ -307,6 +338,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
       .leftJoinAndSelect('producto.marca', 'marca')
       .leftJoinAndSelect('producto.linea', 'linea')
       .leftJoinAndSelect('producto.proveedor', 'proveedor')
+      .innerJoinAndSelect('producto.presentacion', 'presentacion')
       .where('producto.deletedAt IS NULL');
 
 
@@ -384,6 +416,43 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
 
   }
 
+  @Transactional()
+  async actualizarPrecios(
+    productos: Producto[],
+    usuario: Usuario,
+  ): Promise<Producto[]> {
+    const repo = this.uow.getRepository(Producto);
+
+    for (const producto of productos) {
+      producto.usuarioUpdated = usuario;
+      await repo.save(producto);
+    }
+
+    return productos;
+  }
+
+  async findHistorialPrecios(
+    id: number,
+    skip: number,
+    take: number,
+  ): Promise<CambioPrecio[]> {
+    try {
+      return await this.cambioPrecioRepository
+        .createQueryBuilder('cambioPrecio')
+        .innerJoin('cambioPrecio.producto', 'producto')
+        .where('producto.id = :id', { id })
+        .orderBy('cambioPrecio.fecha', 'DESC')
+        .addOrderBy('cambioPrecio.id', 'DESC')
+        .skip(skip)
+        .take(take)
+        .getMany();
+    } catch (error) {
+      throw new DatabaseConnectionException(
+        'Error al conectar con la base de datos.',
+      );
+    }
+  }
+
   async findByDenominacion(denominacion: string): Promise<Producto | null> {
     try {
       const entity = await this.repository.findOne({
@@ -433,10 +502,77 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         .createQueryBuilder('producto')
         .leftJoinAndSelect('producto.marca', 'marca')
         .leftJoinAndSelect('producto.linea', 'linea')
+        .innerJoinAndSelect('producto.presentacion', 'presentacion')
 
       query.andWhere('producto.deletedAt IS NULL');
       query.orderBy('producto.denominacion', 'ASC');
       // Paginación
+      query.skip(skip).take(take);
+
+      const [data, total] = await query.getManyAndCount();
+
+      return { data, total };
+    } catch (error) {
+      throw new DatabaseConnectionException(
+        'Error al conectar con la base de datos.',
+      );
+    }
+  }
+
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    const termino = denominacion?.trim() ?? '';
+    if (!termino) {
+      return { data: [], total: 0 };
+    }
+
+    try {
+      const query = this.repository
+        .createQueryBuilder('producto')
+        .leftJoinAndSelect('producto.marca', 'marca')
+        .leftJoinAndSelect('producto.linea', 'linea')
+        .where('producto.deletedAt IS NULL');
+
+      QueryBuilderHelper.applyPartialCoincidence(
+        query,
+        'producto',
+        'denominacion',
+        termino,
+      );
+
+      query.orderBy('producto.denominacion', 'ASC');
+      query.skip(skip).take(take);
+
+      const [data, total] = await query.getManyAndCount();
+
+      return { data, total };
+    } catch (error) {
+      throw new DatabaseConnectionException(
+        'Error al conectar con la base de datos.',
+      );
+    }
+  }
+
+  async findProductosBySuperLinea(
+    superLineaId: number,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    try {
+      const query = this.repository
+        .createQueryBuilder('producto')
+        .leftJoinAndSelect('producto.marca', 'marca')
+        .leftJoinAndSelect('producto.linea', 'linea')
+        .leftJoinAndSelect('linea.superLinea', 'superLinea')
+        .where('superLinea.id = :superLineaId', { superLineaId })
+        .andWhere('producto.deletedAt IS NULL')
+        .andWhere('linea.deletedAt IS NULL')
+        .andWhere('superLinea.deletedAt IS NULL');
+
+      query.orderBy('producto.denominacion', 'ASC');
       query.skip(skip).take(take);
 
       const [data, total] = await query.getManyAndCount();
@@ -466,6 +602,17 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
       .where('producto.linea_id = :lineaId', { lineaId })
       .andWhere('producto.deletedAt IS NULL')
       .limit(1) // opcional, para optimizar
+      .getCount();
+
+    return count > 0;
+  }
+
+  async existsActiveByPresentacion(presentacionId: number): Promise<boolean> {
+    const count = await this.repository
+      .createQueryBuilder('producto')
+      .where('producto.presentacion_id = :presentacionId', { presentacionId })
+      .andWhere('producto.deletedAt IS NULL')
+      .limit(1)
       .getCount();
 
     return count > 0;

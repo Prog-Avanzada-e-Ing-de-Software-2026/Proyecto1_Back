@@ -27,6 +27,16 @@ import { ProductoRelatedEntitiesValidator } from '../../infraestructure/validato
 import { ProductoUniquenessValidator } from '../../infraestructure/validators/producto-uniqueness.validator.ts';
 import { UsuarioValidator } from 'src/modules/common/utils/validation/usuario-validator';
 import { ProductoDeletePolicy } from '../policies/producto-delete.policy';
+import { ActualizacionPrecioDto } from '../../dto/actualizacion-precio.dto';
+import { TipoAumento } from 'src/modules/common/enums/tipo-aumento.emun';
+import { OperacionAjuste } from 'src/modules/common/enums/operacion-ajuste.enum';
+import { BadRequestException } from '@nestjs/common';
+import { IPresentacionRepository } from 'src/modules/gestion-productos/presentacion/domain/interfaces/presentacion.repository.interface';
+import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
+import { MotivoCambioPrecio } from '../../enums/motivo-cambio-precio.enum';
+import { PaginationDto } from 'src/modules/common/dto/pagination.dto';
+import { CambioPrecioDto } from '../../dto/cambio-precio.dto';
+import { CambioPrecioMapper } from '../../mappers/cambio-precio.mapper';
 @Injectable()
 export class ProductoService {
   private readonly logger = new Logger(ProductoService.name);
@@ -51,6 +61,8 @@ export class ProductoService {
 
     private readonly productoDeletePolicy: ProductoDeletePolicy,
 
+    @Inject('IPresentacionRepository')
+    private readonly presentacionRepository: IPresentacionRepository,
   ) { }
 
   private readonly ENTITY_NAME = 'Producto';
@@ -64,13 +76,13 @@ export class ProductoService {
     const { marca, linea, usuario } =
       await this.validarYPrepararCreacion(dto);
 
-
+    const presentacion = await this.findActivePresentacion(dto.presentacionId);
 
     const entity = await this.repository.create(
       dto,
       linea,
       marca,
-
+      presentacion,
       usuario,
     );
 
@@ -87,12 +99,17 @@ export class ProductoService {
     const { marca, linea, usuario } =
       await this.validarYPrepararActualizacion(id, dto);
 
+    const presentacion =
+      dto.presentacionId === undefined
+        ? undefined
+        : await this.findActivePresentacion(dto.presentacionId);
+
     const entity = await this.repository.update(
       id,
       dto,
       linea,
       marca,
-
+      presentacion,
       usuario,
     );
 
@@ -195,6 +212,17 @@ export class ProductoService {
     return entity;
   }
 
+  async getHistorialPrecios(
+    id: number,
+    paginacion: PaginationDto,
+  ): Promise<CambioPrecioDto[]> {
+    await this.findEntityById(id);
+    const skip = paginacion.skip ?? 0;
+    const take = paginacion.take ?? 10;
+    const cambios = await this.repository.findHistorialPrecios(id, skip, take);
+    return cambios.map((cambio) => CambioPrecioMapper.toDto(cambio));
+  }
+
   async remove(id: number, usuarioId: number) {
     const entity = await this.findEntityById(id);
 
@@ -252,6 +280,42 @@ export class ProductoService {
     };
   }
 
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: GetProductoDto[]; total: number }> {
+    const result = await this.repository.busquedaPorCoincidenciaParcial(
+      denominacion,
+      skip,
+      take,
+    );
+    return {
+      data: result.data.map((producto) => {
+        return ProductoMapper.toBusquedaDto(producto);
+      }),
+      total: PaginacionUtils.totalItems(result.total),
+    };
+  }
+
+  async findProductosBySuperLinea(
+    superLineaId: number,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: GetProductoDto[]; total: number }> {
+    const result = await this.repository.findProductosBySuperLinea(
+      superLineaId,
+      skip,
+      take,
+    );
+    return {
+      data: result.data.map((producto) => {
+        return ProductoMapper.toBusquedaDto(producto);
+      }),
+      total: PaginacionUtils.totalItems(result.total),
+    };
+  }
+
   async existsProductosActivosByMarca(marcaId: number): Promise<boolean> {
     return this.repository.existsProductosActivosByMarca(marcaId);
   }
@@ -259,6 +323,79 @@ export class ProductoService {
     return this.repository.existsProductosActivosByLinea(lineaId);
   }
 
+  async actualizarPrecios(
+    dto: ActualizacionPrecioDto,
+    usuario?: any,
+  ): Promise<{ message: string; productos: Array<{ denominacion: string; costo: number; precio: number }> }> {
+    const valor = Number(dto.valor);
+
+    if (!usuario?.id) {
+      throw new BadRequestException(
+        'No se pudo identificar al usuario autenticado para la actualización.',
+      );
+    }
+
+    const usuarioAutenticado = await this.usuarioService.findOne(usuario.id);
+    if (!usuarioAutenticado) {
+      throw new NotFoundException('Usuario no encontrado.');
+    }
+
+    const resultado = await this.repository.findBy(
+      '',
+      '',
+      false,
+      '',
+      0,
+      dto.lineaId ?? 0,
+      0,
+      false,
+      0,
+      10000,
+      true,
+    );
+
+    const productos = resultado.data;
+
+    if (productos.length === 0) {
+      throw new NotFoundException('No se encontraron productos para actualizar.');
+    }
+
+    const motivo = dto.lineaId
+      ? MotivoCambioPrecio.ActualizacionDePrecioPorLinea
+      : MotivoCambioPrecio.ActualizacionDePrecioGlobal;
+
+    for (const producto of productos) {
+      const ajuste = valor;
+
+      if (dto.operacion === OperacionAjuste.AUMENTO) {
+        if (dto.tipoAjuste === TipoAumento.PORCENTAJE) {
+          producto.aumentarPrecioPorPorcentaje(ajuste, motivo);
+        } else {
+          producto.aumentarPrecioPorMonto(ajuste, motivo);
+        }
+      } else {
+        if (dto.tipoAjuste === TipoAumento.PORCENTAJE) {
+          producto.disminuirPrecioPorPorcentaje(ajuste, motivo);
+        } else {
+          producto.disminuirPrecioPorMonto(ajuste, motivo);
+        }
+      }
+    }
+
+    const productosActualizados = await this.repository.actualizarPrecios(
+      productos,
+      usuarioAutenticado,
+    );
+
+    return {
+      message: 'Actualización de precios realizada correctamente.',
+      productos: productosActualizados.map((producto) => ({
+        denominacion: producto.denominacion,
+        costo: Number(producto.costo ?? 0),
+        precio: Number(producto.precio ?? 0),
+      })),
+    };
+  }
 
   async findByIds(ids: number[]): Promise<Producto[]> {
     return this.repository.findByIds(ids);
@@ -319,6 +456,7 @@ export class ProductoService {
       denominacion: dto.denominacion,
       marcaId: dto.marcaId,
       lineaId: dto.lineaId,
+      presentacionId: dto.presentacionId,
       alicuotaIva: dto.alicuotaIva,
     });
 
@@ -371,7 +509,8 @@ export class ProductoService {
 
     if (
       productoActual.lineaId == null ||
-      productoActual.marcaId == null
+      productoActual.marcaId == null ||
+      productoActual.presentacionId == null
     ) {
       throw new InternalServerErrorException('Producto en estado inválido');
     }
@@ -381,8 +520,8 @@ export class ProductoService {
       denominacion: dto.denominacion ?? productoActual.denominacion,
       marcaId: dto.marcaId ?? productoActual.marcaId,
       lineaId: dto.lineaId ?? productoActual.lineaId,
+      presentacionId: dto.presentacionId ?? productoActual.presentacionId,
       alicuotaIva: dto.alicuotaIva ?? productoActual.alicuotaIva,
-
     });
 
     // Validar unicidad (excluyendo el ID actual)
@@ -414,6 +553,16 @@ export class ProductoService {
     );
 
     return { marca, linea, usuario };
+  }
+
+  private async findActivePresentacion(id: number): Promise<Presentacion> {
+    const presentacion = await this.presentacionRepository.findOne(id);
+    if (!presentacion) {
+      throw new NotFoundException(
+        `Presentación con ID ${id} no encontrada o eliminada.`,
+      );
+    }
+    return presentacion;
   }
 
 
