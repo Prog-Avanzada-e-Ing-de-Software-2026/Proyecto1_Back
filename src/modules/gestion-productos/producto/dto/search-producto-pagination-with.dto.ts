@@ -53,6 +53,7 @@ export class SearchProductoPaginationWithDto {
   @IsPositiveInteger({ message: 'El proveedor debe ser un número entero positivo.' })
   proveedorId: number;
 
+  @IsOptionalWhenUndefined()
   @Transform(({ value }) => toStrictBoolean(value))
   @IsBoolean({ message: 'conStock debe ser un valor booleano.' })
   conStock: boolean;
