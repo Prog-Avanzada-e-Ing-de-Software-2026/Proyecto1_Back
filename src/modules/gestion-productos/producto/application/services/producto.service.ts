@@ -452,13 +452,23 @@ export class ProductoService {
    */
   private async validarYPrepararCreacion(dto: CreateProductoDto) {
     // Validar datos  (Domain - sin DB)
-    this.intrinsicValidationService.validarDatosBasicos({
-      denominacion: dto.denominacion,
-      marcaId: dto.marcaId,
-      lineaId: dto.lineaId,
-      presentacionId: dto.presentacionId,
-      alicuotaIva: dto.alicuotaIva,
-    });
+    this.intrinsicValidationService.validarDatosBasicos(
+      {
+        denominacion: dto.denominacion,
+        marcaId: dto.marcaId,
+        lineaId: dto.lineaId,
+        presentacionId: dto.presentacionId,
+        alicuotaIva: dto.alicuotaIva,
+        costo: dto.costo,
+        porcentaje: dto.porcentaje,
+        stock: dto.stock,
+        stockMinimo: dto.stockMinimo,
+        utilizaStockMinimo: dto.utilizaStockMinimo,
+        utilizaPack: dto.utilizaPack,
+        cantidadPorPack: dto.cantidadPorPack,
+      },
+      { requerirEstadoCompleto: true },
+    );
 
     // Validar unicidad (Infrastructure - DB)
     await this.uniquenessValidator.validarDenominacionUnica(dto.denominacion);
@@ -470,20 +480,14 @@ export class ProductoService {
       );
     }
     // 3 Validar entidades relacionadas existen (Infrastructure - DB)
-    const { marca, linea, } =
+    const { marca, linea } =
       await this.relatedEntitiesValidator.validarYObtenerEntidadesRelacionadas(
         dto.marcaId,
         dto.lineaId,
-
       );
 
     //  Validar reglas de negocio sobre entidades (Domain)
-    this.validationService.validarEntidadesRelacionadas(
-      marca,
-      linea,
-
-    );
-
+    this.validationService.validarEntidadesRelacionadas(marca, linea);
 
     //  Validar usuario existe (Infrastructure)
     const usuario = await this.usuarioValidator.validarUsuarioExiste(
@@ -515,37 +519,40 @@ export class ProductoService {
       throw new InternalServerErrorException('Producto en estado inválido');
     }
 
-    //  Validar datos intrínsecos
-    this.intrinsicValidationService.validarDatosBasicos({
-      denominacion: dto.denominacion ?? productoActual.denominacion,
-      marcaId: dto.marcaId ?? productoActual.marcaId,
-      lineaId: dto.lineaId ?? productoActual.lineaId,
-      presentacionId: dto.presentacionId ?? productoActual.presentacionId,
-      alicuotaIva: dto.alicuotaIva ?? productoActual.alicuotaIva,
-    });
+    //  Validar datos intrínsecos (reemplazo total: solo el estado de la petición)
+    this.intrinsicValidationService.validarDatosBasicos(
+      {
+        denominacion: dto.denominacion,
+        marcaId: dto.marcaId,
+        lineaId: dto.lineaId,
+        presentacionId: dto.presentacionId,
+        alicuotaIva: dto.alicuotaIva,
+        costo: dto.costo,
+        porcentaje: dto.porcentaje,
+        stock: dto.stock,
+        stockMinimo: dto.stockMinimo,
+        utilizaStockMinimo: dto.utilizaStockMinimo,
+        utilizaPack: dto.utilizaPack,
+        cantidadPorPack: dto.cantidadPorPack,
+      },
+      { requerirEstadoCompleto: true },
+    );
 
     // Validar unicidad (excluyendo el ID actual)
-    if (dto.denominacion) {
-      await this.uniquenessValidator.validarDenominacionUnica(
-        dto.denominacion,
-        id,
-      );
-    }
+    await this.uniquenessValidator.validarDenominacionUnica(
+      dto.denominacion,
+      id,
+    );
 
     // Validar entidades relacionadas
-    const { marca, linea, } =
+    const { marca, linea } =
       await this.relatedEntitiesValidator.validarYObtenerEntidadesRelacionadas(
-        dto.marcaId ?? productoActual.marcaId,
-        dto.lineaId ?? productoActual.lineaId,
-
+        dto.marcaId,
+        dto.lineaId,
       );
 
     //  Validar reglas de negocio
-    this.validationService.validarEntidadesRelacionadas(
-      marca,
-      linea,
-
-    );
+    this.validationService.validarEntidadesRelacionadas(marca, linea);
 
     // 5 Validar usuario
     const usuario = await this.usuarioValidator.validarUsuarioExiste(
