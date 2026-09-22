@@ -4,14 +4,24 @@ import {
   IsNotEmpty,
   IsInt,
   IsString,
+  IsNumber,
   MaxLength,
   Matches,
-  ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class UpdateProductoDto extends PartialType(
-  OmitType(CreateProductoDto, ['presentacionId', 'usuarioCreatedId'] as const),
+  OmitType(CreateProductoDto, [
+    'denominacion',
+    'costo',
+    'porcentaje',
+    'stock',
+    'stockMinimo',
+    'marcaId',
+    'lineaId',
+    'presentacionId',
+    'usuarioCreatedId',
+  ] as const),
 ) {
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
@@ -25,10 +35,33 @@ export class UpdateProductoDto extends PartialType(
   })
   denominacion: string;
 
-  @ValidateIf((_, value) => value !== undefined)
-  @IsNotEmpty({ message: 'El presentacionId no puede ser nulo.' })
-  @IsInt({ message: 'El presentacionId debe ser un número entero.' })
-  presentacionId?: number;
+  @IsNotEmpty()
+  @IsNumber()
+  costo: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  porcentaje: number;
+
+  @IsNotEmpty()
+  @IsInt()
+  stock: number;
+
+  @IsNotEmpty()
+  @IsInt()
+  stockMinimo: number;
+
+  @IsNotEmpty({ message: 'La marca es obligatoria.' })
+  @IsInt({ message: 'La marca  debe ser un número entero.' })
+  marcaId: number;
+
+  @IsNotEmpty({ message: 'La linea es obligatoria.' })
+  @IsInt({ message: 'La linea  debe ser un número entero.' })
+  lineaId: number;
+
+  @IsNotEmpty({ message: 'La presentación es obligatoria.' })
+  @IsInt({ message: 'La presentación debe ser un número entero.' })
+  presentacionId: number;
 
   @IsNotEmpty({ message: 'El usuarioUpdatedId es obligatorio.' })
   @IsInt({ message: 'El usuarioUpdatedId debe ser un número entero.' })
