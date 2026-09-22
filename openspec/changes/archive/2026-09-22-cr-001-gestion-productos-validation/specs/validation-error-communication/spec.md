@@ -28,7 +28,7 @@ For a recognized request-validation failure, the API MUST return HTTP 400 and MU
 
 ### Requirement: Production-safe field details
 
-Validation details MUST contain only whitelisted public field names and stable public constraint messages. They MUST NOT expose stack traces, raw exception objects, internal class names, arbitrary request values, database details, or implementation-specific diagnostics. Non-validation exceptions MUST retain their existing status and public-envelope behavior.
+Validation details MUST contain only sanitized public field names (safe identifier and numeric index segments) and authored constraint messages. They MUST NOT expose stack traces, raw exception objects, internal class names, arbitrary request values, database details, or implementation-specific diagnostics. Non-validation exceptions MUST retain their existing status and public-envelope behavior.
 
 #### Scenario: Production validation failure
 

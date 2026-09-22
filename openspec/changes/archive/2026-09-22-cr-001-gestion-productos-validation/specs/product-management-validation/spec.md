@@ -10,6 +10,8 @@ Define safe request transformation and defense-in-depth validation for the six `
 
 All six modules MUST preserve invalid input for validation instead of throwing from transforms, silently erasing it, or coercing it into a valid substitute. String normalization MAY trim and normalize case only after confirming that the input is a string. Boolean fields MUST accept JSON booleans and the string representations `"true"` and `"false"` only. Unsupported values, including `1`, `0`, `"yes"`, and explicit `null`, MUST be rejected when the field is present.
 
+NOTE: The system-managed `createdAt` field on the create and update DTOs and the Línea `deletedAt` field retain the existing `@IsOptional()` contract, so an explicit `null` value is accepted for them. For Línea `deletedAt` this preserves the existing `linea.controller.spec.ts` contract, which sends `deletedAt: null`.
+
 #### Scenario: Non-string denomination is rejected safely
 
 - GIVEN a denomination in `producto`, `linea`, `marca`, `presentacion`, or `superlinea` is `null`, numeric, or another non-string value
@@ -110,15 +112,25 @@ Product domain/application validation MUST enforce `costo >= 0`, `porcentaje` (m
 
 ### Requirement: Línea validation
 
-Línea create and update requests MUST require a string denomination of at most 255 characters, a positive integer `superLineaId`, and positive integer audit identifiers when supplied. A Línea quantity such as `stockMinimo` MUST use the finite `decimal(12,3)` contract, and its required SuperLínea MUST exist and be active.
+Línea CREATE requests MUST require a string denomination of at most 255 characters, a positive integer `superLineaId`, and a positive integer `usuarioCreatedId`. Línea UPDATE requests MUST require a positive integer `usuarioUpdatedId` and MUST validate the denomination, `superLineaId`, and quantity (`stockMinimo`) only when present: omission is allowed, but a present invalid value or explicit `null` MUST be rejected. A Línea quantity such as `stockMinimo` MUST use the finite `decimal(12,3)` contract, and a required SuperLínea MUST exist and be active.
 
-#### Scenario: Línea denomination and relation boundaries
+#### Scenario: Línea create denomination and relation boundaries
 
-- GIVEN a Línea denomination contains exactly 255 characters and `superLineaId` is a positive integer referring to an active SuperLínea
+- GIVEN a Línea create request has a denomination of exactly 255 characters and `superLineaId` is a positive integer referring to an active SuperLínea
 - WHEN the request is validated
 - THEN it MUST be accepted if all other rules pass
 - AND GIVEN the denomination contains 256 characters or `superLineaId` is `0` or `-1`
 - THEN validation MUST reject the request before persistence or relation lookup
+
+#### Scenario: Línea update validates present fields and requires the audit ID
+
+- GIVEN a Línea update request omits `denominacion`, `superLineaId`, or `stockMinimo`
+- WHEN the request is validated
+- THEN omission MUST be accepted at the DTO boundary
+- AND GIVEN any omitted field is instead present but invalid, such as a 256-character denomination, `superLineaId` of `0` or `-1`, an invalid quantity, or an explicit `null`
+- THEN validation MUST reject the request before persistence or relation lookup
+- AND GIVEN `usuarioUpdatedId` is omitted, `0`, `-1`, fractional, non-finite, or explicit `null`
+- THEN validation MUST reject the request before persistence
 
 #### Scenario: Línea fractional quantity
 
@@ -130,15 +142,25 @@ Línea create and update requests MUST require a string denomination of at most 
 
 ### Requirement: Marca validation
 
-Marca create and update requests MUST require a string denomination of at most 255 characters and positive integer audit identifiers when supplied. Invalid types, explicit nulls, zero, negative, non-integer, and non-finite identifiers MUST be rejected without unsafe transformation.
+Marca CREATE requests MUST require a string denomination of at most 255 characters and a positive integer `usuarioCreatedId`. Marca UPDATE requests MUST require a positive integer `usuarioUpdatedId` and MUST validate the denomination only when present: omission is allowed, but a present invalid value or explicit `null` MUST be rejected. Invalid types, explicit nulls, zero, negative, non-integer, and non-finite identifiers MUST be rejected without unsafe transformation.
 
-#### Scenario: Marca denomination boundary
+#### Scenario: Marca create denomination boundary
 
-- GIVEN a Marca denomination contains exactly 255 characters
+- GIVEN a Marca create request has a denomination of exactly 255 characters
 - WHEN the request is validated
 - THEN it MUST be accepted if all other rules pass
 - AND GIVEN it contains 256 characters
 - THEN validation MUST reject it before persistence
+
+#### Scenario: Marca update validates present fields and requires the audit ID
+
+- GIVEN a Marca update request omits `denominacion`
+- WHEN the request is validated
+- THEN omission MUST be accepted at the DTO boundary
+- AND GIVEN the denomination is present but invalid, such as a 256-character denomination or explicit `null`
+- THEN validation MUST reject the field with a deterministic field-specific failure
+- AND GIVEN `usuarioUpdatedId` is omitted, `0`, `-1`, fractional, non-finite, or explicit `null`
+- THEN validation MUST reject the field with a deterministic field-specific failure
 
 #### Scenario: Marca audit identifier
 
@@ -148,35 +170,55 @@ Marca create and update requests MUST require a string denomination of at most 2
 
 ### Requirement: Presentación validation
 
-Presentación create and update requests MUST require a string denomination of at most 255 characters and positive integer audit identifiers when supplied. Optional fields MUST distinguish omission from explicit invalid null, and transformations MUST never throw for malformed values.
+Presentación CREATE requests MUST require a string denomination of at most 255 characters and a positive integer `usuarioCreatedId`. Presentación UPDATE requests MUST require a positive integer `usuarioUpdatedId` and MUST validate the denomination only when present: omission is allowed, but a present invalid value or explicit `null` MUST be rejected. Optional fields MUST distinguish omission from explicit invalid null, and transformations MUST never throw for malformed values.
 
-#### Scenario: Presentación denomination boundary
+#### Scenario: Presentación create denomination boundary
 
-- GIVEN a Presentación denomination contains exactly 255 characters
+- GIVEN a Presentación create request has a denomination of exactly 255 characters
 - WHEN the request is validated
 - THEN it MUST be accepted if all other rules pass
 - AND GIVEN it contains 256 characters or is non-string
 - THEN validation MUST reject it without an internal transformation error
 
+#### Scenario: Presentación update validates present fields and requires the audit ID
+
+- GIVEN a Presentación update request omits `denominacion`
+- WHEN the update DTO is validated
+- THEN omission MUST be accepted
+- AND GIVEN the denomination is present but invalid, such as a 256-character or non-string denomination, or explicit `null`
+- THEN validation MUST reject it
+- AND GIVEN `usuarioUpdatedId` is omitted, `0`, `-1`, or explicit `null`
+- THEN validation MUST reject it
+
 #### Scenario: Presentación identifier boundary
 
-- GIVEN an audit identifier is omitted
-- WHEN an optional update DTO is validated
-- THEN omission MAY be accepted
+- GIVEN a Presentación update request omits `usuarioUpdatedId`
+- WHEN the update DTO is validated
+- THEN validation MUST reject it
 - AND GIVEN the identifier is explicitly `null`, `0`, or `-1`
 - THEN validation MUST reject it
 
 ### Requirement: SuperLínea validation
 
-SuperLínea create and update requests MUST require a string denomination of at most 255 characters and positive integer audit identifiers when supplied. Invalid explicit nulls, malformed values, and unsupported identifier forms MUST be rejected before persistence.
+SuperLínea CREATE requests MUST require a string denomination of at most 255 characters and a positive integer `usuarioCreatedId`. SuperLínea UPDATE requests MUST require a positive integer `usuarioUpdatedId` and MUST validate the denomination only when present: omission is allowed, but a present invalid value or explicit `null` MUST be rejected. Invalid explicit nulls, malformed values, and unsupported identifier forms MUST be rejected before persistence.
 
-#### Scenario: SuperLínea denomination boundary
+#### Scenario: SuperLínea create denomination boundary
 
-- GIVEN a SuperLínea denomination contains exactly 255 characters
+- GIVEN a SuperLínea create request has a denomination of exactly 255 characters
 - WHEN the request is validated
 - THEN it MUST be accepted if all other rules pass
 - AND GIVEN it contains 256 characters or is numeric
 - THEN validation MUST reject it safely
+
+#### Scenario: SuperLínea update validates present fields and requires the audit ID
+
+- GIVEN a SuperLínea update request omits `denominacion`
+- WHEN the request is validated
+- THEN omission MUST be accepted at the DTO boundary
+- AND GIVEN the denomination is present but invalid, such as a 256-character or numeric denomination, or explicit `null`
+- THEN validation MUST reject it and MUST NOT perform a persistence operation
+- AND GIVEN `usuarioUpdatedId` is omitted, `0`, `-1`, fractional, non-finite, or explicit `null`
+- THEN validation MUST reject it and MUST NOT perform a persistence operation
 
 #### Scenario: SuperLínea audit identifier boundary
 
