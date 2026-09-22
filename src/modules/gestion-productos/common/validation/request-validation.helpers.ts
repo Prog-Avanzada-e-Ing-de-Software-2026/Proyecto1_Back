@@ -76,9 +76,8 @@ export function isNonNegativeInteger(value: unknown): value is number {
 
 export function hasMaxScale(value: number, scale: number): boolean {
   if (!isFiniteNumber(value)) return false;
-  const multiplier = 10 ** scale;
-  const scaled = value * multiplier;
-  return Number.isInteger(scaled);
+  const scaled = value * 10 ** scale;
+  return Math.abs(scaled - Math.round(scaled)) < 1e-6;
 }
 
 export function fitsMoneyRange(value: unknown): boolean {

@@ -29,7 +29,7 @@ export class CreateProductoDto {
   @MaxLength(200, {
     message: 'La denominación no puede superar los 200 caracteres.',
   })
-  @Matches(/^[[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ.\-/%]+$/, {
+  @Matches(/^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ.\-/%]+$/, {
     message: 'La denominación contiene caracteres inválidos.',
   })
   denominacion: string;
