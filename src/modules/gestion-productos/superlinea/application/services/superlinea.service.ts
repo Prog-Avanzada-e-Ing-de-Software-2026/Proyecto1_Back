@@ -45,7 +45,7 @@ export class SuperLineaService {
   async update(id: number, dto: UpdateSuperLineaDto) {
     await this.findEntityById(id);
     if (dto.denominacion) {
-      await this.checkDenominacionExists(dto.denominacion);
+      await this.checkDenominacionExists(dto.denominacion, id);
     }
     const entity = await this.repository.update(id, dto);
     return MessageFrontUtils.createSimple(
@@ -123,9 +123,9 @@ export class SuperLineaService {
     );
   }
 
-  private async checkDenominacionExists(denominacion: string) {
+  private async checkDenominacionExists(denominacion: string, id?: number) {
     const exists =
-      await this.createPolicy.checkDenominacionExists(denominacion);
+      await this.createPolicy.checkDenominacionExists(denominacion, id);
     if (exists) {
       this.logger.warn(
         `${this.ENTITY_NAME} conflicto: denominación ya está en uso: ${denominacion}`,
