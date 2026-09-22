@@ -7,116 +7,132 @@ import {
   IsOptional,
   IsBoolean,
   IsNumber,
-  IsInt,
   IsEnum,
+  ValidateIf,
+  IsPositive,
 } from 'class-validator';
 import { AlicuotaIva } from 'src/modules/organizacion/enums/alicuota-iva.enum';
+import {
+  IsMoney,
+  IsPercentage,
+  IsPositiveInteger,
+  IsQuantity,
+  IsOptionalWhenUndefined,
+  normalizeString,
+  toStrictBoolean,
+} from '../../common/validation/request-validation.helpers';
 
 export class CreateProductoDto {
-  @Transform(({ value }) => value.trim().toLowerCase())
-  @IsString({ message: 'La denominación debe ser una cadena de texto.' }) // Valida que sea string
-  @IsNotEmpty({ message: 'La denominación no puede estar vacía.' }) // Valida que no esté vacía
-  @MaxLength(255, { message: 'La denominación no puede estar vacía.' })
-  /*  @Matches(/^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ.\-/]+$/, {
-    message:
-      'La denominación solo puede contener letras, números, espacios, puntos, guiones y barras.',
-  }) */
-  @Matches(/^[\w áéíóúÁÉÍÓÚñÑ.\-/%]+$/, {
-    message: 'La denominación contiene caracteres inválidos ',
+  @Transform(({ value }) => normalizeString(value))
+  @IsString({ message: 'La denominación debe ser una cadena de texto.' })
+  @IsNotEmpty({ message: 'La denominación no puede estar vacía.' })
+  @MaxLength(200, {
+    message: 'La denominación no puede superar los 200 caracteres.',
+  })
+  @Matches(/^[[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ.\-/%]+$/, {
+    message: 'La denominación contiene caracteres inválidos.',
   })
   denominacion: string;
 
-  @IsOptional()
+  @IsOptionalWhenUndefined()
   @IsString()
   observacion?: string;
 
-  // si no tiene poner vacio
-  @IsOptional()
+  @IsOptionalWhenUndefined()
   @IsString()
   codigoProveedor?: string;
 
-  @IsOptional()
+  @IsOptionalWhenUndefined()
   @IsString()
   codigoBarra?: string;
 
-  @IsOptional()
+  @IsOptionalWhenUndefined()
   @IsString()
   codigoReferencia?: string;
 
-  @IsOptional()
+  @IsOptionalWhenUndefined()
   @IsString()
   ubicacion?: string;
 
-  @IsBoolean()
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsBoolean({ message: 'utilizaStockMinimo debe ser un valor booleano.' })
   utilizaStockMinimo: boolean;
 
-  @IsOptional()
-  @IsInt()
-  stockMinimo?: number;
-
-  @IsOptional()
-  @IsInt()
-  stock?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => value === 'true' || value === true)
-  costoEnDolar?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => value === 'true' || value === true)
-  destacado?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => value === 'true' || value === true)
-  envioGratis?: boolean;
-
-  @IsOptional()
-  @IsNumber()
-  costo?: number;
-
-  @IsBoolean()
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsBoolean({ message: 'utilizaPack debe ser un valor booleano.' })
   utilizaPack: boolean;
 
-  @IsOptional()
-  @IsInt()
+  @ValidateIf((o: CreateProductoDto) => o.utilizaPack === true)
+  @IsPositiveInteger({
+    message: 'La cantidad por pack debe ser un número entero positivo.',
+  })
   cantidadPorPack?: number;
 
-  @IsOptional()
-  @IsNumber()
-  costoDolar?: number;
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsOptionalWhenUndefined()
+  @IsBoolean({ message: 'costoEnDolar debe ser un valor booleano.' })
+  costoEnDolar?: boolean;
 
-  @IsNotEmpty({ message: 'La linea es obligatoria.' })
-  @IsInt({ message: 'La linea  debe ser un número entero.' })
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsOptionalWhenUndefined()
+  @IsBoolean({ message: 'destacado debe ser un valor booleano.' })
+  destacado?: boolean;
+
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsOptionalWhenUndefined()
+  @IsBoolean({ message: 'envioGratis debe ser un valor booleano.' })
+  envioGratis?: boolean;
+
+  @IsNotEmpty({ message: 'El costo es obligatorio.' })
+  @IsNumber({}, { message: 'El costo debe ser un número.' })
+  @IsMoney({ message: 'El costo debe ser un valor monetario válido.' })
+  costo: number;
+
+  @IsNotEmpty({ message: 'El porcentaje es obligatorio.' })
+  @IsNumber({}, { message: 'El porcentaje debe ser un número.' })
+  @IsPositive({ message: 'El porcentaje debe ser mayor que 0.' })
+  @IsPercentage({ message: 'El porcentaje debe respetar el formato decimal válido.' })
+  porcentaje: number;
+
+  @IsNotEmpty({ message: 'El stock es obligatorio.' })
+  @IsNumber({}, { message: 'El stock debe ser un número.' })
+  @IsPositive({ message: 'El stock debe ser mayor que 0.' })
+  @IsQuantity({ message: 'El stock debe respetar el formato decimal válido.' })
+  stock: number;
+
+  @IsNotEmpty({ message: 'El stock mínimo es obligatorio.' })
+  @IsNumber({}, { message: 'El stock mínimo debe ser un número.' })
+  @IsPositive({ message: 'El stock mínimo debe ser mayor que 0.' })
+  @IsQuantity({ message: 'El stock mínimo debe respetar el formato decimal válido.' })
+  stockMinimo: number;
+
+  @IsNotEmpty({ message: 'La línea es obligatoria.' })
+  @IsPositiveInteger({ message: 'La línea debe ser un número entero positivo.' })
   lineaId: number;
 
-
   @IsNotEmpty({ message: 'La marca es obligatoria.' })
-  @IsInt({ message: 'La marca  debe ser un número entero.' })
+  @IsPositiveInteger({ message: 'La marca debe ser un número entero positivo.' })
   marcaId: number;
 
   @IsNotEmpty({ message: 'La presentación es obligatoria.' })
-  @IsInt({ message: 'La presentación debe ser un número entero.' })
+  @IsPositiveInteger({
+    message: 'La presentación debe ser un número entero positivo.',
+  })
   presentacionId: number;
 
-  @IsOptional()
-  @IsNumber()
-  porcentaje?: number;
+  @IsOptionalWhenUndefined()
+  @IsNumber({}, { message: 'El costo en dólares debe ser un número.' })
+  costoDolar?: number;
 
-  @IsOptional()
-  @IsNumber()
+  @IsNotEmpty({ message: 'El precio es obligatorio.' })
+  @IsNumber({}, { message: 'El precio debe ser un número.' })
   precio: number;
-
-  createdAt?: Date;
 
   @IsEnum(AlicuotaIva, {
     message:
-      'tipo debe ser ALICUOTA_0  ALICUOTA_105, ALICUOTA_21, ALICUOTA_27,',
+      'tipo debe ser ALICUOTA_0, ALICUOTA_105, ALICUOTA_21 o ALICUOTA_27.',
   })
   @Transform(({ value }) => {
-    // Si el valor es un string, lo convierte al valor numérico del enum
     if (typeof value === 'string') {
       return AlicuotaIva[value.toUpperCase() as keyof typeof AlicuotaIva];
     }
@@ -125,8 +141,8 @@ export class CreateProductoDto {
   alicuotaIva: AlicuotaIva;
 
   @IsNotEmpty({ message: 'El usuarioCreatedId es obligatorio.' })
-  @IsInt({ message: 'El usuarioCreatedId debe ser un número entero.' })
+  @IsPositiveInteger({
+    message: 'El usuarioCreatedId debe ser un número entero positivo.',
+  })
   usuarioCreatedId: number;
-
-
 }

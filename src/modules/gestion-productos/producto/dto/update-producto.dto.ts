@@ -1,71 +1,157 @@
-import { OmitType, PartialType } from '@nestjs/mapped-types';
-import { CreateProductoDto } from './create-producto.dto';
+import { Transform } from 'class-transformer';
 import {
-  IsNotEmpty,
-  IsInt,
   IsString,
-  IsNumber,
+  IsNotEmpty,
   MaxLength,
   Matches,
+  IsBoolean,
+  IsNumber,
+  IsEnum,
+  ValidateIf,
+  IsPositive,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { AlicuotaIva } from 'src/modules/organizacion/enums/alicuota-iva.enum';
+import {
+  IsMoney,
+  IsPercentage,
+  IsPositiveInteger,
+  IsQuantity,
+  IsOptionalWhenUndefined,
+  normalizeString,
+  toStrictBoolean,
+} from '../../common/validation/request-validation.helpers';
 
-export class UpdateProductoDto extends PartialType(
-  OmitType(CreateProductoDto, [
-    'denominacion',
-    'costo',
-    'porcentaje',
-    'stock',
-    'stockMinimo',
-    'marcaId',
-    'lineaId',
-    'presentacionId',
-    'usuarioCreatedId',
-  ] as const),
-) {
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : value,
-  )
+export class UpdateProductoDto {
+  @Transform(({ value }) => normalizeString(value))
   @IsString({ message: 'La denominación debe ser una cadena de texto.' })
   @IsNotEmpty({ message: 'La denominación no puede estar vacía.' })
-  @MaxLength(255, { message: 'La denominación no puede estar vacía.' })
-  @Matches(/^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ.\-/]+$/, {
-    message:
-      'La denominación solo puede contener letras, números, espacios, puntos, guiones y barras.',
+  @MaxLength(200, {
+    message: 'La denominación no puede superar los 200 caracteres.',
+  })
+  @Matches(/^[[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ.\-/%]+$/, {
+    message: 'La denominación contiene caracteres inválidos.',
   })
   denominacion: string;
 
-  @IsNotEmpty()
-  @IsNumber()
+  @IsOptionalWhenUndefined()
+  @IsString()
+  observacion?: string;
+
+  @IsOptionalWhenUndefined()
+  @IsString()
+  codigoProveedor?: string;
+
+  @IsOptionalWhenUndefined()
+  @IsString()
+  codigoBarra?: string;
+
+  @IsOptionalWhenUndefined()
+  @IsString()
+  codigoReferencia?: string;
+
+  @IsOptionalWhenUndefined()
+  @IsString()
+  ubicacion?: string;
+
+  @IsOptionalWhenUndefined()
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsBoolean({ message: 'utilizaStockMinimo debe ser un valor booleano.' })
+  utilizaStockMinimo?: boolean;
+
+  @IsOptionalWhenUndefined()
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsBoolean({ message: 'utilizaPack debe ser un valor booleano.' })
+  utilizaPack?: boolean;
+
+  @ValidateIf((o: UpdateProductoDto) => o.utilizaPack === true)
+  @IsPositiveInteger({
+    message: 'La cantidad por pack debe ser un número entero positivo.',
+  })
+  cantidadPorPack?: number;
+
+  @IsOptionalWhenUndefined()
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsBoolean({ message: 'costoEnDolar debe ser un valor booleano.' })
+  costoEnDolar?: boolean;
+
+  @IsOptionalWhenUndefined()
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsBoolean({ message: 'destacado debe ser un valor booleano.' })
+  destacado?: boolean;
+
+  @IsOptionalWhenUndefined()
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsBoolean({ message: 'envioGratis debe ser un valor booleano.' })
+  envioGratis?: boolean;
+
+  @IsOptionalWhenUndefined()
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsBoolean({ message: 'sistema debe ser un valor booleano.' })
+  sistema?: boolean;
+
+  @IsNotEmpty({ message: 'El costo es obligatorio.' })
+  @IsNumber({}, { message: 'El costo debe ser un número.' })
+  @IsMoney({ message: 'El costo debe ser un valor monetario válido.' })
   costo: number;
 
-  @IsNotEmpty()
-  @IsNumber()
+  @IsNotEmpty({ message: 'El porcentaje es obligatorio.' })
+  @IsNumber({}, { message: 'El porcentaje debe ser un número.' })
+  @IsPositive({ message: 'El porcentaje debe ser mayor que 0.' })
+  @IsPercentage({ message: 'El porcentaje debe respetar el formato decimal válido.' })
   porcentaje: number;
 
-  @IsNotEmpty()
-  @IsInt()
+  @IsNotEmpty({ message: 'El stock es obligatorio.' })
+  @IsNumber({}, { message: 'El stock debe ser un número.' })
+  @IsPositive({ message: 'El stock debe ser mayor que 0.' })
+  @IsQuantity({ message: 'El stock debe respetar el formato decimal válido.' })
   stock: number;
 
-  @IsNotEmpty()
-  @IsInt()
+  @IsNotEmpty({ message: 'El stock mínimo es obligatorio.' })
+  @IsNumber({}, { message: 'El stock mínimo debe ser un número.' })
+  @IsPositive({ message: 'El stock mínimo debe ser mayor que 0.' })
+  @IsQuantity({ message: 'El stock mínimo debe respetar el formato decimal válido.' })
   stockMinimo: number;
 
-  @IsNotEmpty({ message: 'La marca es obligatoria.' })
-  @IsInt({ message: 'La marca  debe ser un número entero.' })
-  marcaId: number;
-
-  @IsNotEmpty({ message: 'La linea es obligatoria.' })
-  @IsInt({ message: 'La linea  debe ser un número entero.' })
+  @IsNotEmpty({ message: 'La línea es obligatoria.' })
+  @IsPositiveInteger({ message: 'La línea debe ser un número entero positivo.' })
   lineaId: number;
 
+  @IsNotEmpty({ message: 'La marca es obligatoria.' })
+  @IsPositiveInteger({ message: 'La marca debe ser un número entero positivo.' })
+  marcaId: number;
+
   @IsNotEmpty({ message: 'La presentación es obligatoria.' })
-  @IsInt({ message: 'La presentación debe ser un número entero.' })
+  @IsPositiveInteger({
+    message: 'La presentación debe ser un número entero positivo.',
+  })
   presentacionId: number;
 
+  @IsOptionalWhenUndefined()
+  @IsNumber({}, { message: 'El costo en dólares debe ser un número.' })
+  costoDolar?: number;
+
+  @IsOptionalWhenUndefined()
+  @IsNumber({}, { message: 'El precio debe ser un número.' })
+  precio?: number;
+
+  @IsOptionalWhenUndefined()
+  @IsEnum(AlicuotaIva, {
+    message:
+      'tipo debe ser ALICUOTA_0, ALICUOTA_105, ALICUOTA_21 o ALICUOTA_27.',
+  })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return AlicuotaIva[value.toUpperCase() as keyof typeof AlicuotaIva];
+    }
+    return value;
+  })
+  alicuotaIva?: AlicuotaIva;
+
   @IsNotEmpty({ message: 'El usuarioUpdatedId es obligatorio.' })
-  @IsInt({ message: 'El usuarioUpdatedId debe ser un número entero.' })
+  @IsPositiveInteger({
+    message: 'El usuarioUpdatedId debe ser un número entero positivo.',
+  })
   usuarioUpdatedId: number;
 
-  updatedAt: Date;
+  updatedAt?: Date;
 }
