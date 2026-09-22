@@ -1,68 +1,59 @@
-import { IsBoolean, IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsInt, IsString, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsOptionalWhenUndefined,
+  IsPositiveInteger,
+  toQueryNumber,
+  toStrictBoolean,
+} from '../../common/validation/request-validation.helpers';
 
 export class SearchProductoPaginationWithDto {
-  @IsOptional()
+  @IsOptionalWhenUndefined()
   @IsString()
   denominacion?: string;
 
-  @IsOptional()
+  @IsOptionalWhenUndefined()
   @IsString()
   codigoProveedor: string;
- 
-  @IsOptional()
+
+  @IsOptionalWhenUndefined()
   @IsString()
   codigoReferencia: string;
-  
-  @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return undefined;
-  })
-  @IsBoolean()
+
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsBoolean({ message: 'codReferenciaExacto debe ser un valor booleano.' })
   codReferenciaExacto: boolean = false;
 
-  @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return undefined;
-  })
-  @IsBoolean()
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsBoolean({ message: 'codProveedorExacto debe ser un valor booleano.' })
   codProveedorExacto: boolean = false;
 
-  @IsInt()
+  @IsInt({ message: 'skip debe ser un número entero.' })
   @Min(0, { message: 'skip debe ser un número entero positivo o 0' })
-  @Type(() => Number)
+  @Transform(({ value }) => toQueryNumber(value))
   skip: number = 0;
 
-  @IsInt()
+  @IsInt({ message: 'take debe ser un número entero.' })
   @Min(1, { message: 'take debe ser un número entero mayor que 0' })
-  @Type(() => Number)
+  @Transform(({ value }) => toQueryNumber(value))
   take: number = 10;
 
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsOptionalWhenUndefined()
+  @Transform(({ value }) => toQueryNumber(value))
+  @IsPositiveInteger({ message: 'La marca debe ser un número entero positivo.' })
   marcaId: number;
 
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsOptionalWhenUndefined()
+  @Transform(({ value }) => toQueryNumber(value))
+  @IsPositiveInteger({ message: 'La línea debe ser un número entero positivo.' })
   lineaId: number;
 
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  proveedorId: number; 
+  @IsOptionalWhenUndefined()
+  @Transform(({ value }) => toQueryNumber(value))
+  @IsPositiveInteger({ message: 'El proveedor debe ser un número entero positivo.' })
+  proveedorId: number;
 
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return undefined;
-  })
-  @IsBoolean()
+  @Transform(({ value }) => toStrictBoolean(value))
+  @IsBoolean({ message: 'conStock debe ser un valor booleano.' })
   conStock: boolean;
-
 }
