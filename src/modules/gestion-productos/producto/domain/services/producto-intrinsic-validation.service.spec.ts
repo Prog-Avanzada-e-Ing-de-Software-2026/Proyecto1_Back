@@ -26,4 +26,22 @@ describe('ProductoIntrinsicValidationService', () => {
       ).toThrow(BadRequestException);
     },
   );
+
+  it.each([
+    [200, false],
+    [201, true],
+  ] as const)(
+    'CP - Validar el límite de 200 caracteres de la denominación (%s caracteres)',
+    (longitud, debeRechazar) => {
+      const datos = { ...datosValidos, denominacion: 'A'.repeat(longitud) };
+
+      if (debeRechazar) {
+        expect(() => service.validarDatosBasicos(datos)).toThrow(
+          BadRequestException,
+        );
+      } else {
+        expect(() => service.validarDatosBasicos(datos)).not.toThrow();
+      }
+    },
+  );
 });

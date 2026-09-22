@@ -112,3 +112,143 @@ describe('ProductoService - actualización masiva de precios', () => {
     );
   });
 });
+
+describe('ProductoService - actualización masiva de precios por ajuste único', () => {
+  // Variantes de CP-39/CP-40: [operación, tipo de ajuste, valor]
+  const variantes = [
+    ['AUMENTO', 'MONTO_FIJO', 20],
+    ['DISMINUCION', 'MONTO_FIJO', 20],
+    ['AUMENTO', 'PORCENTAJE', 10],
+    ['DISMINUCION', 'PORCENTAJE', 10],
+  ] as const;
+
+  function tipoAjusteDe(tipo: string): TipoAumento {
+    return tipo === 'MONTO_FIJO' ? TipoAumento.MONTO_FIJO : TipoAumento.PORCENTAJE;
+  }
+
+  function precioEsperado(
+    operacion: string,
+    tipo: string,
+    valor: number,
+    precioBase: number,
+  ): number {
+    if (tipo === 'MONTO_FIJO') {
+      return operacion === 'AUMENTO' ? precioBase + valor : precioBase - valor;
+    }
+    return operacion === 'AUMENTO'
+      ? precioBase * (1 + valor / 100)
+      : precioBase * (1 - valor / 100);
+  }
+
+  it.each(variantes)(
+    'CP - Actualizar precios globalmente mediante un único ajuste (%s %s %s)',
+    async (operacion, tipo, valor) => {
+      const producto = crearProducto(1, 'A');
+      const usuario = { id: 7 } as any;
+      const repo = crearRepo([producto]);
+      const service = crearService(repo, usuario);
+
+      const result = await service.actualizarPrecios(
+        {
+          tipoAjuste: tipoAjusteDe(tipo),
+          operacion,
+          valor,
+        } as any,
+        usuario,
+      );
+
+      const esperado = precioEsperado(operacion, tipo, valor, 100);
+
+      expect(repo.findBy).toHaveBeenCalledWith('', '', false, '', 0, 0, 0, false, 0, 10000, true);
+      expect(producto.precio).toBeCloseTo(esperado);
+      expect(producto.costo).toBeCloseTo(esperado / 1.2);
+      expect(producto.cambiosPrecio).toHaveLength(1);
+      expect(producto.cambiosPrecio[0].motivo).toBe(
+        MotivoCambioPrecio.ActualizacionDePrecioGlobal,
+      );
+      expect(repo.actualizarPrecios).toHaveBeenCalledTimes(1);
+      expect(result.message).toBe('Actualización de precios realizada correctamente.');
+      expect(result.productos[0].denominacion).toBe('A');
+      expect(result.productos[0].costo).toBeCloseTo(esperado / 1.2);
+      expect(result.productos[0].precio).toBeCloseTo(esperado);
+    },
+  );
+
+  it.each(variantes)(
+    'CP - Actualizar precios de una línea mediante un único ajuste (%s %s %s)',
+    async (operacion, tipo, valor) => {
+      const productoDeLaLinea = crearProducto(1, 'A', 5);
+      const productoDeOtraLinea = crearProducto(2, 'B', 9);
+      const usuario = { id: 7 } as any;
+      // findBy devuelve SOLO los productos de la línea 5
+      const repo = crearRepo([productoDeLaLinea]);
+      const service = crearService(repo, usuario);
+
+      await service.actualizarPrecios(
+        {
+          lineaId: 5,
+          tipoAjuste: tipoAjusteDe(tipo),
+          operacion,
+          valor,
+        } as any,
+        usuario,
+      );
+
+      expect(repo.findBy).toHaveBeenCalledWith('', '', false, '', 0, 5, 0, false, 0, 10000, true);
+      expect(productoDeLaLinea.cambiosPrecio).toHaveLength(1);
+      expect(productoDeLaLinea.cambiosPrecio[0].motivo).toBe(
+        MotivoCambioPrecio.ActualizacionDePrecioPorLinea,
+      );
+      // Nada fuera del conjunto devuelto por findBy es tocado ni persistido.
+      expect(productoDeOtraLinea.cambiosPrecio).toBeUndefined();
+      expect(productoDeOtraLinea.precio).toBe(200);
+      expect(repo.actualizarPrecios).toHaveBeenCalledWith(
+        [productoDeLaLinea],
+        usuario,
+      );
+    },
+  );
+
+  it('CP - Rechazar una disminución que produzca algún precio no positivo', async () => {
+    const producto = crearProducto(1, 'A');
+    producto.costo = 50;
+    producto.precio = 50;
+    const usuario = { id: 7 } as any;
+    const repo = crearRepo([producto]);
+    const service = crearService(repo, usuario);
+
+    await expect(
+      service.actualizarPrecios(
+        {
+          tipoAjuste: TipoAumento.MONTO_FIJO,
+          operacion: OperacionAjuste.DISMINUCION,
+          valor: 50,
+        } as any,
+        usuario,
+      ),
+    ).rejects.toThrow('El precio final debe ser mayor que 0.');
+
+    expect(repo.actualizarPrecios).not.toHaveBeenCalled();
+    expect(producto.precio).toBe(50);
+    expect(producto.costo).toBe(50);
+  });
+
+  it('CP - Informar que no existen productos para actualizar', async () => {
+    const usuario = { id: 7 } as any;
+    const repo = crearRepo([]);
+    const service = crearService(repo, usuario);
+
+    await expect(
+      service.actualizarPrecios(
+        {
+          tipoAjuste: TipoAumento.PORCENTAJE,
+          operacion: OperacionAjuste.AUMENTO,
+          valor: 10,
+        } as any,
+        usuario,
+      ),
+    ).rejects.toThrow('No se encontraron productos para actualizar.');
+
+    expect(repo.actualizarPrecios).not.toHaveBeenCalled();
+  });
+});
