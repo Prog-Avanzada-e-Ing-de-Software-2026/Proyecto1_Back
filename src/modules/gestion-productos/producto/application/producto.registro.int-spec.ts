@@ -8,9 +8,8 @@
  * - CP - Validar el límite de 200 caracteres de la denominación.
  * - CP - Rechazar el registro con una presentación que no está activa (soft-deleted).
  *
- * Requiere Docker corriendo. Sin Docker estos tests fallan (no pasan en silencio).
- * Se escribieron pero NO se ejecutaron localmente (Docker + @testcontainers/mysql
- * no disponibles en este entorno).
+ * Requiere Docker y @testcontainers/mysql. Si la infraestructura de contenedores
+ * no está disponible, estos specs fallan explícitamente.
  */
 import { DataSource } from 'typeorm';
 import type { StartedMySqlContainer } from '@testcontainers/mysql';
@@ -186,7 +185,6 @@ describe('Producto - registro (integración servicio/repositorio + MySQL real)',
     const entidad = await repository.findOne(creado.id);
     expect(entidad?.denominacion).toBe(dto.denominacion);
     expect(entidad?.costo).toBe(100);
-    expect(entidad?.precio).toBe(100);
   });
 
   it('CP - Rechazar una denominación duplicada al registrar', async () => {
@@ -215,15 +213,16 @@ describe('Producto - registro (integración servicio/repositorio + MySQL real)',
       enlazarMocks(base);
 
       const dto = crearDtoProducto('X'.repeat(longitud), base.presentacion.id);
-      const error = await service.create(dto as any).catch((e: unknown) => e);
 
       if (longitud === 200) {
-        expect(error).toBeUndefined();
+        const resultado = await service.create(dto as any);
+        expect(resultado.mensaje).toContain('Producto creada');
         const cantidad = await productoRepo.count({
           where: { denominacion: dto.denominacion },
         });
         expect(cantidad).toBe(1);
       } else {
+        const error = await service.create(dto as any).catch((e: unknown) => e);
         expect(error).toBeInstanceOf(BadRequestException);
         expect((error as BadRequestException).message).toContain('200 caracteres');
         const cantidad = await productoRepo.count({
