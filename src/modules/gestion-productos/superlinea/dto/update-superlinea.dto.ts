@@ -1,11 +1,36 @@
-import { OmitType, PartialType } from '@nestjs/mapped-types';
-import { IsInt, IsNotEmpty } from 'class-validator';
-import { CreateSuperLineaDto } from './create-superlinea.dto';
+import { Transform } from 'class-transformer';
+import {
+  IsString,
+  IsNotEmpty,
+  MaxLength,
+  Matches,
+} from 'class-validator';
+import {
+  IsOptionalWhenUndefined,
+  IsPositiveInteger,
+  normalizeString,
+} from '../../common/validation/request-validation.helpers';
 
-export class UpdateSuperLineaDto extends PartialType(
-  OmitType(CreateSuperLineaDto, ['usuarioCreatedId'] as const),
-) {
+export class UpdateSuperLineaDto {
+  @IsOptionalWhenUndefined()
+  @Transform(({ value }) => normalizeString(value))
+  @IsString({ message: 'La denominación debe ser una cadena de texto.' })
+  @IsNotEmpty({ message: 'La denominación no puede estar vacía.' })
+  @MaxLength(255, {
+    message: 'La denominación no puede superar los 255 caracteres.',
+  })
+  @Matches(/^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ]+$/, {
+    message: 'La denominación solo puede contener letras, números y espacios.',
+  })
+  denominacion?: string;
+
+  @IsOptionalWhenUndefined()
+  @IsString()
+  observacion?: string;
+
   @IsNotEmpty({ message: 'El usuarioUpdatedId es obligatorio.' })
-  @IsInt({ message: 'El usuarioUpdatedId debe ser un número entero.' })
+  @IsPositiveInteger({
+    message: 'El usuarioUpdatedId debe ser un número entero positivo.',
+  })
   usuarioUpdatedId: number;
 }

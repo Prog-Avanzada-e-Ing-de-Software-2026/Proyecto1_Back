@@ -1,17 +1,18 @@
 import { Transform } from 'class-transformer';
 import {
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
   IsString,
-  Matches,
+  IsNotEmpty,
   MaxLength,
+  Matches,
 } from 'class-validator';
+import {
+  IsOptionalWhenUndefined,
+  IsPositiveInteger,
+  normalizeString,
+} from '../../common/validation/request-validation.helpers';
 
 export class CreatePresentacionDto {
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : value,
-  )
+  @Transform(({ value }) => normalizeString(value))
   @IsString({ message: 'La denominación debe ser una cadena de texto.' })
   @IsNotEmpty({ message: 'La denominación no puede estar vacía.' })
   @MaxLength(255, {
@@ -23,11 +24,13 @@ export class CreatePresentacionDto {
   })
   denominacion: string;
 
-  @IsOptional()
+  @IsOptionalWhenUndefined()
   @IsString()
   observacion?: string;
 
   @IsNotEmpty({ message: 'El usuarioCreatedId es obligatorio.' })
-  @IsInt({ message: 'El usuarioCreatedId debe ser un número entero.' })
+  @IsPositiveInteger({
+    message: 'El usuarioCreatedId debe ser un número entero positivo.',
+  })
   usuarioCreatedId: number;
 }
