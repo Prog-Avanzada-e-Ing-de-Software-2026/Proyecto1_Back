@@ -7,6 +7,7 @@ import {
 } from '../../../../../../test/integration/test-datasource';
 import { startMySqlTestContainer } from '../../../../../../test/integration/mysql-test-container';
 import { SuperLinea } from '../../domain/entities/superlinea.entity';
+import { PoliticaCreacionSuperLinea } from '../../domain/services/politica-creacion-superlinea.service';
 import { SuperLineaPersistenceAdapter } from './superlinea.persistence-adapter';
 
 describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidencia parcial', () => {
@@ -122,16 +123,21 @@ describe('SuperLineaPersistenceAdapter - persistencia y búsqueda por coincidenc
     );
   });
 
-  it('La modificación de la propia denominación no debe detectar el registro actual como conflicto (pendiente de corrección en producción)', async () => {
-    await createSuperLinea('Bebidas');
+  it('La política no detecta conflicto al conservar la propia denominación, pero sí con otro registro', async () => {
+    const id = await createSuperLinea('Bebidas');
+    const policy = new PoliticaCreacionSuperLinea(adapter);
 
-    // The persistence query used by the uniqueness policy does not exclude the
-    // current entity, so a service-level self-update is wrongly treated as a
-    // conflict. This assertion documents the gap and must stay RED until
-    // production passes the current ID to the policy.
-    const existing = await adapter.findByDenominacionWithDeleted('bebidas');
-
-    expect(existing).toBeNull();
+    // The conflict query itself returns the existing record; excluding the
+    // current entity is the policy's responsibility (service passes the id).
+    await expect(
+      policy.checkDenominacionExists('bebidas', id),
+    ).resolves.toBe(false);
+    await expect(
+      policy.checkDenominacionExists('bebidas'),
+    ).resolves.toBe(true);
+    await expect(
+      policy.checkDenominacionExists('bebidas', id + 1),
+    ).resolves.toBe(true);
   });
 
   it('Elimina lógicamente una SuperLínea y la excluye del detalle', async () => {

@@ -49,6 +49,7 @@ import { Init1787269586538 } from 'src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from 'src/migrations/1789091969000-AddSuperLineaToLinea';
 import { AddCambioPrecioToProducto1789351169000 } from 'src/migrations/1789351169000-AddCambioPrecioToProducto';
 import { AddPresentacionToProducto1789200000000 } from 'src/migrations/1789200000000-AddPresentacionToProducto';
+import { RemoveSuperLineaDenominacionUnique1789400000000 } from 'src/migrations/1789400000000-RemoveSuperLineaDenominacionUnique';
 import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 import { Proveedor } from 'src/modules/organizacion/proveedor/domain/entities/proveedor.entity';
 import { ProveedorOperacion } from 'src/modules/organizacion/proveedor-operacion/entities/proveedor-operacion.entity';
@@ -91,6 +92,7 @@ const MIGRATIONS = [
   AddSuperLineaToLinea1789091969000,
   AddCambioPrecioToProducto1789351169000,
   AddPresentacionToProducto1789200000000,
+  RemoveSuperLineaDenominacionUnique1789400000000,
 ];
 
 describe('Producto - Historial de precios (HTTP end-to-end)', () => {

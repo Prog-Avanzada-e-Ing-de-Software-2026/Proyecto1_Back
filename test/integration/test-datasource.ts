@@ -41,6 +41,7 @@ import { Init1787269586538 } from 'src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from 'src/migrations/1789091969000-AddSuperLineaToLinea';
 import { AddCambioPrecioToProducto1789351169000 } from 'src/migrations/1789351169000-AddCambioPrecioToProducto';
 import { AddPresentacionToProducto1789200000000 } from 'src/migrations/1789200000000-AddPresentacionToProducto';
+import { RemoveSuperLineaDenominacionUnique1789400000000 } from 'src/migrations/1789400000000-RemoveSuperLineaDenominacionUnique';
 
 /**
  * All decorated application entities. Registering the full set (instead of only
@@ -77,6 +78,7 @@ export const TEST_MIGRATIONS = [
   AddSuperLineaToLinea1789091969000,
   AddCambioPrecioToProducto1789351169000,
   AddPresentacionToProducto1789200000000,
+  RemoveSuperLineaDenominacionUnique1789400000000,
 ];
 
 /** Tables owned by the CR-004 persistence specs, cleaned between tests. */
