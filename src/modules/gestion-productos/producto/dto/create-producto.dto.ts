@@ -122,6 +122,7 @@ export class CreateProductoDto {
 
   @IsOptionalWhenUndefined()
   @IsNumber({}, { message: 'El costo en dólares debe ser un número.' })
+  @IsMoney({ message: 'El costo en dólares debe ser un valor monetario válido.' })
   costoDolar?: number;
 
   @IsOptionalWhenUndefined()

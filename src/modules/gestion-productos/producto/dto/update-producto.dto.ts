@@ -128,10 +128,12 @@ export class UpdateProductoDto {
 
   @IsOptionalWhenUndefined()
   @IsNumber({}, { message: 'El costo en dólares debe ser un número.' })
+  @IsMoney({ message: 'El costo en dólares debe ser un valor monetario válido.' })
   costoDolar?: number;
 
   @IsOptionalWhenUndefined()
   @IsNumber({}, { message: 'El precio debe ser un número.' })
+  @IsMoney({ message: 'El precio debe ser un valor monetario válido.' })
   precio?: number;
 
   @IsOptionalWhenUndefined()
