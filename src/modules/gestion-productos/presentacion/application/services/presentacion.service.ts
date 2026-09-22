@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { MessageFrontUtils } from 'src/modules/common/utils/message/message-front.util';
 import { UsuarioService } from 'src/modules/gestion-usuario/usuario/application/services/usuario.service';
@@ -16,6 +17,7 @@ import { PresentacionMapper } from '../../mappers/presentacion.mapper';
 import {
   PoliticaCreacionPresentacion
 } from 'src/modules/gestion-productos/presentacion/domain/services/politica-creacion-presentacion.service';
+import { PresentacionIntrinsicValidationService } from '../../domain/services/presentacion-intrinsic-validation.service';
 import { PaginationWithDenominacionDto } from 'src/modules/common/dto/busquedas/pagination-with-denominacion.dto';
 
 @Injectable()
@@ -29,9 +31,16 @@ export class PresentacionService {
     private readonly usuarioService: UsuarioService,
     private readonly deletionPolicy: PoliticaEliminacionPresentacion,
     private readonly createPolicy: PoliticaCreacionPresentacion,
+
+    @Optional()
+    private readonly presentacionValidationService: PresentacionIntrinsicValidationService = new PresentacionIntrinsicValidationService(),
   ) {}
 
   async create(dto: CreatePresentacionDto) {
+    this.presentacionValidationService.validarDatosBasicos(dto, {
+      requerirEstadoCompleto: true,
+    });
+
     await this.checkDenominacionExists(dto.denominacion);
     await this.repository.create(dto);
     return MessageFrontUtils.createSimple(
@@ -42,6 +51,8 @@ export class PresentacionService {
   }
 
   async update(id: number, dto: UpdatePresentacionDto) {
+    this.presentacionValidationService.validarDatosBasicos(dto);
+
     await this.findEntityById(id);
     if (dto.denominacion) {
       await this.checkDenominacionExists(dto.denominacion, id);

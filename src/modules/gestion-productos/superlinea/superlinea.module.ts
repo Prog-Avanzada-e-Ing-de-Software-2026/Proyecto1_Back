@@ -10,6 +10,7 @@ import { SuperLineaController } from './application/controllers/superlinea.contr
 import { SuperLineaService } from './application/services/superlinea.service';
 import { SuperLinea } from './domain/entities/superlinea.entity';
 import { PoliticaEliminacionSuperLinea } from './domain/services/politica-eliminacion-superlinea.service';
+import { SuperLineaIntrinsicValidationService } from './domain/services/superlinea-intrinsic-validation.service';
 import { SuperLineaPersistenceAdapter } from './infraestructure/repositories/superlinea.persistence-adapter';
 import { SuperLineaRepository } from './infraestructure/repositories/superlinea.repository';
 import {
@@ -27,6 +28,7 @@ import {
     SuperLineaService,
     PoliticaEliminacionSuperLinea,
     PoliticaCreacionSuperLinea,
+    SuperLineaIntrinsicValidationService,
     SuperLineaPersistenceAdapter,
     NormalizeDenominacionPipe,
     {

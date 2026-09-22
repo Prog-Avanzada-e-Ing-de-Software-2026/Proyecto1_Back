@@ -11,6 +11,7 @@ import { IUnitOfWork } from 'src/modules/common/unit-of-work/iunit-of-work.';
 import { UsuarioModule } from 'src/modules/gestion-usuario/usuario/usuario.module';
 import { MarcaService } from './application/services/marca.service';
 import { PoliticaEliminacionMarca } from './domain/services/politica-eliminacion-marca.service';
+import { MarcaIntrinsicValidationService } from './domain/services/marca-intrinsic-validation.service';
 import { ProductoModule } from '../producto/producto.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { ProductoModule } from '../producto/producto.module';
     NormalizeDenominacionPipe,
     MarcaPersistenceAdapter,
     PoliticaEliminacionMarca,
+    MarcaIntrinsicValidationService,
     {
       provide: 'IMarcaRepository',
       useClass: MarcaRepository,

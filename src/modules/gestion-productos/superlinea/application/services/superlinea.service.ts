@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { SelectOption } from 'src/modules/common/interface/select-option';
 import { MessageFrontUtils } from 'src/modules/common/utils/message/message-front.util';
@@ -17,6 +18,7 @@ import { SuperLineaMapper } from '../../mappers/superlinea.mapper';
 import {
   PoliticaCreacionSuperLinea
 } from 'src/modules/gestion-productos/superlinea/domain/services/politica-creacion-superlinea.service';
+import { SuperLineaIntrinsicValidationService } from '../../domain/services/superlinea-intrinsic-validation.service';
 import { PaginationWithDenominacionDto } from 'src/modules/common/dto/busquedas/pagination-with-denominacion.dto';
 
 @Injectable()
@@ -30,9 +32,16 @@ export class SuperLineaService {
     private readonly usuarioService: UsuarioService,
     private readonly deletionPolicy: PoliticaEliminacionSuperLinea,
     private readonly createPolicy: PoliticaCreacionSuperLinea,
+
+    @Optional()
+    private readonly superLineaValidationService: SuperLineaIntrinsicValidationService = new SuperLineaIntrinsicValidationService(),
   ) {}
 
   async create(dto: CreateSuperLineaDto) {
+    this.superLineaValidationService.validarDatosBasicos(dto, {
+      requerirEstadoCompleto: true,
+    });
+
     await this.checkDenominacionExists(dto.denominacion);
     await this.repository.create(dto);
     return MessageFrontUtils.createSimple(
@@ -43,6 +52,8 @@ export class SuperLineaService {
   }
 
   async update(id: number, dto: UpdateSuperLineaDto) {
+    this.superLineaValidationService.validarDatosBasicos(dto);
+
     await this.findEntityById(id);
     if (dto.denominacion) {
       await this.checkDenominacionExists(dto.denominacion, id);

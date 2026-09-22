@@ -10,6 +10,7 @@ import { PresentacionController } from './application/controllers/presentacion.c
 import { PresentacionService } from './application/services/presentacion.service';
 import { Presentacion } from './domain/entities/presentacion.entity';
 import { PoliticaEliminacionPresentacion } from './domain/services/politica-eliminacion-presentacion.service';
+import { PresentacionIntrinsicValidationService } from './domain/services/presentacion-intrinsic-validation.service';
 import { PresentacionPersistenceAdapter } from './infraestructure/repositories/presentacion.persistence-adapter';
 import { PresentacionRepository } from './infraestructure/repositories/presentacion.repository';
 import {
@@ -27,6 +28,7 @@ import {
     PresentacionService,
     PoliticaEliminacionPresentacion,
     PoliticaCreacionPresentacion,
+    PresentacionIntrinsicValidationService,
     PresentacionPersistenceAdapter,
     NormalizeDenominacionPipe,
     {
