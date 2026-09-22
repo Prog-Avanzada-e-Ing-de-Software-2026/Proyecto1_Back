@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './modules/common/filters/global-exception.filters';
 import { ValidationPipe } from '@nestjs/common';
+import { createRequestValidationException } from './modules/common/validation/validation-error.factory';
 import * as bodyParser from 'body-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { useContainer } from 'class-validator';
@@ -17,6 +18,7 @@ async function bootstrap() {
       transform: true, // Convierte el cuerpo a la clase del DTO
       whitelist: true, // Elimina propiedades no declaradas en el DTO
       forbidNonWhitelisted: true, // Lanza error si se reciben propiedades no permitidas
+      exceptionFactory: createRequestValidationException,
       /*
       transformOptions: {
         enableImplicitConversion: true,
