@@ -124,9 +124,10 @@ export class CreateProductoDto {
   @IsNumber({}, { message: 'El costo en dólares debe ser un número.' })
   costoDolar?: number;
 
-  @IsNotEmpty({ message: 'El precio es obligatorio.' })
+  @IsOptionalWhenUndefined()
   @IsNumber({}, { message: 'El precio debe ser un número.' })
-  precio: number;
+  @IsMoney({ message: 'El precio debe ser un valor monetario válido.' })
+  precio?: number;
 
   @IsEnum(AlicuotaIva, {
     message:
