@@ -1,79 +1,277 @@
-# Design: Validate Product Management Requests and Preserve Client Errors
+# Design: Harden Product Management Validation
 
 ## Technical Approach
 
-Keep validation at the NestJS transport boundary. Product write and product-search DTOs will use shared, non-throwing request-value transforms plus `class-validator` constraints. Write constraints remain derived from the current TypeORM columns; search constraints strictly parse supported boolean query forms and preserve inclusive date behavior. `ValidationPipe.exceptionFactory` will convert Nest validation errors into a stable structured payload, and `GlobalExceptionFilter` will preserve that payload while adding the existing response envelope. No service, repository, entity, or `producto-operacion` behavior is added.
+Implement CR-001 as defense-in-depth validation without changing entities, entity mappings, repositories, database schema, or migrations:
 
-## Implementation Status
+1. Request DTOs in all six `gestion-productos` modules reject malformed values through non-throwing transforms and explicit `class-validator` constraints.
+2. Product and catalog domain services enforce the approved intrinsic rules when application services are called without an HTTP boundary.
+3. Application services validate the request state, resolve required active relations, and only then call persistence. Updates are full replacements, so the request carries all mandatory fields and no merge with persisted state occurs.
+4. `producto-operacion` receives DTO validation only; its generated controller/service behavior and persistence boundary remain unchanged.
+5. A custom `ValidationPipe.exceptionFactory` creates a recognizable request-validation exception. `GlobalExceptionFilter` adds deterministic `fieldErrors` only for that exception type while preserving the existing envelope and all non-validation behavior.
 
-**Paused.** The design and task plan are authoritative, but no source or test changes may begin until the user explicitly resumes CR-001.
+This implements both `product-management-validation` and `validation-error-communication`. Existing suites are the specification: no new test files or cases are authored, so strict TDD is a documented, scoped exception for this change.
 
 ## Architecture Decisions
 
-| Decision | Choice | Alternatives considered | Rationale |
-|---|---|---|---|
-| Shared transforms | Add product-management-local `request-value.transforms.ts` with pure helpers for safe strings, strict booleans, and inclusive end-date conversion | Keep unsafe inline transforms; use a write-only helper; change shared controller pipes | A neutral request-value module can serve write and search DTOs without coupling searches to a write-named abstraction. Invalid values remain available to validators instead of throwing or disappearing. |
-| Search query validation | Apply strict boolean parsing to `exacto`, `codReferenciaExacto`, `codProveedorExacto`, and `conStock`; apply safe inclusive-date conversion to `fechaHasta` | Preserve permissive omission; validate inside services | DTO-bound validation rejects malformed queries consistently before business logic; optional `conStock` skips only true absence, and invalid dates remain rejectable. |
-| DTO constraints | Encode length, positive ID, conditional-field, decimal scale, and storage-range rules in create DTOs; updates inherit them through `PartialType` and only require the update audit ID | Duplicate create/update decorators; defer checks to services/database | A single transport contract rejects invalid input before lookups and persistence and prevents create/update drift. |
-| Margin representation | Validate `Producto.porcentaje` as the persisted domain margin using `decimal(5,2)` compatibility only | Introduce a `margen` field; calculate price; force a sign or business range | The entity already persists the concept as `porcentaje`; formula, sign, and update semantics are intentionally not part of CR-001. |
-| Validation errors | Build `message[]` and `fieldErrors` in a pure exception factory, then preserve them in the global filter | Parse message strings in the filter; expose raw `ValidationError` objects | Structured errors retain property identity, support nested paths, and avoid exposing validator internals. |
-| Dormant price DTO | Correct `UpdatePrecioDto` validation only; add no endpoint or mapper change | Expose a route; repair specialized persistence flow | CR-001 defines validation, not previously unavailable price-update behavior. |
+### Decision: Keep shared DTO helpers inside Product Management
+
+**Choice**: Create `src/modules/gestion-productos/common/validation/request-validation.helpers.ts` for pure, non-throwing request transforms, storage-compatible numeric constants/predicates, and an `IsOptionalWhenUndefined` decorator helper. DTOs remain responsible for request contracts; domain services may reuse only pure numeric predicates/constants.
+
+**Alternatives considered**: Put DTO helpers in `src/modules/common/`; keep independent inline transforms; introduce a global custom pipe for each value type.
+
+**Rationale**: The helpers are specific to CR-001 and the six Product Management modules. Keeping them under `gestion-productos` avoids expanding the shared module's DTO responsibilities, eliminates transform drift, and preserves current controller/module boundaries. `src/modules/common/` is touched only for global validation-error communication.
+
+The helper contract is:
+
+- String normalization trims and lowercases only strings; all other values are returned unchanged for validators to reject.
+- Strict booleans accept `true`, `false`, `"true"`, and `"false"` only. Every other present value is preserved, not coerced or erased.
+- Query-number and date transforms convert only recognized valid representations; malformed values and explicit `null` remain invalid values.
+- Optional fields use `ValidateIf((_, value) => value !== undefined)` semantics. Omission is skipped, but explicit `null` continues through validation and fails.
+- Decimal validation rejects non-numbers, `NaN`, infinities, excess fractional digits, and values outside the current `decimal(15,5)`, `decimal(12,3)`, or `decimal(5,2)` ranges.
+
+### Decision: Update requests require the mandatory fields
+
+**Choice**: `UpdateProductoDto` and the catalog update DTOs MUST redeclare and require the mandatory fields directly — the denomination, the positive relation IDs, and the mandatory numeric rules — using the shared hardened helpers. Only genuinely optional fields remain optional on update. Explicit `null` is rejected.
+
+**Alternatives considered**: Inherit create rules through `PartialType` so present fields keep create validation; keep separately redeclared update fields; require every Product field on update; validate updates only after loading persistence state.
+
+**Rationale**: The Product update endpoint is `@Put(':id')` (full replacement), and the "Modificar Producto" user story lists every mandatory field as required. `PartialType` semantics make the mandatory fields optional and rely on persisted state to reconstruct validity, which contradicts full replacement. Requiring the mandatory fields in the request keeps the create and update contracts aligned with the transport semantics; optionality still skips only `undefined`, so explicit `null` remains invalid.
+
+### Decision: Validate the request state directly
+
+**Choice**: Application and domain validation validate the request state. Because `UpdateProductoDto` requires every mandatory field, the Product update service validates the request values directly and passes them to the intrinsic domain service before uniqueness checks, relation lookups, or repository mutation. Línea, Marca, Presentación, and SuperLínea update services validate their required request fields the same way.
+
+**Alternatives considered**: Load persisted state and compose an effective state with explicit undefined checks; validate only fields present in the update; move validation into repositories or entities.
+
+**Rationale**: Full-replacement PUT requests already carry the mandatory fields, so merging request values with persisted state would both duplicate the contract and silently accept incomplete requests. Validating the request state keeps a single source of truth, rejects explicit `null`, and leaves repositories and entities out of scope. No merge with persisted state is performed.
+
+### Decision: Extend Product intrinsic validation and add catalog intrinsic services
+
+**Choice**: Extend the real double-extension file `src/modules/gestion-productos/producto/domain/services/producto-intrinsic-validation.service.ts.ts`. Its validation input gains `costo`, `porcentaje`, `stock`, `stockMinimo`, stock/pack flags, and `cantidadPorPack`; it enforces requiredness, finiteness, storage precision/range, and the approved sign rules. Add focused intrinsic services for Línea, Marca, Presentación, and SuperLínea and inject them into their application services.
+
+**Alternatives considered**: DTO-only validation; entity constructors/mutators; add the rules to deletion/creation policies with unrelated responsibilities; one cross-module domain service.
+
+**Rationale**: DTO-only rules can be bypassed by direct service calls and would leave the eleven Product registration tests red. Entity changes are prohibited. Dedicated intrinsic services preserve each module's domain language and keep uniqueness/deletion policies focused.
+
+Product rules are authoritative and unconditional for Product update requests: `costo >= 0`, `porcentaje > 0`, `stock > 0`, and `stockMinimo > 0`. Although `utilizaStockMinimo` controls downstream stock behavior, CR-001's approved mandatory rule and the eleven registration cases require `stockMinimo` even when the flag is false. `cantidadPorPack` is required and a positive integer only when `utilizaPack` is true.
+
+### Decision: Reuse soft-delete-aware relation lookups
+
+**Choice**: Validate positive integer relation IDs before any lookup, then use existing lookup paths: `MarcaService.findEntityById`, `LineaService.findEntityById`, `PresentacionRepository.findOne`, and `SuperLineaRepository.findOne`. These repository paths already exclude rows with `deletedAt` and therefore represent active records. Product continues to reject system Marca/Línea records through `ProductoValidationService`.
+
+For full-replacement Product updates, all three required relations — `marcaId`, `lineaId`, and `presentacionId` — are resolved from the request before persistence. Línea resolves its required SuperLínea from the request `superLineaId` the same way.
+
+**Alternatives considered**: New repository methods; database constraints; validate only changed relations; always write retained relation objects.
+
+**Rationale**: Existing methods already express active soft-delete behavior. Validating every required request relation satisfies the specification without widening repository or persistence scope.
+
+### Decision: Keep Producto-Operación as a DTO-only scaffold
+
+**Choice**: Define `CreateProductoOperacionDto` with positive integer `productoId`, positive integer `operacionId`, and non-empty string `tipoOperacion` with a 255-character maximum. `UpdateProductoOperacionDto` remains `PartialType(CreateProductoOperacionDto)` and skips only omitted fields.
+
+**Alternatives considered**: Resolve Product or operation relations; add a repository; change the entity; add business validation to `ProductoOperacionService`.
+
+**Rationale**: The existing entity's inferred varchar contract supports a 255-character request bound, but persistence and business behavior are explicitly out of scope. DTO validation is exercised through isolated DTO/controller tests without changing the generated hardcoded service.
+
+### Decision: Recognize validation failures by type, not response shape
+
+**Choice**: Add `src/modules/common/validation/validation-error.factory.ts` containing a `RequestValidationException` and a pure recursive normalizer. `src/main.ts` supplies the factory to the global `ValidationPipe`. `GlobalExceptionFilter` appends `fieldErrors` only when `exception instanceof RequestValidationException`.
+
+**Alternatives considered**: Detect any status-400 response with a `message[]`; parse validator message strings in the filter; expose raw `ValidationError[]`; globally change every `BadRequestException` response.
+
+**Rationale**: Shape matching can misclassify application exceptions and expose arbitrary response data. A dedicated exception type creates an explicit trust boundary. The factory strips `target`, `value`, contexts, exception objects, and all unknown metadata before the filter sees public details.
+
+Normalization rules are deterministic:
+
+1. Traverse only `ValidationError.property`, `constraints`, and `children`.
+2. Accept safe property segments and numeric indexes; reject reserved or malformed segments.
+3. Render nested object paths as `parent.child` and array indexes as `items[0].field`.
+4. Sort fields lexicographically.
+5. Sort constraints by constraint key, deduplicate their authored public messages, and emit only strings.
+
+### Decision: Preserve the existing generic error envelope exactly
+
+**Choice**: Recognized request-validation failures return HTTP 400 with the existing generic `message` value and one additive field:
+
+```json
+{
+  "statusCode": 400,
+  "timestamp": "2026-09-22T12:00:00.000Z",
+  "path": "/api/producto",
+  "message": "Bad Request Exception",
+  "fieldErrors": [
+    {
+      "field": "denominacion",
+      "messages": ["La denominación no puede superar los 200 caracteres."]
+    },
+    {
+      "field": "marcaId",
+      "messages": ["La marca debe ser un número entero positivo."]
+    }
+  ]
+}
+```
+
+**Alternatives considered**: Replace `message` with validator messages; add raw exception response fields; include `fieldErrors` for all 400 errors.
+
+**Rationale**: Clients retain `statusCode`, `timestamp`, `path`, and the same generic message. The ordered array makes field ordering explicit and supports nested paths without relying on JSON object key order. Non-validation exceptions follow the existing filter branch unchanged, including status, generic message, development-only diagnostics, and logging. Production validation responses never include stack traces, raw values, raw exceptions, class names, or database data.
 
 ## Data Flow
 
+### Create/update validation and persistence
+
 ```text
-HTTP body/query -> global ValidationPipe -> route normalization pipes -> controller/service -> repository
-                         |
-                         +-> BadRequestException { message[], fieldErrors }
-                                                     |
-                                                     v
-                                        GlobalExceptionFilter -> 400 envelope
+HTTP input
+   |
+   v
+ValidationPipe -> safe DTO transforms -> class-validator constraints
+   | valid
+   v
+Application service -> validate request state
+   |                  -> (update) load current record only for existence/uniqueness
+   v
+Intrinsic domain validation
+   | valid
+   v
+uniqueness checks -> active relation lookups -> existing repository call
 ```
+
+Every failed stage stops before subsequent lookups or persistence. Product relation lookup remains application orchestration: Marca and Línea are resolved through `ProductoRelatedEntitiesValidator`, Presentación through the existing soft-delete-aware repository path, and `ProductoValidationService` applies the current system-record policy.
+
+### Recognized request-validation failure
+
+```text
+ValidationError[]
+   |
+   v
+validation-error.factory -> safe sorted FieldValidationError[]
+   |
+   v
+RequestValidationException
+   |
+   v
+GlobalExceptionFilter -> existing envelope + fieldErrors -> HTTP 400
+```
+
+This sequence is included because the distinction between trusted validation metadata and arbitrary exceptions is security-sensitive. All other exceptions bypass the additive branch.
 
 ## File Changes
 
 | File | Action | Description |
 |---|---|---|
-| `src/modules/gestion-productos/common/validation/request-value.transforms.ts` | Create | Safe string normalization, strict-boolean parsing, and non-throwing inclusive end-date conversion shared by write and search DTOs. |
-| `src/modules/gestion-productos/producto/dto/create-producto.dto.ts` | Modify | Apply product lengths, strict booleans, decimal/storage bounds, conditional values, VAT set, and positive IDs. |
-| `src/modules/gestion-productos/producto/dto/update-producto.dto.ts` | Modify | Remove divergent duplicated rules; inherit partial create validation and require `usuarioUpdatedId`. |
-| `src/modules/gestion-productos/producto/dto/update-precio.dto.ts` | Modify | Align field-specific numeric, precision, margin, and user-ID validation without making the flow reachable. |
-| `src/modules/gestion-productos/linea/dto/create-linea.dto.ts`, `src/modules/gestion-productos/linea/dto/update-linea.dto.ts` | Modify | Apply safe denomination, fractional stock, conditional minimum, strict boolean, and positive audit ID rules. |
-| `src/modules/gestion-productos/marca/dto/create-marca.dto.ts`, `src/modules/gestion-productos/marca/dto/update-marca.dto.ts` | Modify | Apply safe denomination and positive audit ID rules consistently. |
-| `src/modules/gestion-productos/producto/dto/search-producto-rapido.dto.ts` | Modify | Parse `exacto` strictly and preserve invalid input for a controlled 400 response. |
-| `src/modules/gestion-productos/producto/dto/search-producto-pagination-with.dto.ts` | Modify | Parse exact-match flags and optional `conStock` strictly; only absent `conStock` is omitted. |
-| `src/modules/gestion-productos/producto/dto/seach-informacion-producto.dto.ts` | Modify | Reject invalid dates without transform-time errors and retain inclusive `fechaHasta` as end of the requested UTC day. |
-| `src/modules/common/validation/validation-error.factory.ts` | Create | Flatten nested `ValidationError` constraints into public messages grouped by property path. |
-| `src/main.ts` | Modify | Configure `ValidationPipe.exceptionFactory` with the structured validation response. |
-| `src/modules/common/filters/global-exception.filters.ts` | Modify | Preserve `HttpException` response fields and exclude stack/internal details from production responses. |
+| `src/modules/gestion-productos/common/validation/request-validation.helpers.ts` | Create | Non-throwing string/boolean/number/date transforms, undefined-only optional helper, and storage-compatible numeric constants/predicates. |
+| `src/modules/gestion-productos/producto/dto/create-producto.dto.ts` | Modify | Enforce safe normalization, strict booleans, Product 200-character bound, required numeric state, finite decimal ranges/scales, conditional pack count, and positive relation/audit IDs. |
+| `src/modules/gestion-productos/producto/dto/update-producto.dto.ts` | Modify | Require the mandatory Product fields for full-replacement PUT — denomination, positive relation IDs, and the mandatory numeric rules — using the shared hardened helpers; only genuinely optional fields remain optional; explicit `null` is rejected; require positive `usuarioUpdatedId`. |
+| `src/modules/gestion-productos/producto/dto/actualizacion-precio.dto.ts` | Modify | Apply safe numeric transforms, finite storage bounds, positive IDs, and explicit-null rejection. |
+| `src/modules/gestion-productos/producto/dto/update-precio.dto.ts` | Modify | Align dormant request validation without making the persistence flow reachable. |
+| `src/modules/gestion-productos/producto/dto/search-producto-rapido.dto.ts` | Modify | Preserve unsupported boolean/query values for controlled validation. |
+| `src/modules/gestion-productos/producto/dto/search-producto-pagination-with.dto.ts` | Modify | Strictly parse exact-match and stock flags; reject invalid present values. |
+| `src/modules/gestion-productos/producto/dto/seach-informacion-producto.dto.ts` | Modify | Make date transformation non-throwing and reject explicit null/malformed dates. The existing misspelled filename is preserved. |
+| `src/modules/gestion-productos/producto/dto/search-producto-superlinea.dto.ts` | Modify | Require a positive `superLineaId` while retaining existing pagination rules. |
+| `src/modules/gestion-productos/linea/dto/create-linea.dto.ts` | Modify | Safe denomination, 255-character bound, strict boolean, fractional quantity contract, positive IDs, and no client-controlled deletion value. |
+| `src/modules/gestion-productos/linea/dto/update-linea.dto.ts` | Modify | Require the mandatory Línea fields for full-replacement PUT via the shared helpers, and require a positive update audit ID. |
+| `src/modules/gestion-productos/linea/dto/select-linea.dto.ts` | Modify | Distinguish omission from explicit null for the optional search string. |
+| `src/modules/gestion-productos/marca/dto/create-marca.dto.ts`, `src/modules/gestion-productos/marca/dto/update-marca.dto.ts` | Modify | Safe 255-character denomination and positive create/update audit identifiers; the full-replacement update requires the denomination. |
+| `src/modules/gestion-productos/presentacion/dto/create-presentacion.dto.ts`, `src/modules/gestion-productos/presentacion/dto/update-presentacion.dto.ts`, `src/modules/gestion-productos/presentacion/dto/select-presentacion.dto.ts` | Modify | Preserve safe transforms, reject explicit null, and enforce denomination/audit-ID rules; the full-replacement update requires the denomination. |
+| `src/modules/gestion-productos/superlinea/dto/create-superlinea.dto.ts`, `src/modules/gestion-productos/superlinea/dto/update-superlinea.dto.ts`, `src/modules/gestion-productos/superlinea/dto/select-superlinea.dto.ts` | Modify | Enforce safe 255-character denomination, undefined-only optionality, and positive audit IDs; the full-replacement update requires the denomination. |
+| `src/modules/gestion-productos/producto-operacion/dto/create-producto-operacion.dto.ts`, `src/modules/gestion-productos/producto-operacion/dto/update-producto-operacion.dto.ts` | Modify | Add the validated scaffold contract without changing service or persistence behavior. |
+| `src/modules/gestion-productos/producto/domain/services/producto-intrinsic-validation.service.ts.ts` | Modify | Add mandatory numeric, finite decimal, request-state, and conditional pack rules to the existing double-extension service. |
+| `src/modules/gestion-productos/{linea,marca,presentacion,superlinea}/domain/services/*-intrinsic-validation.service.ts` | Create | Add module-local intrinsic validation for denomination, IDs, and applicable quantity state. |
+| `src/modules/gestion-productos/producto/application/services/producto.service.ts` | Modify | Validate the create/update request state and resolve every required active relation before persistence. |
+| `src/modules/gestion-productos/{linea,marca,presentacion,superlinea}/application/services/*.service.ts` | Modify | Invoke intrinsic validation on the request state before uniqueness/relation/persistence work. |
+| `src/modules/gestion-productos/{linea,marca,presentacion,superlinea}/*.module.ts` | Modify | Register each new intrinsic validation service as a provider. |
+| `src/modules/common/validation/validation-error.factory.ts` | Create | Define the recognized exception type and safe deterministic `ValidationError` normalizer. |
+| `src/main.ts` | Modify | Configure the existing global `ValidationPipe` with the custom exception factory; preserve unrelated bootstrap behavior. |
+| `src/modules/common/filters/global-exception.filters.ts` | Modify | Append `fieldErrors` only for `RequestValidationException`; leave all other response and logging paths unchanged. |
+| `src/modules/gestion-productos/**/*.spec.ts` | Modify only where strictly necessary | Replace the obsolete `FAIL BY DESIGN` comment in `producto.service.registro.spec.ts` with the approved expectation. The existing suites are the specification; no new spec files or test cases are created. |
+
+No entity, mapper, repository, shared column decorator, migration, or schema file is modified. `producto-operacion.service.ts` and its entity remain unchanged.
 
 ## Interfaces / Contracts
 
+### Intrinsic Product state
+
 ```ts
-interface ValidationErrorResponse {
-  statusCode: 400;
-  timestamp: string;
-  path: string;
-  message: string[];
-  fieldErrors: Record<string, string[]>;
+interface ProductoIntrinsicState {
+  denominacion: unknown;
+  costo: unknown;
+  porcentaje: unknown;
+  stock: unknown;
+  stockMinimo: unknown;
+  marcaId: unknown;
+  lineaId: unknown;
+  presentacionId: unknown;
+  utilizaStockMinimo: unknown;
+  utilizaPack: unknown;
+  cantidadPorPack?: unknown;
+  alicuotaIva?: unknown;
 }
 ```
 
-`producto-operacion` is excluded in full. `porcentaje` remains the API and persistence name for margin.
+Using `unknown` at this defense-in-depth boundary prevents direct service callers from bypassing runtime checks through TypeScript assertions. Successful validation narrows values for orchestration; it does not mutate entities.
 
-Supported boolean inputs are the booleans `true` and `false` plus the lowercase query strings `"true"` and `"false"`. Unsupported strings, numbers, and `null` are not coerced or erased. An omitted optional `conStock` remains optional. A valid `fechaHasta` represents an inclusive upper bound at `23:59:59.999` UTC; invalid date input reaches `@IsDate()` as invalid and returns 400.
+### Public validation detail
+
+```ts
+interface FieldValidationError {
+  field: string;
+  messages: string[];
+}
+
+interface RequestValidationErrorResponse {
+  statusCode: 400;
+  timestamp: string;
+  path: string;
+  message: 'Bad Request Exception';
+  fieldErrors: FieldValidationError[];
+}
+```
+
+`fieldErrors` exists only for failures created by the global `ValidationPipe` exception factory. Application-thrown `BadRequestException`, `NotFoundException`, conflict/database exceptions, and unexpected errors retain their current response shape and do not receive this field.
+
+### Numeric contracts
+
+| Kind | Persistence reference | Maximum | Fractional digits | Product sign rule |
+|---|---|---:|---:|---|
+| Money | `decimal(15,5)` | `9,999,999,999.99999` | 5 | `costo >= 0` |
+| Quantity | `decimal(12,3)` | `999,999,999.999` | 3 | `stock > 0`, `stockMinimo > 0` |
+| Percentage | `decimal(5,2)` | `999.99` | 2 | `porcentaje > 0` |
+
+All values must be finite numbers. Positive integer contracts apply to relation IDs, audit IDs, and `cantidadPorPack` when required.
 
 ## Testing Strategy
 
-Testing is deferred by explicit project direction. CR-001 will not create or modify test cases or test files; validation behavior will be verified in a later, separately authorized change.
+Existing test suites are the specification for this change. No new test files or test cases are authored, so strict TDD is a documented, scoped exception: implementation must make the existing suites pass rather than starting from authored RED tests. The only permitted test edit is replacing the obsolete `FAIL BY DESIGN` comment in `producto.service.registro.spec.ts` with the approved CR-001 expectation; no other assertion is weakened or extended.
+
+Suites that MUST stay green:
+
+- `yarn test` — the existing unit manifest, including the eleven `producto.service.registro.spec.ts` rejection cases.
+- `yarn test:integration` — the existing Testcontainers suites, where Docker is available.
+- `yarn build`.
+
+Accepted coverage limitation: because no tests are added, the following changed areas have NO existing automated coverage and will not gain any under this policy:
+
+- Marca, Presentación, and `producto-operacion` DTO validation.
+- Global validation-error communication (`validation-error.factory`, the `GlobalExceptionFilter` additive branch, and the `main.ts` pipe wiring).
+
+This gap is an accepted limitation of the no-new-tests decision, not an oversight, and it must be reported honestly rather than implied to be covered.
+
+`yarn test` and `yarn test:integration` only execute files listed in their respective JSON manifests.
 
 ## Threat Matrix
 
-N/A — no routing, shell, subprocess, VCS/PR automation, executable-file classification, or process-integration boundary.
+N/A — no routing, shell, subprocess, VCS/PR automation, executable-file classification, or process-integration boundary is changed. The global HTTP error boundary is covered by production-safety tests but does not trigger the process-integration threat matrix.
 
 ## Migration / Rollout
 
-No migration required. After explicit resume, deploy the DTO, pipe, and filter changes together; revert those implementation changes together if clients depend on invalid coercions or silently ignored search filters.
+No migration required. No feature flag is needed because no persisted representation changes.
+
+Deploy DTO, domain/application validation, and pipe/filter handling together so every accepted request and every validation response follows one contract. Existing clients that send coerced booleans, zero/negative IDs, explicit nulls, excessive precision, or incomplete Product state will begin receiving HTTP 400; this is intentional but should be called out in release notes.
+
+Rollback is application-only: revert the validation-detail factory/filter/bootstrap changes first if the additive response causes client issues, then revert DTO and service/domain validation together with their existing suites as one unit. No data or schema rollback is required.
+
+The expected implementation diff still exceeds the 400-line review budget once the DTO work is combined, so the work is re-sliced into reviewable units: PR1a shared validation helpers + Product DTOs, PR1b catalog DTOs (`linea`, `marca`, `presentacion`, `superlinea`), PR1c Product search DTOs + `producto-operacion` DTOs, PR2 Product domain/application numeric rules, PR3 catalog domain/application services, and PR4 global validation-error communication. Under the session's `ask-on-risk` strategy, confirm the delivery decision before apply if the risk remains high.
 
 ## Open Questions
 
