@@ -534,6 +534,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         .createQueryBuilder('producto')
         .leftJoinAndSelect('producto.marca', 'marca')
         .leftJoinAndSelect('producto.linea', 'linea')
+        .innerJoinAndSelect('producto.presentacion', 'presentacion')
         .where('producto.deletedAt IS NULL');
 
       QueryBuilderHelper.applyPartialCoincidence(
@@ -566,6 +567,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         .createQueryBuilder('producto')
         .leftJoinAndSelect('producto.marca', 'marca')
         .leftJoinAndSelect('producto.linea', 'linea')
+        .innerJoinAndSelect('producto.presentacion', 'presentacion')
         .leftJoinAndSelect('linea.superLinea', 'superLinea')
         .where('superLinea.id = :superLineaId', { superLineaId })
         .andWhere('producto.deletedAt IS NULL')
