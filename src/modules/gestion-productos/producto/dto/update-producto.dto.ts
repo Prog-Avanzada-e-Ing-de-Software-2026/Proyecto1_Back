@@ -19,7 +19,7 @@ import {
   IsOptionalWhenUndefined,
   normalizeString,
   toStrictBoolean,
-} from '../../common/validation/request-validation.helpers';
+} from '../../common/validation/request-transforms';
 
 export class UpdateProductoDto {
   @Transform(({ value }) => normalizeString(value))

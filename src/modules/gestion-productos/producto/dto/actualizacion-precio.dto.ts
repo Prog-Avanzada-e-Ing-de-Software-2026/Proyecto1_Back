@@ -8,7 +8,7 @@ import {
   IsPositiveInteger,
   IsOptionalWhenUndefined,
   toQueryNumber,
-} from '../../common/validation/request-validation.helpers';
+} from '../../common/validation/request-transforms';
 
 export class ActualizacionPrecioDto {
   @ApiPropertyOptional({

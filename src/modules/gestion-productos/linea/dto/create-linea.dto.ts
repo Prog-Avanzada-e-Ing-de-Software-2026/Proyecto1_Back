@@ -16,7 +16,7 @@ import {
   IsQuantity,
   normalizeString,
   toStrictBoolean,
-} from '../../common/validation/request-validation.helpers';
+} from '../../common/validation/request-transforms';
 
 export class CreateLineaDto {
   @Transform(({ value }) => normalizeString(value))

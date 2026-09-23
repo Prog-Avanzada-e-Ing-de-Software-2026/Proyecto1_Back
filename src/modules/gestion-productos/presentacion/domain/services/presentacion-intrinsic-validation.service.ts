@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { isPositiveInteger } from '../../../common/validation/request-validation.helpers';
+import { isPositiveInteger } from '../../../common/validation/numeric-rules';
 
 interface PresentacionIntrinsicState {
   denominacion?: unknown;

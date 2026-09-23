@@ -3,7 +3,7 @@ import {
   fitsQuantityRange,
   isFiniteNumber,
   isPositiveInteger,
-} from '../../../common/validation/request-validation.helpers';
+} from '../../../common/validation/numeric-rules';
 
 interface LineaIntrinsicState {
   denominacion?: unknown;

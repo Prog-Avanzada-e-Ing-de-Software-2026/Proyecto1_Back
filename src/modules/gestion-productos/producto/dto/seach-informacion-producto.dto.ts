@@ -5,7 +5,7 @@ import {
   IsOptionalWhenUndefined,
   toQueryDate,
   toQueryNumber,
-} from '../../common/validation/request-validation.helpers';
+} from '../../common/validation/request-transforms';
 
 export class SearchInformacionProductoDto {
   @Type(() => Number)

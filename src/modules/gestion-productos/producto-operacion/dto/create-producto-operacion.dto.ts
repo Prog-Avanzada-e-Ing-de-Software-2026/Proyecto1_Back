@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
-import { IsPositiveInteger } from '../../common/validation/request-validation.helpers';
+import { IsPositiveInteger } from '../../common/validation/request-transforms';
 
 export class CreateProductoOperacionDto {
   @IsNotEmpty({ message: 'El productoId es obligatorio.' })

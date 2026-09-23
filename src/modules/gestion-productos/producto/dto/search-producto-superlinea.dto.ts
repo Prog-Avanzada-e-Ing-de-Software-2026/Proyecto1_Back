@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsInt, Min } from 'class-validator';
-import { toQueryNumber } from '../../common/validation/request-validation.helpers';
+import { toQueryNumber } from '../../common/validation/request-transforms';
 
 export class SearchProductoSuperlineaDto {
   @ApiProperty({ example: 5, description: 'ID de la superlínea' })

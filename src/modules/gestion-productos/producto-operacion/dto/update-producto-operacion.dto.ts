@@ -6,7 +6,7 @@ import {
 import {
   IsOptionalWhenUndefined,
   IsPositiveInteger,
-} from '../../common/validation/request-validation.helpers';
+} from '../../common/validation/request-transforms';
 
 export class UpdateProductoOperacionDto {
   @IsOptionalWhenUndefined()

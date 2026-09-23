@@ -5,7 +5,7 @@ import {
   IsMoney,
   IsPositiveInteger,
   toQueryNumber,
-} from '../../common/validation/request-validation.helpers';
+} from '../../common/validation/request-transforms';
 
 export class UpdatePrecioDto {
   @ApiProperty({ example: 100.5, description: 'Costo en moneda local' })
