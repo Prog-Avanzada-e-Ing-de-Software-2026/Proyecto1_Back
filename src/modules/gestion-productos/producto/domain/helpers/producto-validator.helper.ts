@@ -24,9 +24,9 @@ export class ProductoValidator {
     private readonly repository: IProductoRepository,
   ) {}
 
-  private assertEntidadValida(entidad: any, tipo: string) {
+  private assertEntidadValida(entidad: any, tipo: string, id: number) {
     if (!entidad) {
-      throw new NotFoundException(`${tipo} no encontrada`);
+      throw new NotFoundException(`${tipo} con ID ${id} no encontrada.`);
     }
 
     if (entidad.sistema === 1) {
@@ -57,8 +57,8 @@ export class ProductoValidator {
 
 
     if (tipo === 0) {
-      this.assertEntidadValida(marca, 'Marca');
-      this.assertEntidadValida(linea, 'Línea');
+      this.assertEntidadValida(marca, 'Marca', marcaId);
+      this.assertEntidadValida(linea, 'Línea', lineaId);
     }
 
     return { marca, linea, };
@@ -96,7 +96,7 @@ export class ProductoValidator {
     if (existingProduct) {
 
       throw new ConflictException(
-        `La denominación "${denominacion}" ya está en uso.`,
+        `La denominación '${denominacion}' ya está en uso.`,
       );
     }
   }

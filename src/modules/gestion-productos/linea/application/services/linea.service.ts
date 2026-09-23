@@ -5,6 +5,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { UsuarioService } from 'src/modules/gestion-usuario/usuario/application/services/usuario.service';
 import { ensureNotSistemaEntity } from 'src/modules/common/utils/atrituto-sistema';
@@ -17,6 +18,7 @@ import { UpdateLineaDto } from '../../dto/update-linea.dto';
 import { LineaDto } from '../../dto/linea.dto';
 import { LineaMapper } from '../../mappers/linea.mapper';
 import { PoliticaEliminacionLinea } from '../../domain/services/politica-eliminacion-linea.service';
+import { LineaIntrinsicValidationService } from '../../domain/services/linea-intrinsic-validation.service';
 import { Linea } from '../../domain/entities/linea.entity';
 import { ISuperLineaRepository } from '../../../superlinea/domain/interfaces/superlinea.repository.interface';
 import { SuperLinea } from 'src/modules/gestion-productos/superlinea/domain/entities/superlinea.entity';
@@ -33,6 +35,9 @@ export class LineaService {
     private readonly usuarioService: UsuarioService,
     @Inject('ISuperLineaRepository')
     private readonly superLineaRepository: ISuperLineaRepository,
+
+    @Optional()
+    private readonly lineaValidationService: LineaIntrinsicValidationService = new LineaIntrinsicValidationService(),
   ) { }
 
   private readonly ENTITY_NAME = 'Linea';
@@ -41,6 +46,11 @@ export class LineaService {
     this.logger.log(
       `Creando un nuevo ${this.ENTITY_NAME} con denominación: ${dto.denominacion} a: ${dto.denominacion}`,
     );
+
+    this.lineaValidationService.validarDatosBasicos(dto, {
+      requerirEstadoCompleto: true,
+    });
+
     await this.checkDenominacionExists(dto.denominacion, 0);
     const superLinea = await this.findActiveSuperLinea(dto.superLineaId);
     const entity = await this.repository.create(dto, superLinea);
@@ -50,6 +60,7 @@ export class LineaService {
   async update(id: number, dto: UpdateLineaDto) {
     this.logger.log(`Actualizando  ${this.ENTITY_NAME} con ID: ${id}`);
 
+    this.lineaValidationService.validarDatosBasicos(dto);
 
     const linea = await this.findEntityById(id); // Verifica existencia
     ensureNotSistemaEntity(linea, 'Linea');

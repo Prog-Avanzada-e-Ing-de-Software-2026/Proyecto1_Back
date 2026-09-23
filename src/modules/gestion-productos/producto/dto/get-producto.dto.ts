@@ -130,6 +130,11 @@ export class GetProductoDto {
   @Min(0)
   cantidadPorPack: number;
 
+  @ApiProperty({
+    type: String,
+    description: 'Código de referencia del producto.',
+    example: 'REF-001',
+  })
   @IsString()
   codigoReferencia: string;
 

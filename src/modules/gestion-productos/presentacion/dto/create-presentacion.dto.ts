@@ -1,17 +1,27 @@
 import { Transform } from 'class-transformer';
 import {
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
   IsString,
-  Matches,
+  IsNotEmpty,
   MaxLength,
+  Matches,
 } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsOptionalWhenUndefined,
+  IsPositiveInteger,
+  normalizeString,
+} from '../../common/validation/request-transforms';
 
 export class CreatePresentacionDto {
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : value,
-  )
+  @ApiProperty({
+    type: String,
+    maxLength: 255,
+    pattern: /^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ.\-/]+$/.source,
+    description:
+      'Denominación o nombre de la presentación. No puede superar los 255 caracteres.',
+    example: '1L',
+  })
+  @Transform(({ value }) => normalizeString(value))
   @IsString({ message: 'La denominación debe ser una cadena de texto.' })
   @IsNotEmpty({ message: 'La denominación no puede estar vacía.' })
   @MaxLength(255, {
@@ -23,11 +33,25 @@ export class CreatePresentacionDto {
   })
   denominacion: string;
 
-  @IsOptional()
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Observaciones varias sobre la presentación.',
+    example: 'Botella de un litro',
+  })
+  @IsOptionalWhenUndefined()
   @IsString()
   observacion?: string;
 
+  @ApiProperty({
+    type: Number,
+    minimum: 1,
+    description:
+      'ID del usuario que crea la presentación. Debe ser un número entero positivo.',
+    example: 1,
+  })
   @IsNotEmpty({ message: 'El usuarioCreatedId es obligatorio.' })
-  @IsInt({ message: 'El usuarioCreatedId debe ser un número entero.' })
+  @IsPositiveInteger({
+    message: 'El usuarioCreatedId debe ser un número entero positivo.',
+  })
   usuarioCreatedId: number;
 }

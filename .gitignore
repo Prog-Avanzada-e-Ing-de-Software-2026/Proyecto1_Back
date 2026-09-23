@@ -75,3 +75,5 @@ src/*/.js.map
 # Local AI runtime state
 .atl/
 .codegraph/
+odd/
+docs/temp/

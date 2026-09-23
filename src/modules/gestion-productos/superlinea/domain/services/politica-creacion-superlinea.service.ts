@@ -9,8 +9,8 @@ export class PoliticaCreacionSuperLinea {
     private readonly superLineaRepository: ISuperLineaRepository,
   ) {}
 
-  async checkDenominacionExists(denominacion: string): Promise<boolean> {
+  async checkDenominacionExists(denominacion: string, id?:number): Promise<boolean> {
     const existing = await this.superLineaRepository.findByDenominacionWithDeleted(denominacion);
-    return !!existing;
+    return !!existing && existing.id !== id;
   }
 }

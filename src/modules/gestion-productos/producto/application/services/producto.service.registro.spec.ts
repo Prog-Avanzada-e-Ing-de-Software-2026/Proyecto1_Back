@@ -6,11 +6,12 @@ import { ProductoIntrinsicValidationService } from '../../domain/services/produc
  * Casos de prueba de registro y actualización de producto a nivel de servicio
  * (sin Docker).
  *
- * La mayoría de los rechazos esperados por el documento fuente (CP-19/CP-20)
- * NO están implementados en el modelo de producción: `costo`, `porcentaje`
- * (margen), `stock` (stockActual) y `stockMinimo` (stockMínimo) son opcionales
- * y no se validan a nivel de servicio. Esas filas fallan EXPRESAMENTE
- * (FAIL BY DESIGN) y no deben "arreglarse" tocando código de producción.
+ * CR-001 hardena la validación intrínseca de Producto: `costo` >= 0,
+ * `porcentaje` (margen) > 0, `stock` (stockActual) > 0 y `stockMinimo`
+ * (stockMínimo) > 0 son obligatorios en el estado de la petición, junto con
+ * `denominacion`, `marcaId`, `lineaId` y `presentacionId`. Los once casos de
+ * rechazo deben lanzar `BadRequestException` y evitar que se invoque
+ * `repo.create` / `repo.update`.
  */
 const marca = { id: 1, denominacion: 'Coca-Cola' };
 const linea = { id: 1, denominacion: 'Gaseosas' };

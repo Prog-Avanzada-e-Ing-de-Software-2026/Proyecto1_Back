@@ -7,7 +7,7 @@
  *
  * - CP-01: Cambiar el precio de un producto por HTTP (PUT), persistir el
  *          primer cambio de precio en el historial y consultarlo.
- * - CP-05: Paginar el historial de precios (páginas de 10 registros).
+ * - CP-05: Paginar el historial de precios (páginas de hasta 10 registros).
  * - CP-09: Consultar el historial de un producto inexistente (404).
  *
  * Los unitarios CP-03, CP-04 y CP-07 viven en producto.entity.spec.ts.
@@ -49,6 +49,7 @@ import { Init1787269586538 } from 'src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from 'src/migrations/1789091969000-AddSuperLineaToLinea';
 import { AddCambioPrecioToProducto1789351169000 } from 'src/migrations/1789351169000-AddCambioPrecioToProducto';
 import { AddPresentacionToProducto1789200000000 } from 'src/migrations/1789200000000-AddPresentacionToProducto';
+import { RemoveSuperLineaDenominacionUnique1789400000000 } from 'src/migrations/1789400000000-RemoveSuperLineaDenominacionUnique';
 import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 import { Proveedor } from 'src/modules/organizacion/proveedor/domain/entities/proveedor.entity';
 import { ProveedorOperacion } from 'src/modules/organizacion/proveedor-operacion/entities/proveedor-operacion.entity';
@@ -91,6 +92,7 @@ const MIGRATIONS = [
   AddSuperLineaToLinea1789091969000,
   AddCambioPrecioToProducto1789351169000,
   AddPresentacionToProducto1789200000000,
+  RemoveSuperLineaDenominacionUnique1789400000000,
 ];
 
 describe('Producto - Historial de precios (HTTP end-to-end)', () => {
@@ -169,18 +171,27 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
   });
 
   it('Cambiar el precio, persistir el cambio y consultar el historial', async () => {
-    const { linea, marca, usuario, producto } = await crearProducto(
-      dataSource,
-      'cp01',
-    );
+    const { linea, marca, usuario, presentacion, producto } =
+      await crearProducto(dataSource, 'cp01');
     lineaServiceStub.findEntityById.mockResolvedValue(linea);
     marcaServiceStub.findEntityById.mockResolvedValue(marca);
     usuarioServiceStub.findOne.mockResolvedValue(usuario);
+    presentacionRepositoryStub.findOne.mockResolvedValue(presentacion);
 
+    // The approved Product update contract is a full replacement: every
+    // mandatory field must be present. The price is the only value that
+    // changes relative to the fixture, and the change must be recorded.
     await request(app.getHttpServer())
       .put(`/producto/${producto.id}`)
       .send({
         denominacion: 'coca-cola 1l cp01',
+        costo: 60,
+        porcentaje: 10,
+        stock: 5,
+        stockMinimo: 1,
+        lineaId: linea.id,
+        marcaId: marca.id,
+        presentacionId: presentacion.id,
         usuarioUpdatedId: usuario.id,
         precio: 120,
       })
@@ -206,24 +217,25 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
   });
 
   it.each([
-    [5, 1, 5],
-    [10, 1, 10],
-    [11, 1, 10],
-    [11, 2, 1],
-    [20, 1, 10],
-    [20, 2, 10],
+    [5, 1, 10, 5],
+    [10, 1, 10, 10],
+    [11, 1, 10, 10],
+    [11, 2, 10, 1],
+    [20, 1, 5, 5],
+    [20, 2, 5, 5],
+    [20, 2, 10, 10],
   ])(
-    'Consultar el historial paginado (cantidad=%s, pagina=%s, resultado=%s)',
-    async (cantidad, pagina, resultado) => {
+    'Consultar el historial paginado (cantidad=%s, pagina=%s, porPagina=%s, resultado=%s)',
+    async (cantidad, pagina, porPagina, resultado) => {
       const { producto, cambios } = await sembrarProductoConHistorial(
         dataSource,
-        `cp05-${cantidad}-${pagina}`,
+        `cp05-${cantidad}-${pagina}-${porPagina}`,
         cantidad,
       );
 
       const res = await request(app.getHttpServer())
         .get(`/producto/${producto.id}/historial-precios`)
-        .query({ skip: (pagina - 1) * 10, take: 10 })
+        .query({ skip: (pagina - 1) * porPagina, take: porPagina })
         .expect(200);
 
       const esperados = cambios
@@ -231,8 +243,8 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
         .sort((a, b) => b.fecha.getTime() - a.fecha.getTime())
         .map((cambio) => Number(cambio.precioNuevo));
       const paginaEsperada = esperados.slice(
-        (pagina - 1) * 10,
-        (pagina - 1) * 10 + resultado,
+        (pagina - 1) * porPagina,
+        (pagina - 1) * porPagina + porPagina,
       );
 
       expect(res.body).toHaveLength(resultado);

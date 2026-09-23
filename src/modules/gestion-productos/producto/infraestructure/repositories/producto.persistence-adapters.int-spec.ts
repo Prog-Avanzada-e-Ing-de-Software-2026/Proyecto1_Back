@@ -70,6 +70,17 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
   }
 
   describe('busquedaPorCoincidenciaParcial', () => {
+    it('Incluye la presentación asociada al producto', async () => {
+      const superLineaId = await createSuperLinea('Almacen');
+      const lineaId = await createLinea('Almacen linea', superLineaId);
+      await createProducto('Harina integral', lineaId);
+
+      const result = await adapter.busquedaPorCoincidenciaParcial('harina');
+
+      expect(result.data[0].presentacion).toBeDefined();
+      expect(result.data[0].presentacion.id).toBe(presentacionId);
+    });
+
     it('La búsqueda no distingue mayúsculas de minúsculas', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaId = await createLinea('Almacen linea', superLineaId);
@@ -225,6 +236,17 @@ describe('ProductoPersistenceAdapter - CR-004 persistence queries', () => {
   });
 
   describe('findProductosBySuperLinea', () => {
+    it('Incluye la presentación asociada al producto', async () => {
+      const superLineaId = await createSuperLinea('Almacen');
+      const lineaId = await createLinea('Almacen linea', superLineaId);
+      await createProducto('Producto A', lineaId);
+
+      const result = await adapter.findProductosBySuperLinea(superLineaId);
+
+      expect(result.data[0].presentacion).toBeDefined();
+      expect(result.data[0].presentacion.id).toBe(presentacionId);
+    });
+
     it('Devuelve los productos de al menos dos líneas que pertenecen a la superlínea', async () => {
       const superLineaId = await createSuperLinea('Almacen');
       const lineaAId = await createLinea('Linea A', superLineaId);

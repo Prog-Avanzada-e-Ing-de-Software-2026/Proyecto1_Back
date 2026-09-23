@@ -4,7 +4,6 @@ import * as request from 'supertest';
 import { AuthGuard } from 'src/modules/gestion-usuario/auth/auth.guard';
 import { SuperLineaController } from './superlinea.controller';
 import { SuperLineaService } from '../services/superlinea.service';
-import { IsUniqueDenominacionConstraint } from '../../domain/validator/unique-denominacion.validator';
 
 describe('SuperLineaController', () => {
   let app: INestApplication;
@@ -22,9 +21,6 @@ describe('SuperLineaController', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest
-      .spyOn(IsUniqueDenominacionConstraint.prototype, 'validate')
-      .mockResolvedValue(true);
     const moduleRef = await Test.createTestingModule({
       controllers: [SuperLineaController],
       providers: [{ provide: SuperLineaService, useValue: service }],

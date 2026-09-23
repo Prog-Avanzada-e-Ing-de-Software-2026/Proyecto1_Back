@@ -56,6 +56,7 @@ import { Init1787269586538 } from 'src/migrations/1787269586538-Init';
 import { AddSuperLineaToLinea1789091969000 } from 'src/migrations/1789091969000-AddSuperLineaToLinea';
 import { AddCambioPrecioToProducto1789351169000 } from 'src/migrations/1789351169000-AddCambioPrecioToProducto';
 import { AddPresentacionToProducto1789200000000 } from 'src/migrations/1789200000000-AddPresentacionToProducto';
+import { RemoveSuperLineaDenominacionUnique1789400000000 } from 'src/migrations/1789400000000-RemoveSuperLineaDenominacionUnique';
 import { Presentacion } from 'src/modules/gestion-productos/presentacion/domain/entities/presentacion.entity';
 import { Linea } from 'src/modules/gestion-productos/linea/domain/entities/linea.entity';
 import { SuperLinea } from 'src/modules/gestion-productos/superlinea/domain/entities/superlinea.entity';
@@ -98,6 +99,7 @@ const MIGRATIONS = [
   AddSuperLineaToLinea1789091969000,
   AddCambioPrecioToProducto1789351169000,
   AddPresentacionToProducto1789200000000,
+  RemoveSuperLineaDenominacionUnique1789400000000,
 ];
 
 describe('Marca - Gestión de marca (HTTP end-to-end)', () => {

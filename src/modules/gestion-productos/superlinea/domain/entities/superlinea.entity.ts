@@ -3,7 +3,6 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  Index,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -11,7 +10,6 @@ import {
 import { Linea } from '../../../linea/domain/entities/linea.entity';
 
 @Entity('super_linea')
-@Index('UQ_super_linea_denominacion', ['denominacion'], { unique: true })
 export class SuperLinea {
   @PrimaryGeneratedColumn()
   id: number;

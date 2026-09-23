@@ -10,14 +10,12 @@ import { SuperLineaController } from './application/controllers/superlinea.contr
 import { SuperLineaService } from './application/services/superlinea.service';
 import { SuperLinea } from './domain/entities/superlinea.entity';
 import { PoliticaEliminacionSuperLinea } from './domain/services/politica-eliminacion-superlinea.service';
+import { SuperLineaIntrinsicValidationService } from './domain/services/superlinea-intrinsic-validation.service';
 import { SuperLineaPersistenceAdapter } from './infraestructure/repositories/superlinea.persistence-adapter';
 import { SuperLineaRepository } from './infraestructure/repositories/superlinea.repository';
 import {
   PoliticaCreacionSuperLinea
 } from 'src/modules/gestion-productos/superlinea/domain/services/politica-creacion-superlinea.service';
-import {
-  IsUniqueDenominacionConstraint
-} from 'src/modules/gestion-productos/superlinea/domain/validator/unique-denominacion.validator';
 
 @Module({
   imports: [
@@ -30,9 +28,9 @@ import {
     SuperLineaService,
     PoliticaEliminacionSuperLinea,
     PoliticaCreacionSuperLinea,
+    SuperLineaIntrinsicValidationService,
     SuperLineaPersistenceAdapter,
     NormalizeDenominacionPipe,
-    IsUniqueDenominacionConstraint,
     {
       provide: 'ISuperLineaRepository',
       useClass: SuperLineaRepository,

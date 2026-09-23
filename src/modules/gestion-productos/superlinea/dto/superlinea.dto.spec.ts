@@ -1,15 +1,10 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { IsUniqueDenominacionConstraint } from '../domain/validator/unique-denominacion.validator';
 import { CreateSuperLineaDto } from './create-superlinea.dto';
 import { UpdateSuperLineaDto } from './update-superlinea.dto';
 
 describe('Validación de DTOs de SuperLínea', () => {
-  beforeEach(() => {
-    jest
-      .spyOn(IsUniqueDenominacionConstraint.prototype, 'validate')
-      .mockResolvedValue(true);
-  });
+  beforeEach(() => {});
 
   afterEach(() => jest.restoreAllMocks());
 
