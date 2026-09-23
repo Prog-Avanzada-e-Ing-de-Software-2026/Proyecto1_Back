@@ -19,6 +19,7 @@
     "test:cov": "cross-env TEST_SUITE=without jest --coverage",
     "test:debug": "cross-env TEST_SUITE=without node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "openapi:generate": "ts-node -r tsconfig-paths/register src/scripts/generate-openapi.ts",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "migration:generate": "npm run typeorm -- migration:generate -d orm.config.ts",
     "migration:run": "npm run typeorm -- migration:run -d orm.config.ts",
