@@ -103,11 +103,11 @@ Requirement key: R1 Safe/strict request transformation · R2 Product write contr
 
 ## Phase Final Verification
 
-- [ ] V.1 Run `yarn test` and confirm the entire existing unit-manifest suite is green. (Req: all)
-- [ ] V.2 Run `yarn test:integration` when Docker is available; capture and report the outcome honestly, including any unavailable suite; never report an unexecuted Docker suite as passing. (Req: R4, R5, R6, R8, E1, E2)
-- [ ] V.3 Run `yarn build` and resolve compilation failures only within CR-001 files. (Req: all)
-- [ ] V.4 Run `git diff --name-only` and `git diff --check`, then confirm: no entity, mapper, shared column decorator, migration, or `producto-operacion` service/entity/controller file changed; `Producto.denominacion` mapping untouched; no new spec file created and no manifest extended. (Req: R10)
-- [ ] V.5 Confirm the eleven `producto.service.registro.spec.ts` rejection cases pass with their assertions intact and the obsolete "FAIL BY DESIGN" comment replaced. (Req: R4)
+- [x] V.1 Run `yarn test` and confirm the entire existing unit-manifest suite is green. (Req: all)
+- [x] V.2 Run `yarn test:integration` when Docker is available; capture and report the outcome honestly, including any unavailable suite; never report an unexecuted Docker suite as passing. (Req: R4, R5, R6, R8, E1, E2)
+- [x] V.3 Run `yarn build` and resolve compilation failures only within CR-001 files. (Req: all)
+- [x] V.4 Run `git diff --name-only` and `git diff --check`, then confirm: no entity, mapper, shared column decorator, migration, or `producto-operacion` service/entity/controller file changed; `Producto.denominacion` mapping untouched; no new spec file created and no manifest extended. (Req: R10)
+- [x] V.5 Confirm the eleven `producto.service.registro.spec.ts` rejection cases pass with their assertions intact and the obsolete "FAIL BY DESIGN" comment replaced. (Req: R4)
 
 ---
 
