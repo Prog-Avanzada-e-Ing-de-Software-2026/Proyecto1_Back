@@ -171,18 +171,27 @@ describe('Producto - Historial de precios (HTTP end-to-end)', () => {
   });
 
   it('Cambiar el precio, persistir el cambio y consultar el historial', async () => {
-    const { linea, marca, usuario, producto } = await crearProducto(
-      dataSource,
-      'cp01',
-    );
+    const { linea, marca, usuario, presentacion, producto } =
+      await crearProducto(dataSource, 'cp01');
     lineaServiceStub.findEntityById.mockResolvedValue(linea);
     marcaServiceStub.findEntityById.mockResolvedValue(marca);
     usuarioServiceStub.findOne.mockResolvedValue(usuario);
+    presentacionRepositoryStub.findOne.mockResolvedValue(presentacion);
 
+    // The approved Product update contract is a full replacement: every
+    // mandatory field must be present. The price is the only value that
+    // changes relative to the fixture, and the change must be recorded.
     await request(app.getHttpServer())
       .put(`/producto/${producto.id}`)
       .send({
         denominacion: 'coca-cola 1l cp01',
+        costo: 60,
+        porcentaje: 10,
+        stock: 5,
+        stockMinimo: 1,
+        lineaId: linea.id,
+        marcaId: marca.id,
+        presentacionId: presentacion.id,
         usuarioUpdatedId: usuario.id,
         precio: 120,
       })
