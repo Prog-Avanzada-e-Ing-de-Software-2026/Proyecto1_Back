@@ -12,7 +12,16 @@ import {
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import { MensajeDto } from 'src/modules/common/utils/message/mensajeDto';
 import { PaginationWithDenominacionDto } from 'src/modules/common/dto/busquedas/pagination-with-denominacion.dto';
 import { NormalizeDenominacionPipe } from 'src/modules/common/pipes/normalize-denominations.pipe';
 import { NormalizeDenominacionSearchPipe } from 'src/modules/common/pipes/normalize-denominations-search.pipe';
@@ -24,8 +33,10 @@ import { SelectPresentacionDto } from '../../dto/select-presentacion.dto';
 import { PresentacionDto } from '../../dto/presentacion.dto';
 import { UpdatePresentacionDto } from '../../dto/update-presentacion.dto';
 import { PresentacionService } from '../services/presentacion.service';
+import { ApiListadoConTotal } from 'src/modules/common/interface/listadoConTotalDto';
 
 @ApiTags('Gestion Productos')
+@ApiBearerAuth('bearer')
 @Controller('presentacion')
 @UseGuards(AuthGuard)
 export class PresentacionController {
@@ -36,6 +47,14 @@ export class PresentacionController {
   @Post()
   @Roles('Root', 'Administrador', 'Empleado')
   @UsePipes(NormalizeDenominacionPipe)
+  @ApiOperation({
+    summary: 'Crear una presentación',
+    description: 'Registra una nueva presentación en el sistema.',
+  })
+  @ApiCreatedResponse({
+    type: MensajeDto,
+    description: 'Presentación creada correctamente.',
+  })
   create(@Body() dto: CreatePresentacionDto) {
     this.logger.log(`Creando una nueva Presentación: ${dto.denominacion}`);
     return this.service.create(dto);
@@ -44,6 +63,15 @@ export class PresentacionController {
   @Get('search-by')
   @Roles('Root', 'Administrador', 'Empleado')
   @UsePipes(NormalizeDenominacionSearchPipe)
+  @ApiOperation({
+    summary: 'Buscar presentaciones con filtros',
+    description:
+      'Devuelve las presentaciones filtradas por denominación, con paginación.',
+  })
+  @ApiListadoConTotal(
+    PresentacionDto,
+    'Presentaciones que coinciden con los filtros indicados.',
+  )
   search(@Query() dto: PaginationWithDenominacionDto) {
     return this.service.findBy(dto);
   }
@@ -51,20 +79,43 @@ export class PresentacionController {
   @Get('select')
   @Roles('Root', 'Administrador', 'Empleado')
   @UsePipes(NormalizeDenominacionSearchPipe)
+  @ApiOperation({
+    summary: 'Listar presentaciones para selección',
+    description:
+      'Devuelve las presentaciones activas que coinciden parcialmente por denominación.',
+  })
+  @ApiListadoConTotal(
+    PresentacionDto,
+    'Presentaciones activas que coinciden por denominación.',
+  )
   select(@Query() dto: SelectPresentacionDto) {
     return this.service.findAllFor(dto.denominacion ?? '');
   }
 
   @Get(':id/audit')
   @Roles('Root', 'Administrador', 'Empleado')
-  @ApiOkResponse({ type: AuditoriaDto })
+  @ApiOperation({
+    summary: 'Obtener la auditoría de una presentación',
+    description:
+      'Devuelve la información de auditoría de la presentación indicada.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'ID de la presentación.' })
+  @ApiOkResponse({ type: AuditoriaDto, description: 'Informacion de auditoria' })
   findByIdConAuditoria(@Param('id', ParseIntPipe) id: number) {
     return this.service.findByIdConAuditoria(id);
   }
 
   @Get(':id')
   @Roles('Root', 'Administrador', 'Empleado')
-  @ApiOkResponse({ type: PresentacionDto })
+  @ApiOperation({
+    summary: 'Obtener una presentación por ID',
+    description: 'Devuelve el detalle de la presentación indicada.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'ID de la presentación.' })
+  @ApiOkResponse({
+    type: PresentacionDto,
+    description: 'Presentación encontrada.',
+  })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findDtoById(id);
   }
@@ -72,6 +123,15 @@ export class PresentacionController {
   @Put(':id')
   @Roles('Root', 'Administrador', 'Empleado')
   @UsePipes(NormalizeDenominacionPipe)
+  @ApiOperation({
+    summary: 'Actualizar una presentación',
+    description: 'Actualiza los datos de la presentación indicada.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'ID de la presentación.' })
+  @ApiOkResponse({
+    type: MensajeDto,
+    description: 'Presentación actualizada correctamente.',
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePresentacionDto,
@@ -81,6 +141,21 @@ export class PresentacionController {
 
   @Delete(':id')
   @Roles('Root', 'Administrador', 'Empleado')
+  @ApiOperation({
+    summary: 'Eliminar una presentación',
+    description: 'Elimina de forma lógica la presentación indicada.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'ID de la presentación.' })
+  @ApiQuery({
+    name: 'usuarioId',
+    type: Number,
+    required: true,
+    description: 'ID del usuario que realiza la eliminación.',
+  })
+  @ApiOkResponse({
+    type: MensajeDto,
+    description: 'Presentación eliminada correctamente.',
+  })
   remove(
     @Param('id', ParseIntPipe) id: number,
     @Query('usuarioId', ParseIntPipe) usuarioId: number,
