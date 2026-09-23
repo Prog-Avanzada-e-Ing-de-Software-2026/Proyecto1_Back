@@ -91,25 +91,25 @@ export class UpdateProductoDto {
 
   @IsNotEmpty({ message: 'El costo es obligatorio.' })
   @IsNumber({}, { message: 'El costo debe ser un número.' })
-  @IsMoney({ message: 'El costo debe ser un valor monetario válido.' })
+  @IsMoney({ message: 'El costo debe ser un valor monetario válido con hasta 5 decimales.' })
   costo: number;
 
   @IsNotEmpty({ message: 'El porcentaje es obligatorio.' })
   @IsNumber({}, { message: 'El porcentaje debe ser un número.' })
   @IsPositive({ message: 'El porcentaje debe ser mayor que 0.' })
-  @IsPercentage({ message: 'El porcentaje debe respetar el formato decimal válido.' })
+  @IsPercentage({ message: 'El porcentaje debe respetar el formato decimal válido con hasta 2 decimales.' })
   porcentaje: number;
 
   @IsNotEmpty({ message: 'El stock es obligatorio.' })
   @IsNumber({}, { message: 'El stock debe ser un número.' })
   @IsPositive({ message: 'El stock debe ser mayor que 0.' })
-  @IsQuantity({ message: 'El stock debe respetar el formato decimal válido.' })
+  @IsQuantity({ message: 'El stock debe respetar el formato decimal válido con hasta 3 decimales.' })
   stock: number;
 
   @IsNotEmpty({ message: 'El stock mínimo es obligatorio.' })
   @IsNumber({}, { message: 'El stock mínimo debe ser un número.' })
   @IsPositive({ message: 'El stock mínimo debe ser mayor que 0.' })
-  @IsQuantity({ message: 'El stock mínimo debe respetar el formato decimal válido.' })
+  @IsQuantity({ message: 'El stock mínimo debe respetar el formato decimal válido con hasta 3 decimales.' })
   stockMinimo: number;
 
   @IsNotEmpty({ message: 'La línea es obligatoria.' })
@@ -128,12 +128,12 @@ export class UpdateProductoDto {
 
   @IsOptionalWhenUndefined()
   @IsNumber({}, { message: 'El costo en dólares debe ser un número.' })
-  @IsMoney({ message: 'El costo en dólares debe ser un valor monetario válido.' })
+  @IsMoney({ message: 'El costo en dólares debe ser un valor monetario válido con hasta 5 decimales.' })
   costoDolar?: number;
 
   @IsOptionalWhenUndefined()
   @IsNumber({}, { message: 'El precio debe ser un número.' })
-  @IsMoney({ message: 'El precio debe ser un valor monetario válido.' })
+  @IsMoney({ message: 'El precio debe ser un valor monetario válido con hasta 5 decimales.' })
   precio?: number;
 
   @IsOptionalWhenUndefined()

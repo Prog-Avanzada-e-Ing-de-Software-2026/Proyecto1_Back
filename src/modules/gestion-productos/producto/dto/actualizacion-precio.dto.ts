@@ -46,6 +46,6 @@ export class ActualizacionPrecioDto {
   @Transform(({ value }) => toQueryNumber(value))
   @IsNumber({}, { message: 'El valor del ajuste debe ser un número.' })
   @IsPositive({ message: 'El valor del ajuste debe ser mayor que 0.' })
-  @IsMoney({ message: 'El valor del ajuste debe respetar el formato monetario válido.' })
+  @IsMoney({ message: 'El valor del ajuste debe respetar el formato monetario válido con hasta 5 decimales.' })
   valor: number;
 }

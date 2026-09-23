@@ -100,7 +100,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
 
       this.logger.warn(`rrr: ${entity}.`);
       if (!entity) {
-        throw new EntityNotFoundException('Entidad no encontrada.');
+        throw new EntityNotFoundException('Producto', id);
       }
       return entity;
     } catch (error) {
@@ -129,7 +129,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
 
       this.logger.warn(`: ${entity}.`);
       if (!entity) {
-        throw new EntityNotFoundException('Entidad no encontrada.');
+        throw new EntityNotFoundException('Producto', id);
       }
       return entity;
     } catch (error) {
@@ -154,7 +154,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
         .getOne();
 
       if (!entity) {
-        throw new EntityNotFoundException('Entidad no encontrada.');
+        throw new EntityNotFoundException('Producto', id);
       }
       return entity;
     } catch (error) {
@@ -182,7 +182,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
       const entity = await this.findOne(id);
 
       if (!entity) {
-        throw new NotFoundException(`EL prodcuto con ID ${id} no encontrada`);
+        throw new NotFoundException(`El producto con ID ${id} no encontrado.`);
       }
       const {
         precio,
@@ -407,7 +407,7 @@ export class ProductoPersistenceAdapter implements IProductoRepository {
     const entity = await repo.findOne({ where: { id } });
 
     if (!entity) {
-      throw new NotFoundException('Producto no encontrado');
+      throw new NotFoundException(`Producto con ID ${id} no encontrado.`);
     }
 
     ProductoMapper.mapPrecios(entity, dto, usuario);

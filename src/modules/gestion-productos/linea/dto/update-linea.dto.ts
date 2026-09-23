@@ -32,7 +32,7 @@ export class UpdateLineaDto {
 
   @IsOptionalWhenUndefined()
   @IsNumber({}, { message: 'El stock mínimo debe ser un número.' })
-  @IsQuantity({ message: 'El stock mínimo debe respetar el formato decimal válido.' })
+  @IsQuantity({ message: 'El stock mínimo debe respetar el formato decimal válido con hasta 3 decimales.' })
   stockMinimo?: number;
 
   @IsOptionalWhenUndefined()

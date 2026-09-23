@@ -109,7 +109,7 @@ export class LineaPersistenceAdapter
       this.logger.warn(`Entidad obtenida: ${JSON.stringify(entity)}`);
 
       if (!entity) {
-        throw new EntityNotFoundException('Entidad no encontrada');
+        throw new EntityNotFoundException('Línea', id);
       }
 
       return entity;
