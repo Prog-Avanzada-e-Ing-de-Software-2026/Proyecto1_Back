@@ -5,6 +5,7 @@ import {
   MaxLength,
   Matches,
 } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsOptionalWhenUndefined,
   IsPositiveInteger,
@@ -12,6 +13,14 @@ import {
 } from '../../common/validation/request-transforms';
 
 export class CreateSuperLineaDto {
+  @ApiProperty({
+    type: String,
+    maxLength: 255,
+    pattern: /^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ]+$/.source,
+    description:
+      'Denominación o nombre de la superlínea. No puede superar los 255 caracteres.',
+    example: 'Herramientas',
+  })
   @Transform(({ value }) => normalizeString(value))
   @IsString({ message: 'La denominación debe ser una cadena de texto.' })
   @IsNotEmpty({ message: 'La denominación no puede estar vacía.' })
@@ -23,10 +32,22 @@ export class CreateSuperLineaDto {
   })
   denominacion: string;
 
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Observaciones varias sobre la superlínea.',
+    example: 'Uso industrial',
+  })
   @IsOptionalWhenUndefined()
   @IsString()
   observacion?: string;
 
+  @ApiProperty({
+    type: Number,
+    minimum: 1,
+    description:
+      'ID del usuario que crea la superlínea. Debe ser un número entero positivo.',
+    example: 1,
+  })
   @IsNotEmpty({ message: 'El usuarioCreatedId es obligatorio.' })
   @IsPositiveInteger({
     message: 'El usuarioCreatedId debe ser un número entero positivo.',

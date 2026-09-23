@@ -1,15 +1,28 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PresentacionDto {
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ type: Number, example: 1, description: 'ID de la presentación.' })
   id: number;
 
-  @ApiProperty({ example: '1L' })
+  @ApiProperty({
+    type: String,
+    example: '1L',
+    description: 'Denominación o nombre de la presentación.',
+  })
   denominacion: string;
 
-  @ApiPropertyOptional({ example: 'Botella de un litro' })
+  @ApiPropertyOptional({
+    type: String,
+    example: 'Botella de un litro',
+    description: 'Observaciones varias sobre la presentación.',
+  })
   observacion: string;
 
-  @ApiProperty({ nullable: true, example: null })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Fecha de eliminación (null si está activa).',
+  })
   deletedAt: string | null;
 }
