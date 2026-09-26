@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Linea } from '../domain/entities/linea.entity';
 import { LineaDto } from '../dto/linea.dto';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { toReferenciaDto } from 'src/modules/common/utils/mappers/referencia.mapper';
 
 export class LineaMapper {
@@ -15,7 +16,15 @@ export class LineaMapper {
       observacion: entity.observacion ?? '',
       sistema: entity.sistema,
       deletedAt: entity.deletedAt ? entity.deletedAt.toISOString() : null,
+      superLinea: toReferenciaDto(entity.superLinea),
+    };
+  }
 
+  static toSelectOption(entity: Linea): SelectOption {
+    return {
+      codigo: entity.id,
+      nombre: entity.denominacion,
+      descripcion: entity.observacion ?? '',
     };
   }
 }

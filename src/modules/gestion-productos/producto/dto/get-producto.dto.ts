@@ -7,7 +7,9 @@ import {
   IsNumber,
   IsString,
   Min,
+  ValidateNested,
 } from 'class-validator';
+import { ReferenciaDto } from 'src/modules/common/dto/referencia.dto';
 /*
 Se Utiliza para la busqueda y llenado de la tabla
 */
@@ -128,8 +130,20 @@ export class GetProductoDto {
   @Min(0)
   cantidadPorPack: number;
 
+  @ApiProperty({
+    type: String,
+    description: 'Código de referencia del producto.',
+    example: 'REF-001',
+  })
   @IsString()
   codigoReferencia: string;
 
-
+  @ApiProperty({
+    type: () => ReferenciaDto,
+    description: 'Presentación asociada al producto',
+    required: true,
+  })
+  @ValidateNested()
+  @Type(() => ReferenciaDto)
+  presentacion: ReferenciaDto;
 }

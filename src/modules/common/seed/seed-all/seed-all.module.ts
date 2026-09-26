@@ -6,6 +6,7 @@ import { SeedFamiliaProductoService } from '../seedFamiliaProducto/seed-familia-
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Linea } from 'src/modules/gestion-productos/linea/domain/entities/linea.entity';
 import { Marca } from 'src/modules/gestion-productos/marca/domain/entities/marca.entity';
+import { SuperLinea } from 'src/modules/gestion-productos/superlinea/domain/entities/superlinea.entity';
 import { Producto } from 'src/modules/gestion-productos/producto/domain/entities/producto.entity';
 import { Empresa } from 'src/modules/organizacion/empresa/domain/entities/empresa.entity';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
@@ -30,6 +31,7 @@ import { AlicuotaIva } from 'src/modules/gutil/alicuota-iva/domain/entities/alic
 
       Linea,
       Marca,
+      SuperLinea,
       Producto,
       Empresa,
       Cliente,

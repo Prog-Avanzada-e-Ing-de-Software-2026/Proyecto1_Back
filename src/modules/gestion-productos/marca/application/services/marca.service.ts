@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { ensureNotSistemaEntity } from 'src/modules/common/utils/atrituto-sistema';
 import { UsuarioService } from 'src/modules/gestion-usuario/usuario/application/services/usuario.service';
@@ -15,6 +16,7 @@ import { CreateMarcaDto } from '../../dto/create-marca.dto';
 import { MarcaDto } from '../../dto/marca.dto';
 import { MarcaMapper } from '../../mappers/marca.mapper';
 import { PoliticaEliminacionMarca } from '../../domain/services/politica-eliminacion-marca.service';
+import { MarcaIntrinsicValidationService } from '../../domain/services/marca-intrinsic-validation.service';
 
 import { Marca } from '../../domain/entities/marca.entity';
 
@@ -26,6 +28,9 @@ export class MarcaService {
     private readonly repository: IMarcaRepository,
     private readonly usuarioService: UsuarioService,
     private readonly validacionesService: PoliticaEliminacionMarca,
+
+    @Optional()
+    private readonly marcaValidationService: MarcaIntrinsicValidationService = new MarcaIntrinsicValidationService(),
   ) {}
 
   private readonly ENTITY_NAME = 'Marca';
@@ -34,6 +39,11 @@ export class MarcaService {
     this.logger.log(
       `Creando un nuevo ${this.ENTITY_NAME} con denominación: ${dto.denominacion} a: ${dto.denominacion}`,
     );
+
+    this.marcaValidationService.validarDatosBasicos(dto, {
+      requerirEstadoCompleto: true,
+    });
+
     await this.checkDenominacionExists(dto.denominacion, 0);
     const entity = await this.repository.create(dto);
 
@@ -46,6 +56,9 @@ export class MarcaService {
 
   async update(id: number, dto: UpdateMarcaDto) {
     this.logger.log(`Actualizando  ${this.ENTITY_NAME} con ID: ${id}`);
+
+    this.marcaValidationService.validarDatosBasicos(dto);
+
     const marca = await this.findEntityById(id);
     ensureNotSistemaEntity(marca, 'Marca');
 

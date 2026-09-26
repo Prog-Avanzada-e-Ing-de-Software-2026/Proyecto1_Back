@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Linea } from 'src/modules/gestion-productos/linea/domain/entities/linea.entity';
 import { Marca } from 'src/modules/gestion-productos/marca/domain/entities/marca.entity';
+import { SuperLinea } from 'src/modules/gestion-productos/superlinea/domain/entities/superlinea.entity';
 
 import { SeedFamiliaProductoService } from './seed-familia-producto.service';
 import { SeedFamiliaProductoController } from './seed-familia-producto.controller';
@@ -16,6 +17,7 @@ import { Proveedor } from 'src/modules/organizacion/proveedor/domain/entities/pr
       [ 
       Linea, 
       Marca,
+      SuperLinea,
       Producto,
       Usuario,
       Proveedor,

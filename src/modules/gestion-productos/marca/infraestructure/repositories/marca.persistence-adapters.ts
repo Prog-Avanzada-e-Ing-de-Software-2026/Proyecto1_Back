@@ -115,7 +115,7 @@ export class MarcaPersistenceAdapter
 
       this.logger.warn(`FindOne : ${JSON.stringify(entity)}.`);
       if (!entity) {
-        throw new EntityNotFoundException('Entidad no encontrada');
+        throw new EntityNotFoundException('Marca', id);
       }
       return entity;
     } catch (error) {
@@ -237,7 +237,7 @@ export class MarcaPersistenceAdapter
   async update(id: number, data: Partial<Marca>): Promise<Marca> {
     const repo = this.uow.getRepository(Marca);
     const existente = await repo.findOneBy({ id });
-    if (!existente) throw new Error('Marca no encontrada');
+    if (!existente) throw new Error(`Marca con ID ${id} no encontrada`);
     repo.merge(existente, data);
     return await repo.save(existente);
   }

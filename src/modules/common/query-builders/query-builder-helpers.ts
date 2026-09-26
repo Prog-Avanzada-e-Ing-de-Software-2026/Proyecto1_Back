@@ -28,4 +28,27 @@ export class QueryBuilderHelper {
   ): SelectQueryBuilder<T> {
     return query.orderBy(`${alias}.${campo}`, orden);
   }
+
+  /**
+   * Escapa los metacaracteres de `LIKE` para que el término se busque literal.
+   *
+   * Sin esto, un `%` o un `_` escritos por el usuario los interpreta MySQL como
+   * comodín: buscar `%` arma el patrón `%%%` y devuelve el catálogo activo
+   * completo. Ver DT-015.
+   */
+  static escapeLikePattern(termino: string): string {
+    return termino.replace(/([\\%_])/g, '\\$1');
+  }
+
+  static applyPartialCoincidence<T extends ObjectLiteral>(
+    query: SelectQueryBuilder<T>,
+    alias: string,
+    campo: string,
+    termino: string,
+  ): SelectQueryBuilder<T> {
+    return query.andWhere(
+      `LOWER(${alias}.${campo}) COLLATE utf8mb4_bin LIKE CONCAT('%', LOWER(:termino), '%') COLLATE utf8mb4_bin`,
+      { termino: QueryBuilderHelper.escapeLikePattern(termino) },
+    );
+  }
 }
