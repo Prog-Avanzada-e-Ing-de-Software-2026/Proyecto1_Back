@@ -1,0 +1,6903 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/api/marca": {
+      "post": {
+        "description": "Registra una nueva marca en el sistema.",
+        "operationId": "MarcaController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMarcaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Marca creada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crear una marca",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/marca/search-by": {
+      "get": {
+        "description": "Devuelve las marcas filtradas por denominación, con paginación.",
+        "operationId": "MarcaController_findByDenominacionFiltered",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Marcas que coinciden con los filtros indicados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListadoConTotalDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/MarcaDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buscar marcas con filtros",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/marca/{id}": {
+      "get": {
+        "description": "Devuelve el detalle de la marca indicada.",
+        "operationId": "MarcaController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la marca.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Marca encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarcaDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener una marca por ID",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "put": {
+        "description": "Actualiza los datos de la marca indicada.",
+        "operationId": "MarcaController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la marca.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarcaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Marca actualizada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar una marca",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "delete": {
+        "description": "Elimina de forma lógica la marca indicada.",
+        "operationId": "MarcaController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la marca.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "usuarioId",
+            "required": true,
+            "in": "query",
+            "description": "ID del usuario que realiza la eliminación.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Marca eliminada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Eliminar una marca",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/marca/{id}/audit": {
+      "get": {
+        "description": "Devuelve la información de auditoría de la marca indicada.",
+        "operationId": "MarcaController_findByIdConAuditoria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la marca.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de auditoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditoriaDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener la auditoría de una marca",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/usuario/search-by": {
+      "get": {
+        "operationId": "UsuarioController_findByDenominacionFiltered",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": true,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuario"
+        ]
+      }
+    },
+    "/api/usuario": {
+      "get": {
+        "operationId": "UsuarioController_findAll",
+        "parameters": [
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuario"
+        ]
+      }
+    },
+    "/api/usuario/{id}": {
+      "get": {
+        "operationId": "UsuarioController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuario"
+        ]
+      },
+      "put": {
+        "operationId": "UsuarioController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUsuarioDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuario"
+        ]
+      },
+      "delete": {
+        "operationId": "UsuarioController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuario"
+        ]
+      }
+    },
+    "/api/usuario/search": {
+      "get": {
+        "operationId": "UsuarioController_findByMailFiltered",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuario"
+        ]
+      }
+    },
+    "/api/usuario/cambiar-contrasena/{id}": {
+      "patch": {
+        "operationId": "UsuarioController_cambiarContrasena",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContrasenaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuario"
+        ]
+      }
+    },
+    "/api/rol": {
+      "post": {
+        "operationId": "RolController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRolDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Rol"
+        ]
+      },
+      "get": {
+        "operationId": "RolController_findAll",
+        "parameters": [
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Rol"
+        ]
+      }
+    },
+    "/api/rol/{id}": {
+      "get": {
+        "operationId": "RolController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Rol"
+        ]
+      },
+      "put": {
+        "operationId": "RolController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRolDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Rol"
+        ]
+      },
+      "delete": {
+        "operationId": "RolController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Rol"
+        ]
+      }
+    },
+    "/api/rol/search": {
+      "get": {
+        "operationId": "RolController_findByDenominacionFiltered",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Rol"
+        ]
+      }
+    },
+    "/api/producto": {
+      "post": {
+        "description": "Registra un nuevo producto en el sistema.",
+        "operationId": "ProductoController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Producto creado correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crear un producto",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/find-all-for-marcas/select": {
+      "get": {
+        "description": "Devuelve las marcas filtradas por denominación.",
+        "operationId": "ProductoController_findAllMarcasFor",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar.",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Marcas filtradas por denominación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListadoConTotalDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/MarcaDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar marcas para selección",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/find-all-for-lineas/select": {
+      "get": {
+        "description": "Devuelve las líneas filtradas por denominación.",
+        "operationId": "ProductoController_findAllLineasFor",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar.",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Líneas filtradas por denominación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListadoConTotalDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/LineaDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar líneas para selección",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/search-by-rapido": {
+      "get": {
+        "description": "Busca productos por código de barras o de proveedor, de forma exacta o parcial.",
+        "operationId": "ProductoController_searchRapido",
+        "parameters": [
+          {
+            "name": "codigo",
+            "required": true,
+            "in": "query",
+            "description": "Código de barras o de proveedor a buscar.",
+            "schema": {
+              "example": "7791234567890",
+              "type": "string"
+            }
+          },
+          {
+            "name": "exacto",
+            "required": true,
+            "in": "query",
+            "description": "Indica si la búsqueda debe coincidir exactamente.",
+            "schema": {
+              "default": false,
+              "example": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "skip",
+            "required": true,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir.",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": true,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar.",
+            "schema": {
+              "minimum": 1,
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Productos que coinciden con el código buscado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListadoConTotalDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/GetProductoDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Búsqueda rápida de productos",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/search-by": {
+      "get": {
+        "description": "Busca productos por denominación, código de proveedor, código de referencia, marca, línea, proveedor y stock.",
+        "operationId": "ProductoController_search",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar (coincidencia parcial).",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "codigoProveedor",
+            "required": false,
+            "in": "query",
+            "description": "Código de proveedor a filtrar.",
+            "schema": {
+              "example": "ABC-1234",
+              "type": "string"
+            }
+          },
+          {
+            "name": "codigoReferencia",
+            "required": false,
+            "in": "query",
+            "description": "Código de referencia a filtrar.",
+            "schema": {
+              "example": "REF-001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "codReferenciaExacto",
+            "required": true,
+            "in": "query",
+            "description": "Indica si el código de referencia debe coincidir exactamente.",
+            "schema": {
+              "default": false,
+              "example": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "codProveedorExacto",
+            "required": true,
+            "in": "query",
+            "description": "Indica si el código de proveedor debe coincidir exactamente.",
+            "schema": {
+              "default": false,
+              "example": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "skip",
+            "required": true,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir.",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": true,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar.",
+            "schema": {
+              "minimum": 1,
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "marcaId",
+            "required": false,
+            "in": "query",
+            "description": "ID de la marca a filtrar. Debe ser un entero positivo.",
+            "schema": {
+              "minimum": 1,
+              "example": 2,
+              "type": "number"
+            }
+          },
+          {
+            "name": "lineaId",
+            "required": false,
+            "in": "query",
+            "description": "ID de la línea a filtrar. Debe ser un entero positivo.",
+            "schema": {
+              "minimum": 1,
+              "example": 3,
+              "type": "number"
+            }
+          },
+          {
+            "name": "proveedorId",
+            "required": false,
+            "in": "query",
+            "description": "ID del proveedor a filtrar. Debe ser un entero positivo.",
+            "schema": {
+              "minimum": 1,
+              "example": 4,
+              "type": "number"
+            }
+          },
+          {
+            "name": "conStock",
+            "required": false,
+            "in": "query",
+            "description": "Indica si solo se deben incluir productos con stock.",
+            "schema": {
+              "example": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Productos que coinciden con los filtros indicados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListadoConTotalDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/GetProductoDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Búsqueda de productos con filtros",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/search-by-denominacion": {
+      "get": {
+        "description": "Devuelve los productos activos que coinciden parcialmente por denominación.",
+        "operationId": "ProductoController_searchByPartialDenominacion",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Productos activos que coinciden parcialmente por denominación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListadoConTotalDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/GetProductoDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buscar productos por denominación",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/search-by-superlinea": {
+      "get": {
+        "description": "Devuelve los productos activos de una superlínea.",
+        "operationId": "ProductoController_searchBySuperlinea",
+        "parameters": [
+          {
+            "name": "superLineaId",
+            "required": true,
+            "in": "query",
+            "description": "ID de la superlínea",
+            "schema": {
+              "minimum": 1,
+              "example": 5,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": true,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": true,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "minimum": 1,
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Productos activos de una superlínea",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListadoConTotalDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/GetProductoDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buscar productos por superlínea",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/marca/{id}": {
+      "get": {
+        "description": "Devuelve la marca asociada al producto indicado.",
+        "operationId": "ProductoController_getMarcaDelProducto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del producto.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Marca asociada al producto.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarcaDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener la marca de un producto",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/linea/{id}": {
+      "get": {
+        "description": "Devuelve la línea asociada al producto indicado.",
+        "operationId": "ProductoController_geLineaDelProducto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del producto.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Línea asociada al producto.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineaDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener la línea de un producto",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/{id}": {
+      "get": {
+        "description": "Devuelve el detalle del producto indicado.",
+        "operationId": "ProductoController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del producto.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductoDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener un producto por ID",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "put": {
+        "description": "Actualiza los datos del producto indicado.",
+        "operationId": "ProductoController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del producto.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Producto actualizado correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar un producto",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "delete": {
+        "description": "Elimina de forma lógica el producto indicado.",
+        "operationId": "ProductoController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del producto.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "usuarioId",
+            "required": true,
+            "in": "query",
+            "description": "ID del usuario que realiza la eliminación.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto eliminado correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Eliminar un producto",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/actualizar-precios": {
+      "post": {
+        "description": "Aplica un ajuste de precio (porcentaje o monto fijo) a los productos, de forma global o por línea.",
+        "operationId": "ProductoController_actualizarPrecios",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizacionPrecioDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Precios actualizados correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Actualización de precios realizada correctamente."
+                    },
+                    "productos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denominacion": {
+                            "type": "string",
+                            "example": "1158 Caja de tornillos"
+                          },
+                          "costo": {
+                            "type": "number",
+                            "example": 100.5
+                          },
+                          "precio": {
+                            "type": "number",
+                            "example": 132.5
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar precios de productos",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/{id}/audit": {
+      "get": {
+        "description": "Devuelve la información de auditoría del producto indicado.",
+        "operationId": "ProductoController_findByIdConAuditoria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del producto.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de auditoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditoriaDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener la auditoría de un producto",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto/{id}/historial-precios": {
+      "get": {
+        "description": "Devuelve el historial de cambios de precio del producto indicado.",
+        "operationId": "ProductoController_historialPrecios",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del producto.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial de cambios de precio del producto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CambioPrecioDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener el historial de precios de un producto",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/linea": {
+      "post": {
+        "description": "Registra una nueva línea en el sistema.",
+        "operationId": "LineaController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLineaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Línea creada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineaDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crear una línea",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/linea/search-by": {
+      "get": {
+        "description": "Devuelve las líneas filtradas por denominación, con paginación.",
+        "operationId": "LineaController_findByDenominacionFiltered",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Líneas que coinciden con los filtros indicados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListadoConTotalDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/LineaDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buscar líneas con filtros",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/linea/select": {
+      "get": {
+        "description": "Devuelve las líneas activas que coinciden parcialmente por denominación.",
+        "operationId": "LineaController_searchForSelection",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar.",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Líneas activas que coinciden parcialmente por denominación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SelectOption"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar líneas para selección",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/linea/{id}": {
+      "get": {
+        "description": "Devuelve el detalle de la línea indicada.",
+        "operationId": "LineaController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la línea.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Línea encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineaDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener una línea por ID",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "put": {
+        "description": "Actualiza los datos de la línea indicada.",
+        "operationId": "LineaController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la línea.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLineaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Línea actualizada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar una línea",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "delete": {
+        "description": "Elimina de forma lógica la línea indicada.",
+        "operationId": "LineaController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la línea.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "usuarioId",
+            "required": true,
+            "in": "query",
+            "description": "ID del usuario que realiza la eliminación.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Línea eliminada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Eliminar una línea",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/linea/find-all-for-superlinea/select": {
+      "get": {
+        "description": "Devuelve las superlíneas filtradas por denominación para asociarlas a una línea.",
+        "operationId": "LineaController_findAllForSuperLineas",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar.",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Superlíneas filtradas por denominación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SuperLineaDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar superlíneas para selección",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/linea/{id}/audit": {
+      "get": {
+        "description": "Devuelve la información de auditoría de la línea indicada.",
+        "operationId": "LineaController_findByIdConAuditoria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la línea.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de auditoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditoriaDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener la auditoría de una línea",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/presentacion": {
+      "post": {
+        "description": "Registra una nueva presentación en el sistema.",
+        "operationId": "PresentacionController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePresentacionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Presentación creada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crear una presentación",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/presentacion/search-by": {
+      "get": {
+        "description": "Devuelve las presentaciones filtradas por denominación, con paginación.",
+        "operationId": "PresentacionController_search",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Presentaciones que coinciden con los filtros indicados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListadoConTotalDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/PresentacionDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buscar presentaciones con filtros",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/presentacion/select": {
+      "get": {
+        "description": "Devuelve las presentaciones activas que coinciden parcialmente por denominación.",
+        "operationId": "PresentacionController_select",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar.",
+            "schema": {
+              "example": "1L",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Presentaciones activas que coinciden por denominación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListadoConTotalDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/PresentacionDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar presentaciones para selección",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/presentacion/{id}/audit": {
+      "get": {
+        "description": "Devuelve la información de auditoría de la presentación indicada.",
+        "operationId": "PresentacionController_findByIdConAuditoria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la presentación.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de auditoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditoriaDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener la auditoría de una presentación",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/presentacion/{id}": {
+      "get": {
+        "description": "Devuelve el detalle de la presentación indicada.",
+        "operationId": "PresentacionController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la presentación.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Presentación encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresentacionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener una presentación por ID",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "put": {
+        "description": "Actualiza los datos de la presentación indicada.",
+        "operationId": "PresentacionController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la presentación.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePresentacionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Presentación actualizada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar una presentación",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "delete": {
+        "description": "Elimina de forma lógica la presentación indicada.",
+        "operationId": "PresentacionController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la presentación.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "usuarioId",
+            "required": true,
+            "in": "query",
+            "description": "ID del usuario que realiza la eliminación.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Presentación eliminada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Eliminar una presentación",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/proveedor": {
+      "post": {
+        "operationId": "ProveedorController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProveedorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Crear un nuevo proveedor",
+        "tags": [
+          "Organizacion - Proveedor"
+        ]
+      }
+    },
+    "/api/proveedor/search-by": {
+      "get": {
+        "operationId": "ProveedorController_findByDenominacionFiltered",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Buscar proveedores por denominación con paginación",
+        "tags": [
+          "Organizacion - Proveedor"
+        ]
+      }
+    },
+    "/api/proveedor/find-all-for-condiciones-iva/select": {
+      "get": {
+        "operationId": "ProveedorController_findAllCondicionIva",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Listado de condiciones de IVA",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListadoConTotalDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Buscar las condiciones de IVA para combo",
+        "tags": [
+          "Organizacion - Proveedor",
+          "Condición IVA"
+        ]
+      }
+    },
+    "/api/proveedor/find-all-for-localidades/select": {
+      "get": {
+        "operationId": "ProveedorController_findAllLocalidad",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Listado de localidades",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListadoConTotalDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Buscar las localidades",
+        "tags": [
+          "Organizacion - Proveedor",
+          "Localidad"
+        ]
+      }
+    },
+    "/api/proveedor/find-all-for-localidades-for/{id}/select": {
+      "get": {
+        "operationId": "ProveedorController_findAllLocalidadFor",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de localidades de una provincia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListadoConTotalDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Buscar las localidades dada una provincia",
+        "tags": [
+          "Organizacion - Proveedor",
+          "Localidad"
+        ]
+      }
+    },
+    "/api/proveedor/find-all-for-provincias/select": {
+      "get": {
+        "operationId": "ProveedorController_findAllProvincia",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Listado de provincias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListadoConTotalDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Buscar las provincias",
+        "tags": [
+          "Organizacion - Proveedor",
+          "Provincia"
+        ]
+      }
+    },
+    "/api/proveedor/condicion-iva/{id}": {
+      "get": {
+        "operationId": "ProveedorController_geCondicionIvaDelCliente",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion - Proveedor"
+        ]
+      }
+    },
+    "/api/proveedor/{id}": {
+      "get": {
+        "operationId": "ProveedorController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "empresaId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Obtener proveedor por ID con saldo para una empresa",
+        "tags": [
+          "Organizacion - Proveedor"
+        ]
+      },
+      "put": {
+        "operationId": "ProveedorController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProveedorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Actualizar proveedor por ID",
+        "tags": [
+          "Organizacion - Proveedor"
+        ]
+      },
+      "delete": {
+        "operationId": "ProveedorController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "usuarioId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Eliminar cliente por ID",
+        "tags": [
+          "Organizacion - Proveedor"
+        ]
+      }
+    },
+    "/api/proveedor/{id}/audit": {
+      "get": {
+        "operationId": "ProveedorController_findByIdConAuditoria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de auditoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditoriaDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Organizacion - Proveedor"
+        ]
+      }
+    },
+    "/api/condicion-iva": {
+      "post": {
+        "operationId": "CondicionIvaController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCondicionIvaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/condicion-iva/search-by": {
+      "get": {
+        "operationId": "CondicionIvaController_findByDenominacionFiltered",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/condicion-iva/findAllFor": {
+      "get": {
+        "operationId": "CondicionIvaController_findAllFor",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/condicion-iva/{id}": {
+      "get": {
+        "operationId": "CondicionIvaController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CondicionIvaDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      },
+      "put": {
+        "operationId": "CondicionIvaController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCondicionIvaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      },
+      "delete": {
+        "operationId": "CondicionIvaController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/condicion-iva/{id}/audit": {
+      "get": {
+        "operationId": "CondicionIvaController_findByIdConAuditoria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de auditoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditoriaDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/localidad": {
+      "post": {
+        "operationId": "LocalidadController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLocalidadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/localidad/search-by": {
+      "get": {
+        "operationId": "LocalidadController_findByDenominacionFiltered",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": true,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provinciaId",
+            "required": false,
+            "in": "query",
+            "description": "id de provincia",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/localidad/{id}": {
+      "get": {
+        "operationId": "LocalidadController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalidadDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      },
+      "put": {
+        "operationId": "LocalidadController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLocalidadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      },
+      "delete": {
+        "operationId": "LocalidadController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/localidad/find-all-for-provincias/select": {
+      "get": {
+        "operationId": "LocalidadController_findAllProvincia",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Listado de provincias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListadoConTotalDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Buscar las provincias",
+        "tags": [
+          "GUtil",
+          "Provincia"
+        ]
+      }
+    },
+    "/api/localidad/{id}/audit": {
+      "get": {
+        "operationId": "LocalidadController_findByIdConAuditoria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de auditoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditoriaDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/provincia": {
+      "post": {
+        "operationId": "ProvinciaController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProvinciaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      },
+      "get": {
+        "operationId": "ProvinciaController_findAll",
+        "parameters": [
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/provincia/search": {
+      "get": {
+        "operationId": "ProvinciaController_findByDenominacionFiltered",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/provincia/findAllFor": {
+      "get": {
+        "operationId": "ProvinciaController_findAllFor",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/provincia/{id}": {
+      "get": {
+        "operationId": "ProvinciaController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      },
+      "put": {
+        "operationId": "ProvinciaController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProvinciaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      },
+      "delete": {
+        "operationId": "ProvinciaController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/domicilio": {
+      "post": {
+        "operationId": "DomicilioController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDomicilioDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      },
+      "get": {
+        "operationId": "DomicilioController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/domicilio/{id}": {
+      "get": {
+        "operationId": "DomicilioController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      },
+      "patch": {
+        "operationId": "DomicilioController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDomicilioDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      },
+      "delete": {
+        "operationId": "DomicilioController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "GUtil"
+        ]
+      }
+    },
+    "/api/superlinea": {
+      "post": {
+        "description": "Registra una nueva superlínea en el sistema.",
+        "operationId": "SuperLineaController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSuperLineaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Superlínea creada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crear una superlínea",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/superlinea/search-by": {
+      "get": {
+        "description": "Devuelve las superlíneas filtradas por denominación, con paginación.",
+        "operationId": "SuperLineaController_search",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Superlíneas que coinciden con los filtros indicados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListadoConTotalDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/SuperLineaDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buscar superlíneas con filtros",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/superlinea/select": {
+      "get": {
+        "description": "Devuelve las superlíneas activas que coinciden parcialmente por denominación.",
+        "operationId": "SuperLineaController_searchForSelection",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar.",
+            "schema": {
+              "example": "herramienta",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SuperLíneas activas que coinciden parcialmente por denominación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SelectOption"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar superlíneas para selección",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/superlinea/{id}/audit": {
+      "get": {
+        "description": "Devuelve la información de auditoría de la superlínea indicada.",
+        "operationId": "SuperLineaController_findByIdConAuditoria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la superlínea.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de auditoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditoriaDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener la auditoría de una superlínea",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/superlinea/{id}": {
+      "get": {
+        "description": "Devuelve el detalle de la superlínea indicada.",
+        "operationId": "SuperLineaController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la superlínea.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SuperLínea encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuperLineaDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener una superlínea por ID",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "put": {
+        "description": "Actualiza los datos de la superlínea indicada.",
+        "operationId": "SuperLineaController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la superlínea.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSuperLineaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Superlínea actualizada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar una superlínea",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "delete": {
+        "description": "Elimina de forma lógica la superlínea indicada.",
+        "operationId": "SuperLineaController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la superlínea.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "usuarioId",
+            "required": true,
+            "in": "query",
+            "description": "ID del usuario que realiza la eliminación.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Superlínea eliminada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Eliminar una superlínea",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/cliente": {
+      "post": {
+        "operationId": "ClienteController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClienteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Crear un nuevo cliente",
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/cliente/search-by": {
+      "get": {
+        "operationId": "ClienteController_findByDenominacionFiltered",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Buscar clientes por denominación con paginación",
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/cliente/search-by-vendedor": {
+      "get": {
+        "operationId": "ClienteController_findByDenominacionVendedorFiltered",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Buscar clientes por denominación con paginación",
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/cliente/find-all-for-condiciones-iva/select": {
+      "get": {
+        "operationId": "ClienteController_findAllCondicionIva",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Listado de condiciones de IVA",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListadoConTotalDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Buscar las condiciones de IVA para combo",
+        "tags": [
+          "Organizacion",
+          "Condición IVA"
+        ]
+      }
+    },
+    "/api/cliente/find-all-for-vendedores/select": {
+      "get": {
+        "operationId": "ClienteController_findAllByVendedorDenominacion",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "empresaId",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de vendedores con total",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListadoConTotalDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Buscar clientes filtrando por denominación y empresa",
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/cliente/find-all-for-localidades/select": {
+      "get": {
+        "operationId": "ClienteController_findAllLocalidad",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Listado de localidades",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListadoConTotalDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Buscar las localidades",
+        "tags": [
+          "Organizacion",
+          "Localidad"
+        ]
+      }
+    },
+    "/api/cliente/find-all-for-localidades-for/{id}/select": {
+      "get": {
+        "operationId": "ClienteController_findAllLocalidadFor",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de localidades de una provincia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListadoConTotalDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Buscar las localidades dada una provincia",
+        "tags": [
+          "Organizacion",
+          "Localidad"
+        ]
+      }
+    },
+    "/api/cliente/find-all-for-provincias/select": {
+      "get": {
+        "operationId": "ClienteController_findAllProvincia",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Listado de provincias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListadoConTotalDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Buscar las provincias",
+        "tags": [
+          "Organizacion",
+          "Provincia"
+        ]
+      }
+    },
+    "/api/cliente/condicion-iva/{id}": {
+      "get": {
+        "operationId": "ClienteController_geCondicionIvaDelCliente",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/cliente/{id}": {
+      "get": {
+        "operationId": "ClienteController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "empresaId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperadorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Obtener cliente por ID con saldo para una empresa",
+        "tags": [
+          "Organizacion"
+        ]
+      },
+      "put": {
+        "operationId": "ClienteController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClienteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Actualizar cliente por ID",
+        "tags": [
+          "Organizacion"
+        ]
+      },
+      "delete": {
+        "operationId": "ClienteController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "usuarioId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Eliminar cliente por ID",
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/cliente/{id}/audit": {
+      "get": {
+        "operationId": "ClienteController_findByIdConAuditoria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de auditoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditoriaDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/personal": {
+      "post": {
+        "operationId": "PersonalController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePersonalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/personal/search-by": {
+      "get": {
+        "operationId": "PersonalController_findByDenominacionFiltered",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Buscar personalpor denominación con paginación",
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/personal/{id}": {
+      "get": {
+        "operationId": "PersonalController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      },
+      "put": {
+        "operationId": "PersonalController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePersonalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      },
+      "delete": {
+        "operationId": "PersonalController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/personal/{id}/audit": {
+      "get": {
+        "operationId": "PersonalController_findByIdConAuditoria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de auditoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditoriaDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/empresa": {
+      "post": {
+        "operationId": "EmpresaController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEmpresaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      },
+      "get": {
+        "operationId": "EmpresaController_findAll",
+        "parameters": [
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/empresa/search": {
+      "get": {
+        "operationId": "EmpresaController_findByDenominacionFiltered",
+        "parameters": [
+          {
+            "name": "denominacion",
+            "required": false,
+            "in": "query",
+            "description": "Denominación a filtrar",
+            "schema": {
+              "example": "tornillo",
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/empresa/{id}": {
+      "get": {
+        "operationId": "EmpresaController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      },
+      "put": {
+        "operationId": "EmpresaController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEmpresaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      },
+      "delete": {
+        "operationId": "EmpresaController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/auth/registrar": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarUsuarioDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/login-con-google": {
+      "post": {
+        "operationId": "AuthController_loginConGoogle",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/recuperar": {
+      "post": {
+        "operationId": "AuthController_recuperarPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecuperarPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/verificar-codigo": {
+      "post": {
+        "operationId": "AuthController_verificarCodigo",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificarCodigoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/cambiar-contrasena": {
+      "patch": {
+        "operationId": "AuthController_cambiarContrasena",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CambiarContrasenaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/seed-familia-producto/execute": {
+      "get": {
+        "operationId": "SeedFamiliaProductoController_executeSeed",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "SeedFamiliaProducto"
+        ]
+      }
+    },
+    "/api/seed-organizacion/execute": {
+      "get": {
+        "operationId": "SeedOrganizacionController_executeSeed",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "SeedOrganizacion"
+        ]
+      }
+    },
+    "/api/seed-all/execute": {
+      "get": {
+        "operationId": "SeedAllController_executeSeed",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "SeedAll"
+        ]
+      }
+    },
+    "/api/seed-usuario/execute": {
+      "get": {
+        "operationId": "SeedUsuarioController_executeSeed",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "SeedUsuario"
+        ]
+      }
+    },
+    "/api/files/producto": {
+      "post": {
+        "operationId": "FilesController_uploadProducto",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/proveedor-operacion": {
+      "post": {
+        "operationId": "ProveedorOperacionController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProveedorOperacionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ProveedorOperacion"
+        ]
+      },
+      "get": {
+        "operationId": "ProveedorOperacionController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ProveedorOperacion"
+        ]
+      }
+    },
+    "/api/proveedor-operacion/{id}": {
+      "get": {
+        "operationId": "ProveedorOperacionController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ProveedorOperacion"
+        ]
+      },
+      "patch": {
+        "operationId": "ProveedorOperacionController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProveedorOperacionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ProveedorOperacion"
+        ]
+      },
+      "delete": {
+        "operationId": "ProveedorOperacionController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ProveedorOperacion"
+        ]
+      }
+    },
+    "/api/configuracion-sistema/{empresaId}": {
+      "get": {
+        "operationId": "ConfiguracionSistemaController_getConfiguracionPorEmpresa",
+        "parameters": [
+          {
+            "name": "empresaId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/empresa-operacion": {
+      "post": {
+        "operationId": "EmpresaOperacionController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEmpresaOperacionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "EmpresaOperacion"
+        ]
+      },
+      "get": {
+        "operationId": "EmpresaOperacionController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "EmpresaOperacion"
+        ]
+      }
+    },
+    "/api/empresa-operacion/{id}": {
+      "get": {
+        "operationId": "EmpresaOperacionController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "EmpresaOperacion"
+        ]
+      },
+      "patch": {
+        "operationId": "EmpresaOperacionController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEmpresaOperacionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "EmpresaOperacion"
+        ]
+      },
+      "delete": {
+        "operationId": "EmpresaOperacionController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "EmpresaOperacion"
+        ]
+      }
+    },
+    "/api/cliente-operacion": {
+      "post": {
+        "operationId": "ClienteOperacionController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClienteOperacionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      },
+      "get": {
+        "operationId": "ClienteOperacionController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/cliente-operacion/{id}": {
+      "get": {
+        "operationId": "ClienteOperacionController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      },
+      "patch": {
+        "operationId": "ClienteOperacionController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClienteOperacionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      },
+      "delete": {
+        "operationId": "ClienteOperacionController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Organizacion"
+        ]
+      }
+    },
+    "/api/producto-operacion": {
+      "post": {
+        "description": "Endpoint provisional. Devuelve un mensaje de texto mientras la operación no está implementada.",
+        "operationId": "ProductoOperacionController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductoOperacionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mensaje de confirmación de creación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Crear una operación de producto",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "get": {
+        "description": "Endpoint provisional. Devuelve un mensaje de texto mientras la operación no está implementada.",
+        "operationId": "ProductoOperacionController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Mensaje con el listado de operaciones de producto.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Listar operaciones de producto",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/producto-operacion/{id}": {
+      "get": {
+        "description": "Endpoint provisional. Devuelve un mensaje de texto mientras la operación no está implementada.",
+        "operationId": "ProductoOperacionController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la operación de producto.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mensaje con la operación de producto encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Obtener una operación de producto por ID",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "patch": {
+        "description": "Endpoint provisional. Devuelve un mensaje de texto mientras la operación no está implementada.",
+        "operationId": "ProductoOperacionController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la operación de producto.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductoOperacionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mensaje de confirmación de actualización.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Actualizar una operación de producto",
+        "tags": [
+          "Gestion Productos"
+        ]
+      },
+      "delete": {
+        "description": "Endpoint provisional. Devuelve un mensaje de texto mientras la operación no está implementada.",
+        "operationId": "ProductoOperacionController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la operación de producto.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mensaje de confirmación de eliminación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Eliminar una operación de producto",
+        "tags": [
+          "Gestion Productos"
+        ]
+      }
+    },
+    "/api/busquedas-genericas/search-by": {
+      "get": {
+        "operationId": "BusquedasController_findBy",
+        "parameters": [
+          {
+            "name": "fechaDesde",
+            "required": true,
+            "in": "query",
+            "description": "Fecha inicial del filtro (incluida)",
+            "schema": {
+              "format": "date",
+              "example": "2024-01-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "fechaHasta",
+            "required": true,
+            "in": "query",
+            "description": "Fecha final del filtro (incluida)",
+            "schema": {
+              "format": "date",
+              "example": "2024-12-31",
+              "type": "string"
+            }
+          },
+          {
+            "name": "empresaId",
+            "required": false,
+            "in": "query",
+            "description": "ID de la empresa. Si no se envía, toma el valor 0.",
+            "schema": {
+              "default": 0,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": true,
+            "in": "query",
+            "description": "Cantidad de elementos a omitir (paginación)",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": true,
+            "in": "query",
+            "description": "Cantidad de elementos a retornar (paginación)",
+            "schema": {
+              "minimum": 1,
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "operadorId",
+            "required": false,
+            "in": "query",
+            "description": "ID de la empresa. Si no se envía, toma el valor 0.",
+            "schema": {
+              "default": 0,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "tipoDocumento",
+            "required": true,
+            "in": "query",
+            "description": "tipo documento .",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Busquedas"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Gestión Base - Distribuidora",
+    "description": "La descripción de las  API  de la distribuidora",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "description": "Token JWT de acceso. Formato: Bearer <token>"
+      }
+    },
+    "schemas": {
+      "CreateMarcaDto": {
+        "type": "object",
+        "properties": {
+          "denominacion": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ]+$",
+            "description": "Denominación o nombre de la marca. No puede superar los 255 caracteres.",
+            "example": "IVECO"
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Observaciones varias sobre la marca.",
+            "example": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Fecha y hora de creación (generada por el servidor).",
+            "example": "2026-09-23T15:00:00.000Z"
+          },
+          "usuarioCreatedId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del usuario que crea la marca. Debe ser un número entero positivo.",
+            "example": 1
+          }
+        },
+        "required": [
+          "denominacion",
+          "usuarioCreatedId"
+        ]
+      },
+      "MensajeDto": {
+        "type": "object",
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "description": "Mensaje para el front"
+          }
+        }
+      },
+      "ListadoConTotalDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Listado de resultados",
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Cantidad total de elementos"
+          }
+        },
+        "required": [
+          "data",
+          "total"
+        ]
+      },
+      "MarcaDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 123,
+            "description": "ID del la marca"
+          },
+          "denominacion": {
+            "type": "string",
+            "example": "IVECO",
+            "description": "Denominación o nombre del producto. Esta formado por la linea y la marca"
+          },
+          "observacion": {
+            "type": "string",
+            "example": "",
+            "description": "Observaciones varias sobre la marca"
+          },
+          "sistema": {
+            "type": "number",
+            "example": 1,
+            "description": "de sistema no se puede editar ni eliminar"
+          },
+          "deletedAt": {
+            "type": "string",
+            "example": null,
+            "description": "Fecha de eliminación (null si está activa)",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "denominacion",
+          "observacion",
+          "sistema",
+          "deletedAt"
+        ]
+      },
+      "UpdateMarcaDto": {
+        "type": "object",
+        "properties": {
+          "denominacion": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ]+$",
+            "description": "Nueva denominación o nombre de la marca. No puede superar los 255 caracteres.",
+            "example": "IVECO"
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Observaciones varias sobre la marca.",
+            "example": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Fecha y hora de creación (generada por el servidor).",
+            "example": "2026-09-23T15:00:00.000Z"
+          },
+          "usuarioUpdatedId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del usuario que actualiza la marca. Debe ser un número entero positivo.",
+            "example": 1
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Fecha y hora de la última actualización (generada por el servidor).",
+            "example": "2026-09-23T15:00:00.000Z"
+          }
+        },
+        "required": [
+          "usuarioUpdatedId"
+        ]
+      },
+      "AuditoriaDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateContrasenaDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateUsuarioDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateRolDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateRolDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "AlicuotaIva": {
+        "type": "number",
+        "enum": [
+          0,
+          10.5,
+          21,
+          27
+        ],
+        "description": "Alícuota de IVA aplicada al producto."
+      },
+      "CreateProductoDto": {
+        "type": "object",
+        "properties": {
+          "denominacion": {
+            "type": "string",
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ.\\-/%]+$",
+            "description": "Denominación o nombre del producto. No puede superar los 200 caracteres.",
+            "example": "1158 Caja de tornillos"
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Observaciones del producto.",
+            "example": ""
+          },
+          "codigoProveedor": {
+            "type": "string",
+            "description": "Código del proveedor del producto.",
+            "example": "ABC-1234"
+          },
+          "codigoBarra": {
+            "type": "string",
+            "description": "Código de barras del producto.",
+            "example": "7791234567890"
+          },
+          "codigoReferencia": {
+            "type": "string",
+            "description": "Código de referencia del producto.",
+            "example": "REF-001"
+          },
+          "ubicacion": {
+            "type": "string",
+            "description": "Ubicación física del producto.",
+            "example": "Estante A1"
+          },
+          "utilizaStockMinimo": {
+            "type": "boolean",
+            "description": "Indica si el producto utiliza stock mínimo.",
+            "example": false
+          },
+          "utilizaPack": {
+            "type": "boolean",
+            "description": "Indica si el producto se comercializa por pack.",
+            "example": false
+          },
+          "cantidadPorPack": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Cantidad de unidades por pack. Requerido cuando utilizaPack es true.",
+            "example": 6
+          },
+          "costoEnDolar": {
+            "type": "boolean",
+            "description": "Indica si el costo está expresado en dólares.",
+            "example": false
+          },
+          "destacado": {
+            "type": "boolean",
+            "description": "Indica si el producto está destacado.",
+            "example": false
+          },
+          "envioGratis": {
+            "type": "boolean",
+            "description": "Indica si el producto tiene envío gratis.",
+            "example": false
+          },
+          "costo": {
+            "type": "number",
+            "description": "Costo del producto. Valor monetario con hasta 5 decimales.",
+            "example": 100.5
+          },
+          "porcentaje": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Porcentaje de ganancia. Debe ser mayor que 0 y admite hasta 2 decimales.",
+            "example": 30.5
+          },
+          "stock": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Cantidad en stock. Debe ser mayor que 0 y admite hasta 3 decimales.",
+            "example": 50
+          },
+          "stockMinimo": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Stock mínimo del producto. Debe ser mayor que 0 y admite hasta 3 decimales.",
+            "example": 5
+          },
+          "lineaId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID de la línea asociada. Debe ser un entero positivo.",
+            "example": 3
+          },
+          "marcaId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID de la marca asociada. Debe ser un entero positivo.",
+            "example": 2
+          },
+          "presentacionId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID de la presentación asociada. Debe ser un entero positivo.",
+            "example": 1
+          },
+          "costoDolar": {
+            "type": "number",
+            "description": "Costo en dólares. Valor monetario con hasta 5 decimales.",
+            "example": 90.25
+          },
+          "precio": {
+            "type": "number",
+            "description": "Precio de venta. Valor monetario con hasta 5 decimales.",
+            "example": 150.75
+          },
+          "alicuotaIva": {
+            "description": "Alícuota de IVA aplicada al producto.",
+            "example": 21,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlicuotaIva"
+              }
+            ]
+          },
+          "usuarioCreatedId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del usuario que crea el producto. Debe ser un entero positivo.",
+            "example": 1
+          }
+        },
+        "required": [
+          "denominacion",
+          "utilizaStockMinimo",
+          "utilizaPack",
+          "costo",
+          "porcentaje",
+          "stock",
+          "stockMinimo",
+          "lineaId",
+          "marcaId",
+          "presentacionId",
+          "alicuotaIva",
+          "usuarioCreatedId"
+        ]
+      },
+      "ReferenciaDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Identificador único de la entidad referenciada.",
+            "example": 1
+          },
+          "denominacion": {
+            "type": "string",
+            "description": "Denominación de la entidad referenciada.",
+            "example": "Iveco"
+          }
+        },
+        "required": [
+          "id",
+          "denominacion"
+        ]
+      },
+      "LineaDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 123,
+            "description": "ID del la linea"
+          },
+          "denominacion": {
+            "type": "string",
+            "example": "tornillos",
+            "description": "Denominación o nombre dela linea"
+          },
+          "stockMinimo": {
+            "type": "number",
+            "description": "Stock mínimo de la línea.",
+            "example": 5
+          },
+          "utilizaStockMinimo": {
+            "type": "boolean",
+            "example": false,
+            "description": "Indica si la línea utiliza stock mínimo."
+          },
+          "observacion": {
+            "type": "string",
+            "example": "",
+            "description": "Observaciones varias sobre la linea"
+          },
+          "sistema": {
+            "type": "number",
+            "example": 1,
+            "description": "de sistema no se puede editar ni eliminar"
+          },
+          "deletedAt": {
+            "type": "string",
+            "example": null,
+            "description": "Fecha de eliminación (null si está activa)",
+            "nullable": true
+          },
+          "superLinea": {
+            "description": "Superlínea a la que pertenece la línea.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "denominacion",
+          "utilizaStockMinimo",
+          "observacion",
+          "sistema",
+          "deletedAt",
+          "superLinea"
+        ]
+      },
+      "GetProductoDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 123,
+            "description": "ID del producto"
+          },
+          "denominacion": {
+            "type": "string",
+            "example": "Caja de tornillos",
+            "description": "Denominación o nombre del producto. Esta formado por la linea y la marca"
+          },
+          "codigoProveedorDenominacion": {
+            "type": "string",
+            "example": "1158 Caja de tornillos",
+            "description": "Codigo proveedor Denominación o nombre del producto. Esta formado por la linea y la marca"
+          },
+          "codigoProveedor": {
+            "type": "string",
+            "example": "ABC-1234",
+            "description": "Código del proveedor"
+          },
+          "proveedor": {
+            "type": "string",
+            "example": "ABC-1234",
+            "description": "Código del proveedor"
+          },
+          "ubicacion": {
+            "type": "string",
+            "example": "ABC-1234",
+            "description": "Código del proveedor"
+          },
+          "stock": {
+            "type": "number",
+            "example": 50,
+            "description": "Cantidad en stock"
+          },
+          "alicuota": {
+            "type": "number",
+            "example": 299.99,
+            "description": "Precio base del producto"
+          },
+          "costo": {
+            "type": "number",
+            "example": 299.99,
+            "description": "Costo del producto"
+          },
+          "precio": {
+            "type": "number",
+            "example": 249.99,
+            "description": "Precio de oferta del producto (si aplica)"
+          },
+          "precioConIva": {
+            "type": "number",
+            "example": 249.99,
+            "description": "Precio de oferta del producto (si aplica)"
+          },
+          "sistema": {
+            "type": "number",
+            "example": 1,
+            "description": "es de sistema de la exportacion"
+          },
+          "observacion": {
+            "type": "string",
+            "example": "1158 Caja de tornillos",
+            "description": "obsrvaciones del producto."
+          },
+          "utilizaStockMinimo": {
+            "type": "boolean",
+            "description": "Indica si posee utiliza Stock minimo",
+            "example": false
+          },
+          "stockMinimo": {
+            "type": "number",
+            "example": 50,
+            "description": "Cantidad en stock minimo"
+          },
+          "utilizaPack": {
+            "type": "boolean",
+            "description": "Indica si posee utiliza Stock minimo",
+            "example": false
+          },
+          "cantidadPorPack": {
+            "type": "number",
+            "example": 50,
+            "description": "Cantidad en stock minimo"
+          },
+          "codigoReferencia": {
+            "type": "string",
+            "description": "Código de referencia del producto.",
+            "example": "REF-001"
+          },
+          "presentacion": {
+            "description": "Presentación asociada al producto",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "denominacion",
+          "codigoProveedorDenominacion",
+          "codigoProveedor",
+          "proveedor",
+          "ubicacion",
+          "stock",
+          "alicuota",
+          "costo",
+          "precio",
+          "precioConIva",
+          "sistema",
+          "observacion",
+          "utilizaStockMinimo",
+          "stockMinimo",
+          "utilizaPack",
+          "cantidadPorPack",
+          "codigoReferencia",
+          "presentacion"
+        ]
+      },
+      "ProductoDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 123
+          },
+          "denominacion": {
+            "type": "string",
+            "example": "Caja de tornillos",
+            "description": "Denominación o nombre del producto. Esta formado por la linea y la marca"
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Observaciones del producto.",
+            "example": ""
+          },
+          "codigoProveedor": {
+            "type": "string",
+            "description": "Código del proveedor del producto.",
+            "example": "ABC-1234"
+          },
+          "codigoBarra": {
+            "type": "string",
+            "description": "Código de barras del producto.",
+            "example": "7791234567890"
+          },
+          "stock": {
+            "type": "number",
+            "description": "Cantidad en stock.",
+            "example": 50
+          },
+          "costo": {
+            "type": "number",
+            "description": "Costo del producto. Valor monetario con hasta 5 decimales.",
+            "example": 100.5
+          },
+          "precio": {
+            "type": "number",
+            "description": "Precio de venta del producto. Valor monetario con hasta 5 decimales.",
+            "example": 150.75
+          },
+          "porcentaje": {
+            "type": "number",
+            "description": "Porcentaje de ganancia. Admite hasta 2 decimales.",
+            "example": 30.5
+          },
+          "costoEnDolar": {
+            "type": "boolean",
+            "description": "Indica si el costo está expresado en dólares.",
+            "example": false
+          },
+          "costoDolar": {
+            "type": "number",
+            "description": "Costo en dólares. Valor monetario con hasta 5 decimales.",
+            "example": 90.25
+          },
+          "cotizacionDolar": {
+            "type": "number",
+            "description": "Cotización del dólar utilizada. Valor monetario con hasta 5 decimales.",
+            "example": 1150.5
+          },
+          "precioDolar": {
+            "type": "number",
+            "description": "Precio expresado en dólares. Valor monetario con hasta 5 decimales.",
+            "example": 13.05
+          },
+          "destacado": {
+            "type": "boolean",
+            "description": "Indica si el producto está destacado.",
+            "example": false
+          },
+          "envioGratis": {
+            "type": "boolean",
+            "description": "Indica si el producto tiene envío gratis.",
+            "example": false
+          },
+          "linea": {
+            "description": "Linea asociada al producto",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          },
+          "marca": {
+            "description": "Marca asociada al producto",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          },
+          "presentacion": {
+            "description": "Presentación asociada al producto",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          },
+          "proveedor": {
+            "description": "proveedor asociada al producto",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          },
+          "alicuotaIva": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlicuotaIva"
+              }
+            ]
+          },
+          "ubicacion": {
+            "type": "string",
+            "description": "Ubicación física del producto.",
+            "example": "Estante A1"
+          },
+          "utilizaStockMinimo": {
+            "type": "boolean",
+            "description": "Indica si el producto utiliza stock mínimo.",
+            "example": false
+          },
+          "stockMinimo": {
+            "type": "number",
+            "description": "Stock mínimo del producto.",
+            "example": 5
+          },
+          "utilizaPack": {
+            "type": "boolean",
+            "description": "Indica si el producto se comercializa por pack.",
+            "example": false
+          },
+          "cantidadPorPack": {
+            "type": "number",
+            "description": "Cantidad de unidades por pack.",
+            "example": 6
+          },
+          "sistema": {
+            "type": "number",
+            "example": 123
+          },
+          "codigoReferencia": {
+            "type": "string",
+            "description": "Código de referencia del producto.",
+            "example": "REF-001"
+          }
+        },
+        "required": [
+          "id",
+          "denominacion",
+          "codigoProveedor",
+          "stock",
+          "costo",
+          "precio",
+          "porcentaje",
+          "costoEnDolar",
+          "costoDolar",
+          "cotizacionDolar",
+          "precioDolar",
+          "destacado",
+          "envioGratis",
+          "linea",
+          "marca",
+          "presentacion",
+          "proveedor",
+          "alicuotaIva",
+          "ubicacion",
+          "utilizaStockMinimo",
+          "utilizaPack",
+          "sistema"
+        ]
+      },
+      "UpdateProductoDto": {
+        "type": "object",
+        "properties": {
+          "denominacion": {
+            "type": "string",
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ.\\-/%]+$",
+            "description": "Denominación o nombre del producto. No puede superar los 200 caracteres.",
+            "example": "1158 Caja de tornillos"
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Observaciones del producto.",
+            "example": ""
+          },
+          "codigoProveedor": {
+            "type": "string",
+            "description": "Código del proveedor del producto.",
+            "example": "ABC-1234"
+          },
+          "codigoBarra": {
+            "type": "string",
+            "description": "Código de barras del producto.",
+            "example": "7791234567890"
+          },
+          "codigoReferencia": {
+            "type": "string",
+            "description": "Código de referencia del producto.",
+            "example": "REF-001"
+          },
+          "ubicacion": {
+            "type": "string",
+            "description": "Ubicación física del producto.",
+            "example": "Estante A1"
+          },
+          "utilizaStockMinimo": {
+            "type": "boolean",
+            "description": "Indica si el producto utiliza stock mínimo.",
+            "example": false
+          },
+          "utilizaPack": {
+            "type": "boolean",
+            "description": "Indica si el producto se comercializa por pack.",
+            "example": false
+          },
+          "cantidadPorPack": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Cantidad de unidades por pack. Requerido cuando utilizaPack es true.",
+            "example": 6
+          },
+          "costoEnDolar": {
+            "type": "boolean",
+            "description": "Indica si el costo está expresado en dólares.",
+            "example": false
+          },
+          "destacado": {
+            "type": "boolean",
+            "description": "Indica si el producto está destacado.",
+            "example": false
+          },
+          "envioGratis": {
+            "type": "boolean",
+            "description": "Indica si el producto tiene envío gratis.",
+            "example": false
+          },
+          "sistema": {
+            "type": "boolean",
+            "description": "Indica si el producto es del sistema.",
+            "example": false
+          },
+          "costo": {
+            "type": "number",
+            "description": "Costo del producto. Valor monetario con hasta 5 decimales.",
+            "example": 100.5
+          },
+          "porcentaje": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Porcentaje de ganancia. Debe ser mayor que 0 y admite hasta 2 decimales.",
+            "example": 30.5
+          },
+          "stock": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Cantidad en stock. Debe ser mayor que 0 y admite hasta 3 decimales.",
+            "example": 50
+          },
+          "stockMinimo": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Stock mínimo del producto. Debe ser mayor que 0 y admite hasta 3 decimales.",
+            "example": 5
+          },
+          "lineaId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID de la línea asociada. Debe ser un entero positivo.",
+            "example": 3
+          },
+          "marcaId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID de la marca asociada. Debe ser un entero positivo.",
+            "example": 2
+          },
+          "presentacionId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID de la presentación asociada. Debe ser un entero positivo.",
+            "example": 1
+          },
+          "costoDolar": {
+            "type": "number",
+            "description": "Costo en dólares. Valor monetario con hasta 5 decimales.",
+            "example": 90.25
+          },
+          "precio": {
+            "type": "number",
+            "description": "Precio de venta. Valor monetario con hasta 5 decimales.",
+            "example": 150.75
+          },
+          "alicuotaIva": {
+            "description": "Alícuota de IVA aplicada al producto.",
+            "example": 21,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlicuotaIva"
+              }
+            ]
+          },
+          "usuarioUpdatedId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del usuario que actualiza el producto. Debe ser un entero positivo.",
+            "example": 1
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Fecha y hora de la última actualización.",
+            "example": "2026-09-23T15:00:00.000Z"
+          }
+        },
+        "required": [
+          "denominacion",
+          "costo",
+          "porcentaje",
+          "stock",
+          "stockMinimo",
+          "lineaId",
+          "marcaId",
+          "presentacionId",
+          "usuarioUpdatedId"
+        ]
+      },
+      "TipoAumento": {
+        "type": "number",
+        "enum": [
+          1,
+          2
+        ],
+        "description": "Tipo de ajuste: monto fijo o porcentaje."
+      },
+      "OperacionAjuste": {
+        "type": "string",
+        "enum": [
+          "AUMENTO",
+          "DISMINUCION"
+        ],
+        "description": "Sentido del ajuste: aumento o disminución."
+      },
+      "ActualizacionPrecioDto": {
+        "type": "object",
+        "properties": {
+          "lineaId": {
+            "type": "number",
+            "example": 12,
+            "description": "ID de la línea a la que pertenece el conjunto de productos.",
+            "minimum": 1
+          },
+          "tipoAjuste": {
+            "example": 1,
+            "description": "Tipo de ajuste: monto fijo o porcentaje.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TipoAumento"
+              }
+            ]
+          },
+          "operacion": {
+            "example": "AUMENTO",
+            "description": "Sentido del ajuste: aumento o disminución.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OperacionAjuste"
+              }
+            ]
+          },
+          "valor": {
+            "type": "number",
+            "example": 10,
+            "description": "Valor del ajuste. Debe ser mayor que 0. Valor monetario con hasta 5 decimales.",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          }
+        },
+        "required": [
+          "tipoAjuste",
+          "operacion",
+          "valor"
+        ]
+      },
+      "MotivoCambioPrecio": {
+        "type": "string",
+        "enum": [
+          "ActualizacionDeCosto",
+          "ActualizacionDeMargen",
+          "ActualizacionDePrecioPorLinea",
+          "ActualizacionDePrecioGlobal",
+          "ActualizacionDePrecioDirecta"
+        ],
+        "description": "Motivo que originó el cambio de precio."
+      },
+      "CambioPrecioDto": {
+        "type": "object",
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "example": "2026-09-13T15:00:00.000Z",
+            "description": "Fecha y hora en la que se registró el cambio de precio.",
+            "format": "date-time"
+          },
+          "precioAnterior": {
+            "type": "number",
+            "example": 120,
+            "description": "Precio del producto antes del cambio."
+          },
+          "precioNuevo": {
+            "type": "number",
+            "example": 132,
+            "description": "Precio del producto después del cambio."
+          },
+          "motivo": {
+            "description": "Motivo que originó el cambio de precio.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MotivoCambioPrecio"
+              }
+            ]
+          }
+        },
+        "required": [
+          "fecha",
+          "precioAnterior",
+          "precioNuevo",
+          "motivo"
+        ]
+      },
+      "CreateLineaDto": {
+        "type": "object",
+        "properties": {
+          "denominacion": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ]+$",
+            "description": "Denominación o nombre de la línea. No puede superar los 255 caracteres.",
+            "example": "tornillos"
+          },
+          "stockMinimo": {
+            "type": "number",
+            "description": "Stock mínimo de la línea. Admite hasta 3 decimales.",
+            "example": 5
+          },
+          "utilizaStockMinimo": {
+            "type": "boolean",
+            "description": "Indica si la línea utiliza stock mínimo.",
+            "example": false
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Observaciones varias sobre la línea.",
+            "example": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Fecha y hora de creación (generada por el servidor).",
+            "example": "2026-09-23T15:00:00.000Z"
+          },
+          "usuarioCreatedId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del usuario que crea la línea. Debe ser un número entero positivo.",
+            "example": 1
+          },
+          "superLineaId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID de la SuperLínea asociada. Debe ser un entero positivo.",
+            "example": 1
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Fecha de eliminación (null si está activa).",
+            "example": null
+          }
+        },
+        "required": [
+          "denominacion",
+          "utilizaStockMinimo",
+          "usuarioCreatedId",
+          "superLineaId"
+        ]
+      },
+      "SelectOption": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "number",
+            "description": "Código identificador de la opción.",
+            "example": 1
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre de la opción.",
+            "example": "tornillos"
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "Descripción de la opción.",
+            "example": ""
+          }
+        },
+        "required": [
+          "codigo",
+          "nombre",
+          "descripcion"
+        ]
+      },
+      "SuperLineaDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1,
+            "description": "ID de la superlínea."
+          },
+          "denominacion": {
+            "type": "string",
+            "example": "Herramientas",
+            "description": "Denominación o nombre de la superlínea."
+          },
+          "observacion": {
+            "type": "string",
+            "example": "Uso industrial",
+            "description": "Observaciones varias sobre la superlínea."
+          },
+          "deletedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Fecha de eliminación (null si está activa)."
+          }
+        },
+        "required": [
+          "id",
+          "denominacion",
+          "deletedAt"
+        ]
+      },
+      "UpdateLineaDto": {
+        "type": "object",
+        "properties": {
+          "denominacion": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ]+$",
+            "description": "Nueva denominación o nombre de la línea. No puede superar los 255 caracteres.",
+            "example": "tornillos"
+          },
+          "stockMinimo": {
+            "type": "number",
+            "description": "Stock mínimo de la línea. Admite hasta 3 decimales.",
+            "example": 5
+          },
+          "utilizaStockMinimo": {
+            "type": "boolean",
+            "description": "Indica si la línea utiliza stock mínimo.",
+            "example": false
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Observaciones varias sobre la línea.",
+            "example": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Fecha y hora de creación (generada por el servidor).",
+            "example": "2026-09-23T15:00:00.000Z"
+          },
+          "usuarioUpdatedId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del usuario que actualiza la línea. Debe ser un número entero positivo.",
+            "example": 1
+          },
+          "superLineaId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID de la SuperLínea asociada. Debe ser un entero positivo.",
+            "example": 1
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Fecha de eliminación (null si está activa).",
+            "example": null
+          }
+        },
+        "required": [
+          "usuarioUpdatedId"
+        ]
+      },
+      "CreatePresentacionDto": {
+        "type": "object",
+        "properties": {
+          "denominacion": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ.\\-/]+$",
+            "description": "Denominación o nombre de la presentación. No puede superar los 255 caracteres.",
+            "example": "1L"
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Observaciones varias sobre la presentación.",
+            "example": "Botella de un litro"
+          },
+          "usuarioCreatedId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del usuario que crea la presentación. Debe ser un número entero positivo.",
+            "example": 1
+          }
+        },
+        "required": [
+          "denominacion",
+          "usuarioCreatedId"
+        ]
+      },
+      "PresentacionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1,
+            "description": "ID de la presentación."
+          },
+          "denominacion": {
+            "type": "string",
+            "example": "1L",
+            "description": "Denominación o nombre de la presentación."
+          },
+          "observacion": {
+            "type": "string",
+            "example": "Botella de un litro",
+            "description": "Observaciones varias sobre la presentación."
+          },
+          "deletedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Fecha de eliminación (null si está activa)."
+          }
+        },
+        "required": [
+          "id",
+          "denominacion",
+          "deletedAt"
+        ]
+      },
+      "UpdatePresentacionDto": {
+        "type": "object",
+        "properties": {
+          "denominacion": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ.\\-/]+$",
+            "description": "Nueva denominación o nombre de la presentación. No puede superar los 255 caracteres.",
+            "example": "1L"
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Observaciones varias sobre la presentación.",
+            "example": "Botella de un litro"
+          },
+          "usuarioUpdatedId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del usuario que actualiza la presentación. Debe ser un número entero positivo.",
+            "example": 1
+          }
+        },
+        "required": [
+          "usuarioUpdatedId"
+        ]
+      },
+      "CreateProveedorDto": {
+        "type": "object",
+        "properties": {
+          "codigoProveedor": {
+            "type": "string",
+            "example": "134",
+            "description": "por el momento va a tomar el id"
+          },
+          "denominacion": {
+            "type": "string",
+            "example": "Proveedor S.A.",
+            "description": "Nombre del proveedor"
+          },
+          "denominacionAfip": {
+            "type": "string",
+            "example": "Proveedor S.A.",
+            "description": "Nombre legal del proveedor"
+          },
+          "cuit": {
+            "type": "string",
+            "example": "CUIT",
+            "description": "Tipo de identificación fiscal"
+          }
+        },
+        "required": [
+          "codigoProveedor",
+          "denominacion",
+          "denominacionAfip",
+          "cuit"
+        ]
+      },
+      "DomicilioDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "ID del domicilio."
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ProveedorDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 123,
+            "description": "ID de del cliente o proveedor"
+          },
+          "denominacion": {
+            "type": "string",
+            "description": "Razon social del cliente yo proveedor"
+          },
+          "codigo": {
+            "type": "string",
+            "description": "Razon social del cliente yo proveedor"
+          },
+          "denominacionAfip": {
+            "type": "string",
+            "description": "Razon social del cliente yo proveedor"
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Razon social del cliente yo proveedor"
+          },
+          "letra": {
+            "type": "string"
+          },
+          "cuit": {
+            "type": "string"
+          },
+          "dni": {
+            "type": "string"
+          },
+          "mail": {
+            "type": "string"
+          },
+          "condicionIva": {
+            "description": "Categoria iva",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          },
+          "vendedor": {
+            "description": "vendedor",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          },
+          "domicilio": {
+            "$ref": "#/components/schemas/DomicilioDto"
+          },
+          "saldo": {
+            "type": "number"
+          },
+          "sistema": {
+            "type": "number"
+          },
+          "esProveedorMateriaPrima": {
+            "type": "boolean",
+            "description": "Indica si es proveevor materia prima",
+            "example": false
+          },
+          "esProveedorGastos": {
+            "type": "boolean",
+            "description": "Indica si es proveedor de gastos",
+            "example": false
+          }
+        },
+        "required": [
+          "id",
+          "denominacion",
+          "codigo",
+          "denominacionAfip",
+          "observacion",
+          "letra",
+          "cuit",
+          "dni",
+          "mail",
+          "condicionIva",
+          "saldo",
+          "sistema",
+          "esProveedorMateriaPrima",
+          "esProveedorGastos"
+        ]
+      },
+      "UpdateProveedorDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateCondicionIvaDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CondicionIvaDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 123,
+            "description": "ID de la condición de IVA"
+          },
+          "denominacion": {
+            "type": "string",
+            "example": "Consumidor Final",
+            "description": "Denominación de la condición de IVA"
+          },
+          "letra": {
+            "type": "string",
+            "example": "A",
+            "description": "Letra asociada a la condición de IVA"
+          },
+          "observacion": {
+            "type": "string",
+            "example": "Consumidor Final",
+            "description": "Denominación de la condición de IVA"
+          },
+          "requiereCuit": {
+            "type": "boolean",
+            "description": "Indica si f CUIT ess requerido"
+          },
+          "requiereDocumento": {
+            "type": "boolean",
+            "description": "Indica si documento es requerido"
+          }
+        },
+        "required": [
+          "id",
+          "denominacion",
+          "letra",
+          "observacion",
+          "requiereCuit",
+          "requiereDocumento"
+        ]
+      },
+      "UpdateCondicionIvaDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateLocalidadDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "LocalidadDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 123,
+            "description": "ID de la localidad"
+          },
+          "denominacion": {
+            "type": "string",
+            "example": "Villa Maria",
+            "description": "Denominación de la localidad"
+          },
+          "codigoPostal": {
+            "type": "string",
+            "example": "5900",
+            "description": "codigo postal"
+          },
+          "sistema": {
+            "type": "number",
+            "example": 123,
+            "description": "ID de la localidad"
+          },
+          "provincia": {
+            "description": "Provincia de la localidad",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          },
+          "deletedAt": {
+            "type": "object",
+            "example": null,
+            "description": "Fecha de eliminación (null si está activa)",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "denominacion",
+          "codigoPostal",
+          "sistema",
+          "provincia",
+          "deletedAt"
+        ]
+      },
+      "UpdateLocalidadDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateProvinciaDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateProvinciaDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateDomicilioDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateDomicilioDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateSuperLineaDto": {
+        "type": "object",
+        "properties": {
+          "denominacion": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ]+$",
+            "description": "Denominación o nombre de la superlínea. No puede superar los 255 caracteres.",
+            "example": "Herramientas"
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Observaciones varias sobre la superlínea.",
+            "example": "Uso industrial"
+          },
+          "usuarioCreatedId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del usuario que crea la superlínea. Debe ser un número entero positivo.",
+            "example": 1
+          }
+        },
+        "required": [
+          "denominacion",
+          "usuarioCreatedId"
+        ]
+      },
+      "UpdateSuperLineaDto": {
+        "type": "object",
+        "properties": {
+          "denominacion": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ]+$",
+            "description": "Nueva denominación o nombre de la superlínea. No puede superar los 255 caracteres.",
+            "example": "Herramientas"
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Observaciones varias sobre la superlínea.",
+            "example": "Uso industrial"
+          },
+          "usuarioUpdatedId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del usuario que actualiza la superlínea. Debe ser un número entero positivo.",
+            "example": 1
+          }
+        },
+        "required": [
+          "usuarioUpdatedId"
+        ]
+      },
+      "CreateClienteDto": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "example": "134",
+            "description": "por el momento va a tomar el id"
+          }
+        },
+        "required": [
+          "codigo"
+        ]
+      },
+      "OperadorDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 123,
+            "description": "ID de del cliente o proveedor"
+          },
+          "denominacion": {
+            "type": "string",
+            "description": "Razon social del cliente yo proveedor"
+          },
+          "codigo": {
+            "type": "string",
+            "description": "Razon social del cliente yo proveedor"
+          },
+          "denominacionAfip": {
+            "type": "string",
+            "description": "Razon social del cliente yo proveedor"
+          },
+          "observacion": {
+            "type": "string",
+            "description": "Razon social del cliente yo proveedor"
+          },
+          "letra": {
+            "type": "string"
+          },
+          "cuit": {
+            "type": "string"
+          },
+          "dni": {
+            "type": "string"
+          },
+          "mail": {
+            "type": "string"
+          },
+          "condicionIva": {
+            "description": "Categoria iva",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          },
+          "vendedor": {
+            "description": "vendedor",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          },
+          "domicilio": {
+            "$ref": "#/components/schemas/DomicilioDto"
+          },
+          "saldo": {
+            "type": "number"
+          },
+          "sistema": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "denominacion",
+          "codigo",
+          "denominacionAfip",
+          "observacion",
+          "letra",
+          "cuit",
+          "dni",
+          "mail",
+          "condicionIva",
+          "saldo",
+          "sistema"
+        ]
+      },
+      "UpdateClienteDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreatePersonalDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdatePersonalDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateEmpresaDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateEmpresaDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "RegistrarUsuarioDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "RecuperarPasswordDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "VerificarCodigoDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CambiarContrasenaDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateProveedorOperacionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateProveedorOperacionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateEmpresaOperacionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateEmpresaOperacionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateClienteOperacionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateClienteOperacionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateProductoOperacionDto": {
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del producto. Debe ser un número entero positivo.",
+            "example": 1
+          },
+          "operacionId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID de la operación. Debe ser un número entero positivo.",
+            "example": 1
+          },
+          "tipoOperacion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Tipo de operación. No puede estar vacío ni superar los 255 caracteres.",
+            "example": "VENTA"
+          }
+        },
+        "required": [
+          "productoId",
+          "operacionId",
+          "tipoOperacion"
+        ]
+      },
+      "UpdateProductoOperacionDto": {
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID del producto. Debe ser un número entero positivo.",
+            "example": 1
+          },
+          "operacionId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "ID de la operación. Debe ser un número entero positivo.",
+            "example": 1
+          },
+          "tipoOperacion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Tipo de operación. No puede estar vacío ni superar los 255 caracteres.",
+            "example": "VENTA"
+          }
+        }
+      }
+    }
+  }
+}

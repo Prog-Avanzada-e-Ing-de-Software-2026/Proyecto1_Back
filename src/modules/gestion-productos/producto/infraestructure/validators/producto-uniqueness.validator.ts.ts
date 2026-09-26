@@ -33,7 +33,7 @@ export class ProductoUniquenessValidator {
         `Producto - Denominación duplicada: "${denominacion}"`,
       );
       throw new ConflictException(
-        `La denominación "${denominacion}" ya está en uso`,
+        `La denominación '${denominacion}' ya está en uso`,
       );
     }
   }
@@ -49,7 +49,7 @@ export class ProductoUniquenessValidator {
         `Producto - codigo duplicado: "${codigoProveedor}"`,
       );
       throw new ConflictException(
-        `El codigo  "${codigoProveedor}" ya está en uso`,
+        `El código '${codigoProveedor}' ya está en uso`,
       );
     }
   }

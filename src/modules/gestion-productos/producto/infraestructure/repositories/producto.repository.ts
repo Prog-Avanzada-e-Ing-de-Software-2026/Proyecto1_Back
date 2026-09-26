@@ -5,11 +5,13 @@ import { IProductoRepository } from '../../domain/interfaces/producto.repository
 import { ProductoPersistenceAdapter } from './producto.persistence-adapters';
 import { Linea } from '../../../linea/domain/entities/linea.entity';
 import { Marca } from '../../../marca/domain/entities/marca.entity';
+import { Presentacion } from '../../../presentacion/domain/entities/presentacion.entity';
 import { UpdateProductoDto } from '../../dto/update-producto.dto';
 import { DatabaseConnectionException } from 'src/modules/common/exceptions/database-connection.exception';
 import { IUnitOfWork } from 'src/modules/common/unit-of-work/iunit-of-work.';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
 import { UpdatePrecioDto } from '../../dto/update-precio.dto';
+import { CambioPrecio } from '../../domain/entities/cambio-precio.entity';
 
 @Injectable()
 export class ProductoRepository implements IProductoRepository {
@@ -29,6 +31,7 @@ export class ProductoRepository implements IProductoRepository {
     data: CreateProductoDto,
     linea: Linea,
     marca: Marca,
+    presentacion: Presentacion,
     usuario: Usuario,
   ): Promise<Producto> {
     this.logger.log(`Creando un nuevo `);
@@ -37,6 +40,7 @@ export class ProductoRepository implements IProductoRepository {
         data,
         linea,
         marca,
+        presentacion,
         usuario,
       );
     } catch (error) {
@@ -52,7 +56,7 @@ export class ProductoRepository implements IProductoRepository {
     data: UpdateProductoDto,
     linea: Linea,
     marca: Marca,
-
+    presentacion: Presentacion | undefined,
     usuario: Usuario,
   ): Promise<Producto> {
     return this.persistenceService.update(
@@ -60,7 +64,7 @@ export class ProductoRepository implements IProductoRepository {
       data,
       linea,
       marca,
-
+      presentacion,
       usuario,
     );
   }
@@ -81,6 +85,7 @@ export class ProductoRepository implements IProductoRepository {
     conStock: boolean,
     skip: number,
     take: number,
+    incluirCambiosPrecio?: boolean,
   ): Promise<{ data: Producto[]; total: number }> {
     return this.persistenceService.findBy(
       denominacion,
@@ -93,6 +98,7 @@ export class ProductoRepository implements IProductoRepository {
       conStock,
       skip,
       take,
+      incluirCambiosPrecio,
     );
   }
 
@@ -136,6 +142,20 @@ export class ProductoRepository implements IProductoRepository {
     return this.persistenceService.actualizarPrecio(id, dto, usuario);
   }
 
+  async actualizarPrecios(
+    productos: Producto[],
+    usuario: Usuario,
+  ): Promise<Producto[]> {
+    return this.persistenceService.actualizarPrecios(productos, usuario);
+  }
+
+  async findHistorialPrecios(
+    id: number,
+    skip: number,
+    take: number,
+  ): Promise<CambioPrecio[]> {
+    return this.persistenceService.findHistorialPrecios(id, skip, take);
+  }
 
   async findByDenominacion(denominacion: string): Promise<Producto | null> {
     const entity =
@@ -162,11 +182,39 @@ export class ProductoRepository implements IProductoRepository {
     );
   }
 
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    return this.persistenceService.busquedaPorCoincidenciaParcial(
+      denominacion,
+      skip,
+      take,
+    );
+  }
+
+  async findProductosBySuperLinea(
+    superLineaId: number,
+    skip = 0,
+    take = 10,
+  ): Promise<{ data: Producto[]; total: number }> {
+    return this.persistenceService.findProductosBySuperLinea(
+      superLineaId,
+      skip,
+      take,
+    );
+  }
+
   async existsProductosActivosByMarca(marcaId: number): Promise<boolean> {
     return this.persistenceService.existsProductosActivosByMarca(marcaId);
   }
   async existsProductosActivosByLinea(lineaId: number): Promise<boolean> {
     return this.persistenceService.existsProductosActivosByLinea(lineaId);
+  }
+
+  async existsActiveByPresentacion(presentacionId: number): Promise<boolean> {
+    return this.persistenceService.existsActiveByPresentacion(presentacionId);
   }
 
 

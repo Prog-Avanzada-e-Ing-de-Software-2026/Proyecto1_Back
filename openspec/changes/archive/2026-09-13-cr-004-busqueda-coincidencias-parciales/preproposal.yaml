@@ -1,0 +1,32 @@
+schemaName: gentle-ai.sdd-preproposal
+schemaVersion: 1
+revision: 2
+change: cr-004-busqueda-coincidencias-parciales
+exploration:
+  outcome: done
+  reference:
+    openspec: openspec/changes/cr-004-busqueda-coincidencias-parciales/exploration.md
+research:
+  request:
+    - "Q1 (local-repo): actual charset/collation for MySQL DB and producto.denominacion (text), linea.denominacion (varchar255), super_linea.denominacion (varchar255)"
+    - "Q2 (documentation): MySQL 8.0 default collation for utf8mb4 and whether utf8mb4_0900_ai_ci is accent-insensitive"
+    - "Q3 (documentation): correct SQL for case-insensitive + accent-sensitive containment; compare COLLATE utf8mb4_bin / BINARY / column-collation approaches"
+    - "Q4 (documentation): TypeORM QueryBuilder expression and @Column/table collation options"
+  classes:
+    - local-repo
+    - documentation
+  admission:
+    documentation: granted (available via context7 MCP)
+    open-web: granted-declared but webfetch tool unavailable at runtime (unused; no open-web claims emitted)
+  outcome: done
+  evidenceReferences:
+    openspec: openspec/changes/cr-004-busqueda-coincidencias-parciales/research.md
+    engram: sdd/cr-004-busqueda-coincidencias-parciales/research
+productDecisions:
+  status: confirmed
+  items:
+    - containment-expression: "LOWER(col) COLLATE utf8mb4_bin LIKE CONCAT('%', LOWER(:term), '%') COLLATE utf8mb4_bin (collate both sides)"
+    - column-collation: "do not change column/table collation (protect unique indexes)"
+    - component-placement: "static shared helper in common (QueryBuilderHelper); thin per-adapter busquedaPorCoincidenciaParcial(); no Producto adapter refactor"
+    - selection-shape: "slim SelectOption-compatible shape for linea/superlinea selection endpoints"
+proposalReady: true

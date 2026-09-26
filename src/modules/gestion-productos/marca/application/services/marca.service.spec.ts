@@ -1,23 +1,42 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConflictException } from '@nestjs/common';
 import { MarcaService } from './marca.service';
 import { IMarcaRepository } from '../../domain/interfaces/marca.repository.interface';
-
+import { Marca } from '../../domain/entities/marca.entity';
+import { MarcaMapper } from '../../mappers/marca.mapper';
+import { UsuarioService } from 'src/modules/gestion-usuario/usuario/application/services/usuario.service';
+import { PoliticaEliminacionMarca } from '../../domain/services/politica-eliminacion-marca.service';
 
 describe('MarcaService', () => {
   let service: MarcaService;
   let repository: jest.Mocked<IMarcaRepository>;
-/*
+
+  const mockRepository = {
+    findBy: jest.fn(),
+    findByDenominacionWith: jest.fn(),
+    create: jest.fn(),
+  };
+
+  const mockUsuarioService = {
+    findOne: jest.fn(),
+  };
+
+  const mockPoliticaEliminacion = {
+    tieneProductosActivosParaMarca: jest.fn(),
+  };
+
   beforeEach(async () => {
-    const mockRepository: Partial<IMarcaRepository> = {
-      findAll: jest.fn(),
-      findByDenominacion: jest.fn(), // Agregar este método
-        create: jest.fn(), // Agregar este método
-    };
+    jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MarcaService,
         { provide: 'IMarcaRepository', useValue: mockRepository },
+        { provide: UsuarioService, useValue: mockUsuarioService },
+        {
+          provide: PoliticaEliminacionMarca,
+          useValue: mockPoliticaEliminacion,
+        },
       ],
     }).compile();
 
@@ -25,62 +44,35 @@ describe('MarcaService', () => {
     repository = module.get('IMarcaRepository');
   });
 
-  describe('findAll', () => {
-    it('debería retornar una lista de marcas', async () => {
-      const marcasMock: Marca[] = [
-        { id: 1, denominacion: 'Nike', createdAt: new Date(), updatedAt: new Date() },
-        { id: 2, denominacion: 'Adidas', createdAt: new Date(), updatedAt: new Date() },
-      ];
+  describe('findBy', () => {
+    it('delegates to the repository and maps the result through MarcaMapper', async () => {
+      const marca = new Marca();
+      marca.id = 1;
+      marca.denominacion = 'Nike';
+      marca.observacion = 'deportiva';
+      marca.sistema = 0;
 
-      repository.findAll.mockResolvedValue(marcasMock);
+      repository.findBy.mockResolvedValue({ data: [marca], total: 1 });
 
-      const result = await service.findAll(0, 10);
+      const result = await service.findBy('nike', 0, 10, false);
 
-      expect(repository.findAll).toHaveBeenCalledWith(0, 10);
-      expect(result).toEqual(marcasMock);
+      expect(repository.findBy).toHaveBeenCalledWith('nike', 0, 10, false);
+      expect(result.data).toEqual([MarcaMapper.toDto(marca)]);
+      expect(result.total).toBe(1);
     });
   });
 
-
   describe('create', () => {
-    it('debería crear una nueva marca si la denominación no existe', async () => {
-      const createMarcaDto: CreateMarcaDto = { denominacion: 'Nike' };
-
-      repository.findByDenominacion.mockResolvedValue(null); // No existe
-      repository.create.mockResolvedValue({
-        id: 1,
-        ...createMarcaDto,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      const result = await service.create(createMarcaDto);
-
-      expect(repository.findByDenominacion).toHaveBeenCalledWith('Nike');
-      expect(repository.create).toHaveBeenCalledWith(createMarcaDto);
-      expect(result).toEqual({
-        id: 1,
+    it('throws ConflictException when the denominacion belongs to another marca', async () => {
+      repository.findByDenominacionWith.mockResolvedValue({
+        id: 2,
         denominacion: 'Nike',
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date),
-      });
-    });
+      } as Marca);
 
-    it('debería lanzar un error si la denominación ya existe', async () => {
-      const createMarcaDto: CreateMarcaDto = { denominacion: 'Nike' };
-
-      repository.findByDenominacion.mockResolvedValue({
-        id: 1,
-        denominacion: 'Nike',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      await expect(service.create(createMarcaDto)).rejects.toThrow(ConflictException);
+      await expect(
+        service.create({ denominacion: 'Nike', usuarioCreatedId: 1 }),
+      ).rejects.toThrow(ConflictException);
       expect(repository.create).not.toHaveBeenCalled();
     });
   });
-
-
-  */
 });

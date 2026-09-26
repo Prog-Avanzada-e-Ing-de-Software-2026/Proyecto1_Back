@@ -1,0 +1,49 @@
+schemaName: gentle-ai.sdd-status
+schemaVersion: 2
+changeName: cr-002-presentacion
+artifactStore: openspec
+planningHome:
+  mode: repo-local
+  path: openspec
+changeRoot: openspec/changes/cr-002-presentacion
+artifactPaths:
+  proposal:
+    - openspec/changes/cr-002-presentacion/proposal.md
+  specs:
+    - openspec/changes/cr-002-presentacion/specs/producto-presentacion-association/spec.md
+    - openspec/changes/cr-002-presentacion/specs/presentacion-management/spec.md
+  design:
+    - openspec/changes/cr-002-presentacion/design.md
+  tasks:
+    - openspec/changes/cr-002-presentacion/tasks.md
+  applyProgress: []
+  verifyReport: []
+artifacts:
+  proposal: done
+  specs: done
+  design: done
+  tasks: done
+  applyProgress: missing
+  verifyReport: missing
+taskProgress:
+  total: 13
+  completed: 0
+  pending: 13
+  allComplete: false
+dependencies:
+  proposal: all_done
+  specs: all_done
+  design: all_done
+  tasks: all_done
+  apply: ready
+  verify: blocked
+  archive: blocked
+applyState: ready
+relationships:
+  dependsOn: []
+  supersedes: []
+  amends: []
+  conflictsWith: []
+  sameDomainActiveChanges: []
+nextRecommended: apply
+blockedReasons: []

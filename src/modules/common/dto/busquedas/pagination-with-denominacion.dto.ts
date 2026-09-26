@@ -5,7 +5,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class PaginationWithDenominacionDto {
   @IsOptional()
   @IsString()
-  @ApiProperty({  description: 'Denominación a filtrar' })
+  @ApiPropertyOptional({
+    description: 'Denominación a filtrar',
+    example: 'tornillo',
+  })
   denominacion?: string;
 
   @IsInt()

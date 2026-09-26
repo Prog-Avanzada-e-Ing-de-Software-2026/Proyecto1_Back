@@ -7,6 +7,7 @@ import {
   Logger 
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { RequestValidationException } from '../validation/validation-error.factory';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -80,16 +81,30 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     this.logger.error('═══════════════════════════════════════════════════════');
 
     // Respuesta al cliente
-    const errorResponse = {
+    const commonFields = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message: exception?.message || 'Internal Server Error',
-      ...(process.env.NODE_ENV === 'development' && { 
-        stack: exception?.stack,
-        details: exception?.response 
-      })
     };
+
+    let errorResponse: Record<string, any>;
+
+    if (exception instanceof RequestValidationException) {
+      errorResponse = {
+        ...commonFields,
+        message: exception.message,
+        fieldErrors: exception.fieldErrors,
+      };
+    } else {
+      errorResponse = {
+        ...commonFields,
+        message: exception?.message || 'Internal Server Error',
+        ...(process.env.NODE_ENV === 'development' && {
+          stack: exception?.stack,
+          details: exception?.response
+        })
+      };
+    }
 
     response.status(status).json(errorResponse);
   }

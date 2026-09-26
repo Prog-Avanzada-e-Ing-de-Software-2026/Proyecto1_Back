@@ -4,25 +4,25 @@ import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, M
 
 
 export class MarcaDto  {
-  @ApiProperty({ example: 123, description: 'ID del la marca' })
+  @ApiProperty({ type: Number, example: 123, description: 'ID del la marca' })
   @Type(() => Number)
   @IsInt()
   id: number;
 
-  @ApiProperty({ example: 'IVECO', description: 'Denominación o nombre del producto. Esta formado por la linea y la marca' })
+  @ApiProperty({ type: String, example: 'IVECO', description: 'Denominación o nombre del producto. Esta formado por la linea y la marca' })
   @IsString()
   denominacion: string;
 
-  @ApiProperty({ example: '', description: 'Observaciones varias sobre la marca' })
+  @ApiProperty({ type: String, example: '', description: 'Observaciones varias sobre la marca' })
   @IsString()
   observacion: string;
 
-  @ApiProperty({ example: 1, description: 'de sistema no se puede editar ni eliminar' })
+  @ApiProperty({ type: Number, example: 1, description: 'de sistema no se puede editar ni eliminar' })
   @Type(() => Number)
   @IsInt()
   sistema: number;
 
-  @ApiProperty({ example: null, description: 'Fecha de eliminación (null si está activa)', nullable: true })
+  @ApiProperty({ type: String, example: null, description: 'Fecha de eliminación (null si está activa)', nullable: true })
   @IsOptional()
   deletedAt: string | null;
 }

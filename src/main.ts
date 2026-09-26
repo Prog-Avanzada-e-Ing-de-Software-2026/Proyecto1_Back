@@ -2,18 +2,27 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './modules/common/filters/global-exception.filters';
 import { ValidationPipe } from '@nestjs/common';
+import { createRequestValidationException } from './modules/common/validation/validation-error.factory';
 import * as bodyParser from 'body-parser';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
+import { useContainer } from 'class-validator';
+import {
+  buildSwaggerDocumentConfig,
+  GLOBAL_API_PREFIX,
+} from './swagger.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
+
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true, // Convierte el cuerpo a la clase del DTO
       whitelist: true, // Elimina propiedades no declaradas en el DTO
       forbidNonWhitelisted: true, // Lanza error si se reciben propiedades no permitidas
+      exceptionFactory: createRequestValidationException,
       /*
       transformOptions: {
         enableImplicitConversion: true,
@@ -21,16 +30,12 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('Gestión Base - Distribuidora')
-    .setDescription('La descripción de las  API  de la distribuidora')
-    .setVersion('1.0')
-    .build();
+  const config = buildSwaggerDocumentConfig();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  SwaggerModule.setup(GLOBAL_API_PREFIX, app, documentFactory);
 
   // Configurar prefijo para endpoints
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix(GLOBAL_API_PREFIX);
 
   // Configurar filtro global de excepciones
   app.useGlobalFilters(new GlobalExceptionFilter());

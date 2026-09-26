@@ -19,9 +19,10 @@ Uno de los pilares de DDD es que todo el equipo —negocio, análisis y desarrol
 
 | Término | Significado en el dominio |
 |---|---|
-| **Producto** | Bien comercializable gestionado por el sistema, identificado por marca, línea y denominación. |
+| **Producto** | Bien comercializable gestionado por el sistema, identificado por marca, línea, presentación y denominación. Cada producto tiene una sola presentación: distintas formas comerciales (ej. 1L y 2,5L) son productos distintos. |
 | **Marca** | Fabricante o identificación comercial del producto. |
 | **Línea** | Categoría o familia a la que pertenece el producto (ej.: Gaseosas). |
+| **Presentación** | Forma comercial en la que se ofrece un producto (ej.: botella 2L, pack x6, lata 500ml). Tiene identidad y ciclo de vida propios; puede asociarse a varios productos. |
 | **Costo** | Valor de adquisición del producto, base para calcular el precio. |
 | **Margen** | Porcentaje de ganancia aplicado sobre el costo para obtener el precio de venta. |
 | **Precio** | Valor de venta al público. Se deriva de Costo + Margen. |
@@ -41,7 +42,7 @@ Uno de los pilares de DDD es que todo el equipo —negocio, análisis y desarrol
 > **Concepto clave:**  
 > Un *Bounded Context* es un límite conceptual dentro del cual un modelo y su lenguaje son válidos y consistentes. Fuera de ese límite, la misma palabra puede significar otra cosa. Delimitar contextos evita que un solo modelo gigante intente representar todo el negocio, lo cual lo vuelve inmanejable.
 >
-> **Ejemplo 1:** "Producto" dentro del contexto Catálogo es marca + línea + denominación; dentro del contexto Comercial, ese mismo "Producto" se ve como un ítem de una venta, con cantidad y subtotal. Son dos vistas distintas de la misma palabra.
+> **Ejemplo 1:** "Producto" dentro del contexto Catálogo es marca + línea + presentación + denominación; dentro del contexto Comercial, ese mismo "Producto" se ve como un ítem de una venta, con cantidad y subtotal. Son dos vistas distintas de la misma palabra.
 >
 > **Ejemplo 2:** separar Inventario de Comercial permite que cada equipo evolucione su modelo —y hasta su base de datos— sin romper al otro contexto.
 
@@ -49,7 +50,7 @@ Del análisis del negocio se pueden identificar tres posibles contextos delimita
 
 | Contexto | Responsabilidad | Alcance en este trabajo |
 |---|---|---|
-| **Catálogo** | Producto, Marca, Línea (datos maestros) | Incluido (compartido con Inventario) |
+| **Catálogo** | Producto, Marca, Línea, Presentación (datos maestros) | Incluido (compartido con Inventario) |
 | **Inventario (CORE)** | Stock, Movimientos de stock, Alertas | Foco principal del trabajo |
 | **Comercial (opcional)** | Ventas, Compras | Fuera de alcance / evolución futura |
 
@@ -62,9 +63,9 @@ El trabajo se enfoca en el contexto de **Inventario**, que es el núcleo (*core 
 > **Concepto clave:**  
 > El modelo de dominio es la representación en entidades, *Value Objects* y relaciones que expresa las reglas del negocio dentro del código, dejando afuera detalles técnicos como base de datos o framework web.
 >
-> **Ejemplo 1:** en este trabajo el modelo de dominio está compuesto por el agregado `Producto` y la entidad `MovimientoStock`, detallados a continuación.
+> **Ejemplo 1:** en este trabajo el modelo de dominio está compuesto por el agregado `Producto`, el agregado `Presentacion` y la entidad `MovimientoStock`, detallados a continuación.
 
-Se identifican dos agregados principales y dos *Value Objects* candidatos.
+Se identifican agregados principales (`Producto`, `Presentacion`) y dos *Value Objects* candidatos. `Marca` y `Línea` también se gestionan como datos maestros con identidad propia.
 
 ### 4.1 Producto (Aggregate Root)
 
@@ -82,6 +83,7 @@ Representa el producto dentro del sistema. Es una entidad con identidad propia (
 - `id`
 - `marca`
 - `linea`
+- `presentacion` (obligatoria; una sola por producto)
 - `denominacion`
 - `costo`
 - `margen`
@@ -101,6 +103,7 @@ ajustarStock(cantidad, motivo)
 ```text
 Marca: Coca-Cola
 Línea: Gaseosas
+Presentación: Botella 2L
 Denominación: Coca-Cola 2L
 
 Costo: $1000
@@ -112,7 +115,23 @@ Stock mínimo: 5
 Estado: no está en alerta
 ```
 
-### 4.2 MovimientoStock (Entity)
+### 4.2 Presentacion (Aggregate Root)
+
+Representa la forma comercial de un producto (ej.: `1L`, `pack x6`, `lata 500ml`). Es raíz de su propio agregado: tiene identidad y ciclo de vida independientes de un `Producto` particular, admite ABMC propio y puede asociarse a varios productos.
+
+**Atributos:**
+
+- `id`
+- `denominacion` (única; incluye registros eliminados lógicamente)
+- `observacion` (opcional)
+
+**Reglas relevantes:**
+
+- Cada `Producto` debe tener asociada una, y solo una, `Presentacion`.
+- No se puede eliminar una `Presentacion` referenciada por uno o más productos activos.
+- No pueden existir dos presentaciones con la misma denominación.
+
+### 4.3 MovimientoStock (Entity)
 
 > **Concepto clave:**  
 > Una *Entity* es un objeto con identidad propia (`id`) que persiste en el tiempo; dos entidades son distintas aunque tengan los mismos atributos, porque lo que importa es "cuál" es, no solo sus valores.
@@ -149,7 +168,7 @@ Motivo: rotura
 Nuevo stock: 8
 ```
 
-### 4.3 Value Objects candidatos
+### 4.4 Value Objects candidatos
 
 > **Concepto clave:**  
 > Un *Value Object* (VO) es un objeto sin identidad propia, definido únicamente por sus atributos: dos VOs con los mismos valores se consideran iguales y, por lo general, son inmutables.
@@ -163,15 +182,23 @@ Nuevo stock: 8
 
 Modelar `Margen` y `Precio` como *Value Objects* —en vez de campos sueltos— es una decisión de diseño abierta a debate: simplifica el modelo inicial mantenerlos como atributos primitivos, pero a medida que el sistema crece —por ejemplo, si se necesitan distintas monedas o reglas de redondeo— conviene encapsularlos.
 
-### 4.4 Diagrama de agregados
+### 4.5 Diagrama de agregados
 
 ```mermaid
 classDiagram
+    class Presentacion {
+        <<Aggregate Root>>
+        id
+        denominacion
+        observacion
+    }
+
     class Producto {
         <<Aggregate Root>>
         id
         marca
         linea
+        presentacion
         denominacion
         costo
         margen
@@ -192,10 +219,11 @@ classDiagram
         motivo
     }
 
+    Presentacion "1" --> "*" Producto : clasifica
     Producto "1" --> "*" MovimientoStock : posee
 ```
 
-Un `Producto` puede tener muchos `MovimientoStock` asociados —relación 1 a N—; cada movimiento pertenece a un único producto y referencia su `id`.
+Una `Presentacion` puede asociarse a muchos `Producto`; cada producto referencia una sola presentación. Un `Producto` puede tener muchos `MovimientoStock` asociados —relación 1 a N—; cada movimiento pertenece a un único producto y referencia su `id`.
 
 ---
 

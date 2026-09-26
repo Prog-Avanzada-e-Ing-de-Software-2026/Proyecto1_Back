@@ -5,18 +5,23 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { UsuarioService } from 'src/modules/gestion-usuario/usuario/application/services/usuario.service';
 import { ensureNotSistemaEntity } from 'src/modules/common/utils/atrituto-sistema';
 import { PaginacionUtils } from 'src/modules/common/utils/pagination/paginacion-utils';
 import { MessageFrontUtils } from 'src/modules/common/utils/message/message-front.util';
+import { SelectOption } from 'src/modules/common/interface/select-option';
 import { ILineaRepository } from '../../domain/interfaces/linea.repository.interface';
 import { CreateLineaDto } from '../../dto/create-linea.dto';
 import { UpdateLineaDto } from '../../dto/update-linea.dto';
 import { LineaDto } from '../../dto/linea.dto';
 import { LineaMapper } from '../../mappers/linea.mapper';
 import { PoliticaEliminacionLinea } from '../../domain/services/politica-eliminacion-linea.service';
+import { LineaIntrinsicValidationService } from '../../domain/services/linea-intrinsic-validation.service';
 import { Linea } from '../../domain/entities/linea.entity';
+import { ISuperLineaRepository } from '../../../superlinea/domain/interfaces/superlinea.repository.interface';
+import { SuperLinea } from 'src/modules/gestion-productos/superlinea/domain/entities/superlinea.entity';
 
 @Injectable()
 export class LineaService {
@@ -28,7 +33,11 @@ export class LineaService {
     @Inject(forwardRef(() => PoliticaEliminacionLinea))
     private readonly validacionesService: PoliticaEliminacionLinea,
     private readonly usuarioService: UsuarioService,
+    @Inject('ISuperLineaRepository')
+    private readonly superLineaRepository: ISuperLineaRepository,
 
+    @Optional()
+    private readonly lineaValidationService: LineaIntrinsicValidationService = new LineaIntrinsicValidationService(),
   ) { }
 
   private readonly ENTITY_NAME = 'Linea';
@@ -37,22 +46,21 @@ export class LineaService {
     this.logger.log(
       `Creando un nuevo ${this.ENTITY_NAME} con denominación: ${dto.denominacion} a: ${dto.denominacion}`,
     );
+
+    this.lineaValidationService.validarDatosBasicos(dto, {
+      requerirEstadoCompleto: true,
+    });
+
     await this.checkDenominacionExists(dto.denominacion, 0);
-
-
-    const entity = await this.repository.create(dto);
-
-
-    return MessageFrontUtils.createSimple(
-      `${this.ENTITY_NAME}`,
-      entity.denominacion,
-      'creada',
-    );
+    const superLinea = await this.findActiveSuperLinea(dto.superLineaId);
+    const entity = await this.repository.create(dto, superLinea);
+    return LineaMapper.toDto(entity);
   }
 
   async update(id: number, dto: UpdateLineaDto) {
     this.logger.log(`Actualizando  ${this.ENTITY_NAME} con ID: ${id}`);
 
+    this.lineaValidationService.validarDatosBasicos(dto);
 
     const linea = await this.findEntityById(id); // Verifica existencia
     ensureNotSistemaEntity(linea, 'Linea');
@@ -60,7 +68,11 @@ export class LineaService {
       await this.checkDenominacionExists(dto.denominacion, id);
 
 
-    const entity = await this.repository.update(id, dto);
+    const superLinea =
+      dto.superLineaId === undefined
+        ? undefined
+        : await this.findActiveSuperLinea(dto.superLineaId);
+    const entity = await this.repository.update(id, dto, superLinea);
     return MessageFrontUtils.createSimple(
       `${this.ENTITY_NAME}`,
       entity.denominacion,
@@ -107,6 +119,18 @@ export class LineaService {
       data,
       total: 1,
     };
+  }
+
+  async findAllForSuperLineas(denominacion: string): Promise<SuperLinea[]> {
+    return await this.superLineaRepository.findAllFor(denominacion);
+  }
+
+  async busquedaPorCoincidenciaParcial(
+    denominacion: string,
+  ): Promise<SelectOption[]> {
+    const lineas =
+      await this.repository.busquedaPorCoincidenciaParcial(denominacion);
+    return lineas.map(LineaMapper.toSelectOption);
   }
 
   async findByIdConAuditoria(id: number) {
@@ -194,6 +218,16 @@ export class LineaService {
     }
 
     this.logger.log(`✅ Denominación disponible`);
+  }
+
+  private async findActiveSuperLinea(id: number) {
+    const superLinea = await this.superLineaRepository.findOne(id);
+    if (!superLinea) {
+      throw new NotFoundException(
+        `SuperLínea con ID ${id} no encontrada o eliminada.`,
+      );
+    }
+    return superLinea;
   }
 
 

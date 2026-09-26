@@ -1,11 +1,13 @@
 import { Linea } from '../../../linea/domain/entities/linea.entity';
 import { Marca } from '../../../marca/domain/entities/marca.entity';
+import { Presentacion } from '../../../presentacion/domain/entities/presentacion.entity';
 import { CreateProductoDto } from '../../dto/create-producto.dto';
 import { Producto } from '../entities/producto.entity';
 import { UpdateProductoDto } from '../../dto/update-producto.dto';
 import { IUnitOfWork } from 'src/modules/common/unit-of-work/iunit-of-work.';
 import { Usuario } from 'src/modules/gestion-usuario/usuario/domain/entities/usuario.entity';
 import { UpdatePrecioDto } from '../../dto/update-precio.dto';
+import { CambioPrecio } from '../entities/cambio-precio.entity';
 
 export interface IProductoRepository {
 
@@ -13,6 +15,7 @@ export interface IProductoRepository {
     data: CreateProductoDto,
     linea: Linea,
     marca: Marca,
+    presentacion: Presentacion,
     usuario: Usuario,
   ): Promise<Producto>;
 
@@ -31,6 +34,7 @@ export interface IProductoRepository {
     conStock: boolean,
     skip: number,
     take: number,
+    incluirCambiosPrecio?: boolean,
   ): Promise<{ data: Producto[]; total: number }>;
 
   findByRapido(
@@ -48,6 +52,7 @@ export interface IProductoRepository {
     data: UpdateProductoDto,
     linea: Linea,
     marca: Marca,
+    presentacion: Presentacion | undefined,
     usuario: Usuario,
   ): Promise<Producto>;
 
@@ -58,6 +63,18 @@ export interface IProductoRepository {
     dto: UpdatePrecioDto,
     usuario: Usuario,
   ): Promise<void>;
+
+  actualizarPrecios(
+    productos: Producto[],
+    usuario: Usuario,
+  ): Promise<Producto[]>;
+
+  findHistorialPrecios(
+    id: number,
+    skip: number,
+    take: number,
+  ): Promise<CambioPrecio[]>;
+
   remove(data: Producto, usuario: Usuario): Promise<Producto>;
 
   isCodigoProveedorDuplicado(
@@ -71,6 +88,18 @@ export interface IProductoRepository {
     take: number,
   ): Promise<{ data: Producto[]; total: number }>;
 
+  busquedaPorCoincidenciaParcial(
+    denominacion: string,
+    skip: number,
+    take: number,
+  ): Promise<{ data: Producto[]; total: number }>;
+
+  findProductosBySuperLinea(
+    superLineaId: number,
+    skip: number,
+    take: number,
+  ): Promise<{ data: Producto[]; total: number }>;
+
   existsByDenominacion(
     denominacion: string,
     excludeId?: number,
@@ -78,6 +107,7 @@ export interface IProductoRepository {
   existsByCodigoProveedor(codigoProveedor: string, excludeId: number): Promise<boolean>;
   existsProductosActivosByMarca(marcaId: number): Promise<boolean>;
   existsProductosActivosByLinea(lineaId: number): Promise<boolean>;
+  existsActiveByPresentacion(presentacionId: number): Promise<boolean>;
 
   findByIds(ids: number[]): Promise<Producto[]>;
 }

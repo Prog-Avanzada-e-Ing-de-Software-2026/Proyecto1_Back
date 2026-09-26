@@ -1,0 +1,17 @@
+[
+  "src/migrations/add-cambio-precio-to-producto.int-spec.ts",
+  "src/migrations/add-presentacion-to-producto.int-spec.ts",
+  "src/migrations/add-superlinea-to-linea.int-spec.ts",
+  "src/modules/gestion-productos/linea/infraestructure/repositories/linea.persistence-adapter.int-spec.ts",
+  "src/modules/gestion-productos/marca/application/marca.http.int-spec.ts",
+  "src/modules/gestion-productos/marca/application/marca.integracion.int-spec.ts",
+  "src/modules/gestion-productos/producto/application/controllers/producto.busqueda-general.http.int-spec.ts",
+  "src/modules/gestion-productos/producto/application/producto.actualizacion-precios.int-spec.ts",
+  "src/modules/gestion-productos/producto/application/producto.http.int-spec.ts",
+  "src/modules/gestion-productos/producto/application/producto.integracion.int-spec.ts",
+  "src/modules/gestion-productos/producto/application/producto.registro.int-spec.ts",
+  "src/modules/gestion-productos/producto/infraestructure/repositories/producto.busqueda-general.int-spec.ts",
+  "src/modules/gestion-productos/producto/infraestructure/repositories/producto.persistence-adapters.int-spec.ts",
+  "src/modules/gestion-productos/superlinea/infraestructure/repositories/superlinea.persistence-adapter.int-spec.ts",
+  "test/integration/harness-safety.int-spec.ts"
+]
